@@ -11,15 +11,15 @@
 
   * Object classification (starting with toothbrush)
   * Math questions
-  * 2×2 Sudoku
-  * QR/Barcode scan
+  * 2×2 Sudoku (optional)
+  * QR/Barcode scan (optional)
 
 * *Backup option* (when primary task is not possible)
 
   * For one minute, the app takes you to a different page where it randomly asks for confirmation that you are awake
   * You will have 2–3 seconds to respond
 
-* *Power nap mode*
+* *Power nap mode* (optional)
 
   * Set nap duration, works the same as normal alarm
 

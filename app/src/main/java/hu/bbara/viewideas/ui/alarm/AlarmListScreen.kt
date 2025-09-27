@@ -43,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,7 +60,6 @@ internal fun AlarmListRoute(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val density = LocalDensity.current
     val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
     val upcomingAlarm = remember(alarms) { resolveNextAlarm(alarms) }
     val (activeAlarms, inactiveAlarms) = remember(alarms) {
@@ -69,6 +67,7 @@ internal fun AlarmListRoute(
         val inactive = alarms.filterNot { it.isActive }
         active to inactive
     }
+    val orderedAlarms = remember(activeAlarms, inactiveAlarms) { activeAlarms + inactiveAlarms }
 
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
@@ -119,52 +118,24 @@ internal fun AlarmListRoute(
                 }
             }
 
-            if (alarms.isEmpty()) {
+            if (orderedAlarms.isEmpty()) {
                 item { EmptyState() }
             } else {
-                if (activeAlarms.isNotEmpty()) {
-                    item { SectionHeader(title = "Active") }
-                    items(activeAlarms, key = { it.id }) { alarm ->
-                        AlarmRow(
-                            alarm = alarm,
-                            onToggle = { onToggle(alarm.id, it) },
-                            onEdit = { onEdit(alarm.id) },
-                            onEnterSelection = { onEnterSelection(alarm.id) },
-                            onToggleSelection = { onToggleSelection(alarm.id) },
-                            is24Hour = is24Hour,
-                            selectionActive = selectionActive,
-                            isSelected = selectedIds.contains(alarm.id)
-                        )
-                    }
-                }
-
-                if (inactiveAlarms.isNotEmpty()) {
-                    item { SectionHeader(title = "Inactive") }
-                    items(inactiveAlarms, key = { it.id }) { alarm ->
-                        AlarmRow(
-                            alarm = alarm,
-                            onToggle = { onToggle(alarm.id, it) },
-                            onEdit = { onEdit(alarm.id) },
-                            onEnterSelection = { onEnterSelection(alarm.id) },
-                            onToggleSelection = { onToggleSelection(alarm.id) },
-                            is24Hour = is24Hour,
-                            selectionActive = selectionActive,
-                            isSelected = selectedIds.contains(alarm.id)
-                        )
-                    }
+                items(orderedAlarms, key = { it.id }) { alarm ->
+                    AlarmRow(
+                        alarm = alarm,
+                        onToggle = { onToggle(alarm.id, it) },
+                        onEdit = { onEdit(alarm.id) },
+                        onEnterSelection = { onEnterSelection(alarm.id) },
+                        onToggleSelection = { onToggleSelection(alarm.id) },
+                        is24Hour = is24Hour,
+                        selectionActive = selectionActive,
+                        isSelected = selectedIds.contains(alarm.id)
+                    )
                 }
             }
         }
     }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -247,10 +218,25 @@ private fun AlarmRow(
     selectionActive: Boolean,
     isSelected: Boolean
 ) {
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.secondaryContainer
+    val containerColor = when {
+        isSelected -> MaterialTheme.colorScheme.secondaryContainer
+        alarm.isActive -> MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.12f)
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
+    val primaryTextColor = if (alarm.isActive) {
+        MaterialTheme.colorScheme.onSurface
     } else {
-        MaterialTheme.colorScheme.surface
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val secondaryTextColor = if (alarm.isActive) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    }
+    val accentColor = if (alarm.isActive) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
     }
     Card(
         modifier = Modifier
@@ -280,19 +266,20 @@ private fun AlarmRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = alarm.time.formatForDisplay(is24Hour),
-                    style = MaterialTheme.typography.headlineMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = primaryTextColor
                 )
                 if (alarm.label.isNotBlank()) {
                     Text(
                         text = alarm.label,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = secondaryTextColor
                     )
                 }
                 Text(
                     text = formatDays(alarm.repeatDays),
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = accentColor
                 )
             }
             Switch(checked = alarm.isActive, onCheckedChange = onToggle)

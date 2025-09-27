@@ -48,7 +48,6 @@ internal fun AlarmCreateRoute(
     draft: AlarmCreationState,
     isEditing: Boolean,
     onUpdateDraft: (AlarmCreationState) -> Unit,
-    onSelectPreset: (LocalTime) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
     onSave: () -> Unit,
@@ -59,9 +58,6 @@ internal fun AlarmCreateRoute(
     val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
     val scrollState = rememberScrollState()
     val canSave = draft.time != null && draft.repeatDays.isNotEmpty()
-    val presetTimes = remember {
-        listOf(LocalTime.of(6, 30), LocalTime.of(7, 0), LocalTime.of(8, 30), LocalTime.of(21, 30))
-    }
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(is24Hour = is24Hour)
 
@@ -101,16 +97,6 @@ internal fun AlarmCreateRoute(
                 Text(text = "Time", style = MaterialTheme.typography.titleMedium)
                 Button(onClick = { showTimePicker = true }) {
                     Text(text = draft.time?.formatForDisplay(is24Hour) ?: "Pick a time")
-                }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    presetTimes.forEach { preset ->
-                        TextButton(onClick = {
-                            onSelectPreset(preset)
-                            showTimePicker = false
-                        }) {
-                            Text(text = preset.formatForDisplay(is24Hour))
-                        }
-                    }
                 }
             }
 

@@ -46,6 +46,17 @@ class AlarmViewModel(
     fun deleteAlarm(id: Int) {
         viewModelScope.launch {
             repository.deleteAlarm(id)
+            _uiState.update { state ->
+                if (state.editingAlarm?.id == id) {
+                    state.copy(
+                        draft = sampleDraft(),
+                        destination = AlarmDestination.List,
+                        editingAlarm = null
+                    )
+                } else {
+                    state
+                }
+            }
         }
     }
 

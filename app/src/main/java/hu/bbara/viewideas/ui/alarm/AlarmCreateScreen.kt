@@ -54,6 +54,7 @@ internal fun AlarmCreateRoute(
     onReset: () -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -83,8 +84,14 @@ internal fun AlarmCreateRoute(
                 },
                 title = { Text(text = if (isEditing) "Edit alarm" else "New alarm") },
                 actions = {
-                    TextButton(onClick = onReset) {
-                        Text(text = if (isEditing) "Revert" else "Reset")
+                    if (isEditing) {
+                        TextButton(onClick = onDelete) {
+                            Text(text = "Delete")
+                        }
+                    } else {
+                        TextButton(onClick = onReset) {
+                            Text(text = "Reset")
+                        }
                     }
                 }
             )

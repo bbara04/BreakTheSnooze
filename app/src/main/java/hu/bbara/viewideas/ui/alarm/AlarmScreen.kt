@@ -62,7 +62,6 @@ private fun AlarmScreenContent(
         AlarmDestination.List -> AlarmListRoute(
             alarms = uiState.alarms,
             onToggle = onToggle,
-            onDelete = onDelete,
             onEdit = onEdit,
             onCreate = onStartCreate,
             modifier = modifier
@@ -78,6 +77,9 @@ private fun AlarmScreenContent(
             onReset = onResetDraft,
             onSave = onSaveDraft,
             onCancel = onCancel,
+            onDelete = {
+                uiState.editingAlarm?.let { onDelete(it.id) }
+            },
             modifier = modifier
         )
     }

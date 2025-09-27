@@ -13,15 +13,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -40,7 +37,6 @@ import androidx.compose.ui.unit.dp
 internal fun AlarmListRoute(
     alarms: List<AlarmUiModel>,
     onToggle: (id: Int, isActive: Boolean) -> Unit,
-    onDelete: (id: Int) -> Unit,
     onEdit: (id: Int) -> Unit,
     onCreate: () -> Unit,
     modifier: Modifier = Modifier
@@ -87,7 +83,6 @@ internal fun AlarmListRoute(
                         AlarmRow(
                             alarm = alarm,
                             onToggle = { onToggle(alarm.id, it) },
-                            onDelete = { onDelete(alarm.id) },
                             onEdit = { onEdit(alarm.id) },
                             is24Hour = is24Hour
                         )
@@ -100,7 +95,6 @@ internal fun AlarmListRoute(
                         AlarmRow(
                             alarm = alarm,
                             onToggle = { onToggle(alarm.id, it) },
-                            onDelete = { onDelete(alarm.id) },
                             onEdit = { onEdit(alarm.id) },
                             is24Hour = is24Hour
                         )
@@ -168,11 +162,13 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
 private fun AlarmRow(
     alarm: AlarmUiModel,
     onToggle: (Boolean) -> Unit,
-    onDelete: () -> Unit,
     onEdit: () -> Unit,
     is24Hour: Boolean
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onEdit
+    ) {
         Row(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -195,17 +191,7 @@ private fun AlarmRow(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Switch(checked = alarm.isActive, onCheckedChange = onToggle)
-                Row {
-                    IconButton(onClick = onEdit) {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit alarm")
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(imageVector = Icons.Default.Close, contentDescription = "Delete alarm")
-                    }
-                }
-            }
+            Switch(checked = alarm.isActive, onCheckedChange = onToggle)
         }
     }
 }

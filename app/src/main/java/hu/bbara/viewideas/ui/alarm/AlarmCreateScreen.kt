@@ -3,10 +3,10 @@ package hu.bbara.viewideas.ui.alarm
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,7 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
 import java.time.LocalTime
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmCreateRoute(
     draft: AlarmCreationState,
@@ -134,10 +133,19 @@ internal fun AlarmCreateRoute(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = "Active on", style = MaterialTheme.typography.titleMedium)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     dayOrder.forEach { day ->
                         val selected = draft.repeatDays.contains(day)
-                        TextButton(onClick = { onToggleDay(day) }) {
+                        TextButton(
+                            onClick = { onToggleDay(day) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .defaultMinSize(minWidth = 0.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
                             Text(
                                 text = day.displayName(),
                                 color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface

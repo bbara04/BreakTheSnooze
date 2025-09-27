@@ -36,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -95,8 +96,29 @@ internal fun AlarmCreateRoute(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = "Time", style = MaterialTheme.typography.titleMedium)
-                Button(onClick = { showTimePicker = true }) {
-                    Text(text = draft.time?.formatForDisplay(is24Hour) ?: "Pick a time")
+                Surface(
+                    onClick = { showTimePicker = true },
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    tonalElevation = 6.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 28.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = draft.time?.formatForDisplay(is24Hour) ?: "Pick a time",
+                            style = MaterialTheme.typography.displayMedium
+                        )
+                        Text(
+                            text = if (draft.time != null) "Tap to adjust" else "Tap to choose",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                    }
                 }
             }
 

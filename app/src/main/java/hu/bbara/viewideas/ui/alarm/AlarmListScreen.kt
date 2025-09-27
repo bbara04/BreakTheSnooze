@@ -1,11 +1,7 @@
 package hu.bbara.viewideas.ui.alarm
 
 import android.text.format.DateFormat
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import android.util.Log
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,14 +32,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,7 +65,8 @@ internal fun AlarmListRoute(
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
     LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress && listState.firstVisibleItemIndex == 0) {
+        Log.d("AlarmListRoute", "ScrollCoroutine is active: ${listState.isScrollInProgress}")
+        if (!listState.isScrollInProgress && listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset > 0) {
             val halfOfFirstVisibleItem =
                 listState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.div(
                     2

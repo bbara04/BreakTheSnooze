@@ -26,6 +26,7 @@ class AndroidAlarmScheduler(
             Log.w(TAG, "Exact alarm scheduling not permitted; skipping for id=${alarm.id}")
             return
         }
+        Log.d(TAG, "schedule called for id=${alarm.id}")
         val triggerAtMillis = calculateNextTriggerMillis(alarm) ?: return
         val alarmIntent = createAlarmPendingIntent(alarm.id, PendingIntent.FLAG_UPDATE_CURRENT) ?: return
         val showIntent = createShowIntent(alarm.id)
@@ -45,12 +46,14 @@ class AndroidAlarmScheduler(
         createAlarmPendingIntent(alarmId, PendingIntent.FLAG_NO_CREATE)?.let { pending ->
             manager.cancel(pending)
             pending.cancel()
+            Log.d(TAG, "cancelled id=$alarmId")
         }
     }
 
     override fun synchronize(alarms: List<AlarmUiModel>) {
         val active = alarms.filter { it.isActive }
         val inactiveIds = alarms.filterNot { it.isActive }.map { it.id }.toSet()
+        Log.d(TAG, "synchronize active=${active.size} inactive=${inactiveIds.size}")
 
         inactiveIds.forEach { cancel(it) }
         active.forEach { schedule(it) }

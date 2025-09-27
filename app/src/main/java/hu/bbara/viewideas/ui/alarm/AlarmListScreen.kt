@@ -1,6 +1,7 @@
 package hu.bbara.viewideas.ui.alarm
 
 import android.text.format.DateFormat
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -73,6 +74,9 @@ internal fun AlarmListRoute(
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
     LaunchedEffect(listState.isScrollInProgress) {
+        if (listState.isScrollInProgress) {
+            Log.d(TAG_ALARM_ROW, "scrolling... index=${listState.firstVisibleItemIndex} offset=${listState.firstVisibleItemScrollOffset}")
+        }
         if (!listState.isScrollInProgress && listState.firstVisibleItemIndex == 0) {
             val halfOfFirstVisibleItem =
                 listState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.div(
@@ -208,6 +212,8 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
     }
 }
 
+private const val TAG_ALARM_ROW = "AlarmRow"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AlarmRow(
@@ -245,13 +251,16 @@ private fun AlarmRow(
             .fillMaxWidth()
             .combinedClickable(
                 onClick = {
+                    Log.d(TAG_ALARM_ROW, "click id=${alarm.id} selection=$selectionActive")
                     if (selectionActive) {
                         onToggleSelection()
                     } else {
+                        Log.d(TAG_ALARM_ROW, "edit dispatched id=${alarm.id}")
                         onEdit()
                     }
                 },
                 onLongClick = {
+                    Log.d(TAG_ALARM_ROW, "longClick id=${alarm.id} selection=$selectionActive")
                     if (!selectionActive) {
                         onEnterSelection()
                     } else {
@@ -284,7 +293,13 @@ private fun AlarmRow(
                     color = accentColor
                 )
             }
-            Switch(checked = alarm.isActive, onCheckedChange = onToggle)
+            Switch(
+                checked = alarm.isActive,
+                onCheckedChange = {
+                    Log.d(TAG_ALARM_ROW, "switch id=${alarm.id} -> $it")
+                    onToggle(it)
+                }
+            )
         }
     }
 }

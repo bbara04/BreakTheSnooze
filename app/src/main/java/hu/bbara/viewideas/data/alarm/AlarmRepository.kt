@@ -7,6 +7,7 @@ import hu.bbara.viewideas.ui.alarm.sampleAlarms
 import hu.bbara.viewideas.ui.alarm.timeFormatter
 import java.time.DayOfWeek
 import java.time.LocalTime
+import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +35,7 @@ class DefaultAlarmRepository(
 
     override suspend fun upsertAlarm(alarm: AlarmUiModel): AlarmUiModel? {
         return withContext(ioDispatcher) {
+            Log.d(TAG, "upsert id=${alarm.id}")
             val entity = alarm.toEntity()
             val rowId = alarmDao.insertOrReplace(entity).toInt()
             val targetId = if (alarm.id == 0) rowId else alarm.id
@@ -43,6 +45,7 @@ class DefaultAlarmRepository(
 
     override suspend fun updateAlarmActive(id: Int, isActive: Boolean): AlarmUiModel? {
         return withContext(ioDispatcher) {
+            Log.d(TAG, "updateActive id=$id -> $isActive")
             val entity = alarmDao.getById(id) ?: return@withContext null
             val updated = entity.copy(isActive = isActive)
             alarmDao.update(updated)
@@ -52,6 +55,7 @@ class DefaultAlarmRepository(
 
     override suspend fun deleteAlarm(id: Int) {
         withContext(ioDispatcher) {
+            Log.d(TAG, "delete id=$id")
             alarmDao.deleteById(id)
         }
     }
@@ -70,6 +74,10 @@ class DefaultAlarmRepository(
         return withContext(ioDispatcher) {
             alarmDao.getById(id)?.toUiModel()
         }
+    }
+
+    companion object {
+        private const val TAG = "AlarmRepository"
     }
 }
 

@@ -130,7 +130,7 @@ private fun AlarmScreenPreview() {
         AlarmScreenContent(
             uiState = AlarmUiState(
                 alarms = sampleAlarms(),
-                draft = sampleDraft(),
+                draft = sampleDraft(useCurrentTime = false),
                 destination = AlarmDestination.List
             ),
             onToggle = { _, _ -> },

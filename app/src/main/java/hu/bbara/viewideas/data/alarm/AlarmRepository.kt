@@ -117,7 +117,6 @@ fun AlarmCreationState.toUiModelWithId(
     isActive: Boolean = true
 ): AlarmUiModel? {
     val time = time ?: return null
-    if (repeatDays.isEmpty()) return null
     return AlarmUiModel(
         id = id,
         time = time,

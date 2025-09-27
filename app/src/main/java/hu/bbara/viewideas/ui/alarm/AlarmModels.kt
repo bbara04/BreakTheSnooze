@@ -84,10 +84,19 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
     ).sortedWith(alarmSorter)
 }
 
-internal fun sampleDraft(): AlarmCreationState = AlarmCreationState(
-    time = LocalTime.of(6, 30),
+internal fun defaultAlarmTime(): LocalTime {
+    val now = LocalTime.now()
+    return if (now.minute == 0 && now.second == 0 && now.nano == 0) {
+        now
+    } else {
+        now.plusHours(1).withMinute(0).withSecond(0).withNano(0)
+    }
+}
+
+internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(
+    time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
     label = "Gym",
-    repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+    repeatDays = emptySet()
 )
 
 internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {

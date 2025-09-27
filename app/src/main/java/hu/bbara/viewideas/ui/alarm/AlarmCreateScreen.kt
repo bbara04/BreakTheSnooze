@@ -57,7 +57,7 @@ internal fun AlarmCreateRoute(
     val context = LocalContext.current
     val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
     val scrollState = rememberScrollState()
-    val canSave = draft.time != null && draft.repeatDays.isNotEmpty()
+    val canSave = draft.time != null
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(is24Hour = is24Hour)
 

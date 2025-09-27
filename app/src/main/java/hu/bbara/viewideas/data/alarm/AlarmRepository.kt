@@ -15,10 +15,11 @@ import kotlinx.coroutines.withContext
 
 interface AlarmRepository {
     val alarms: Flow<List<AlarmUiModel>>
-    suspend fun upsertAlarm(alarm: AlarmUiModel)
-    suspend fun updateAlarmActive(id: Int, isActive: Boolean)
+    suspend fun upsertAlarm(alarm: AlarmUiModel): AlarmUiModel?
+    suspend fun updateAlarmActive(id: Int, isActive: Boolean): AlarmUiModel?
     suspend fun deleteAlarm(id: Int)
     suspend fun ensureSeedData()
+    suspend fun getAlarmById(id: Int): AlarmUiModel?
 }
 
 class DefaultAlarmRepository(
@@ -31,16 +32,21 @@ class DefaultAlarmRepository(
             entities.map { it.toUiModel() }
         }
 
-    override suspend fun upsertAlarm(alarm: AlarmUiModel) {
-        withContext(ioDispatcher) {
-            alarmDao.insertOrReplace(alarm.toEntity())
+    override suspend fun upsertAlarm(alarm: AlarmUiModel): AlarmUiModel? {
+        return withContext(ioDispatcher) {
+            val entity = alarm.toEntity()
+            val rowId = alarmDao.insertOrReplace(entity).toInt()
+            val targetId = if (alarm.id == 0) rowId else alarm.id
+            alarmDao.getById(targetId)?.toUiModel()
         }
     }
 
-    override suspend fun updateAlarmActive(id: Int, isActive: Boolean) {
-        withContext(ioDispatcher) {
-            val entity = alarmDao.getById(id) ?: return@withContext
-            alarmDao.update(entity.copy(isActive = isActive))
+    override suspend fun updateAlarmActive(id: Int, isActive: Boolean): AlarmUiModel? {
+        return withContext(ioDispatcher) {
+            val entity = alarmDao.getById(id) ?: return@withContext null
+            val updated = entity.copy(isActive = isActive)
+            alarmDao.update(updated)
+            updated.toUiModel()
         }
     }
 
@@ -57,6 +63,12 @@ class DefaultAlarmRepository(
                     alarmDao.insertOrReplace(alarm.toEntity())
                 }
             }
+        }
+    }
+
+    override suspend fun getAlarmById(id: Int): AlarmUiModel? {
+        return withContext(ioDispatcher) {
+            alarmDao.getById(id)?.toUiModel()
         }
     }
 }

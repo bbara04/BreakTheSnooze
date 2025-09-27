@@ -1,19 +1,27 @@
 package hu.bbara.viewideas.ui.alarm
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
+import hu.bbara.viewideas.data.alarm.AlarmSchedulerProvider
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import java.time.DayOfWeek
 import java.time.LocalTime
+import androidx.core.content.ContextCompat
 
 @Composable
 fun AlarmScreen(
@@ -21,9 +29,26 @@ fun AlarmScreen(
 ) {
     val context = LocalContext.current
     val repository = remember(context) { AlarmRepositoryProvider.getRepository(context) }
+    val scheduler = remember(context) { AlarmSchedulerProvider.getScheduler(context) }
     val alarmViewModel: AlarmViewModel = viewModel(
-        factory = remember(repository) { AlarmViewModelFactory(repository) }
+        factory = remember(repository, scheduler) { AlarmViewModelFactory(repository, scheduler) }
     )
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = {}
+        )
+        LaunchedEffect(Unit) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     val uiState by alarmViewModel.uiState.collectAsState()
 

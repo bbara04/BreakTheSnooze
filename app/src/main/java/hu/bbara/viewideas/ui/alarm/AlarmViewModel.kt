@@ -3,6 +3,7 @@ package hu.bbara.viewideas.ui.alarm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import hu.bbara.viewideas.data.alarm.AlarmRepository
+import hu.bbara.viewideas.data.alarm.AlarmScheduler
 import hu.bbara.viewideas.data.alarm.toUiModelWithId
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class AlarmViewModel(
-    private val repository: AlarmRepository
+    private val repository: AlarmRepository,
+    private val scheduler: AlarmScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AlarmUiState())
@@ -26,6 +28,7 @@ class AlarmViewModel(
 
         viewModelScope.launch {
             repository.alarms.collect { alarms ->
+                scheduler.synchronize(alarms)
                 _uiState.update { state ->
                     val editing = state.editingAlarm
                     val updatedEditing = editing?.let { current ->
@@ -39,13 +42,21 @@ class AlarmViewModel(
 
     fun onToggleAlarm(id: Int, isActive: Boolean) {
         viewModelScope.launch {
-            repository.updateAlarmActive(id, isActive)
+            val updated = repository.updateAlarmActive(id, isActive)
+            updated?.let { alarm ->
+                if (alarm.isActive) {
+                    scheduler.schedule(alarm)
+                } else {
+                    scheduler.cancel(alarm.id)
+                }
+            }
         }
     }
 
     fun deleteAlarm(id: Int) {
         viewModelScope.launch {
             repository.deleteAlarm(id)
+            scheduler.cancel(id)
             _uiState.update { state ->
                 if (state.editingAlarm?.id == id) {
                     state.copy(
@@ -126,7 +137,14 @@ class AlarmViewModel(
             isActive = editing?.isActive ?: true
         ) ?: return
         viewModelScope.launch {
-            repository.upsertAlarm(model)
+            val saved = repository.upsertAlarm(model)
+            saved?.let { alarm ->
+                if (alarm.isActive) {
+                    scheduler.schedule(alarm)
+                } else {
+                    scheduler.cancel(alarm.id)
+                }
+            }
             _uiState.update { state ->
                 state.copy(
                     draft = sampleDraft(),
@@ -167,7 +185,10 @@ class AlarmViewModel(
         val ids = _uiState.value.selectedAlarmIds
         if (ids.isEmpty()) return
         viewModelScope.launch {
-            ids.forEach { repository.deleteAlarm(it) }
+            ids.forEach {
+                repository.deleteAlarm(it)
+                scheduler.cancel(it)
+            }
             _uiState.update { state ->
                 val editing = state.editingAlarm
                 val editingCleared = if (editing != null && ids.contains(editing.id)) null else editing

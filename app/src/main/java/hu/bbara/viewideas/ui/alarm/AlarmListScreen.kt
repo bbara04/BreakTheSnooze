@@ -1,5 +1,6 @@
 package hu.bbara.viewideas.ui.alarm
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +45,8 @@ internal fun AlarmListRoute(
     onCreate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
     val upcomingAlarm = remember(alarms) { resolveNextAlarm(alarms) }
     val (activeAlarms, inactiveAlarms) = remember(alarms) {
         val active = alarms.filter { it.isActive }
@@ -71,7 +75,7 @@ internal fun AlarmListRoute(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
-                UpcomingAlarmCard(upcomingAlarm)
+                UpcomingAlarmCard(upcomingAlarm, is24Hour)
             }
 
             if (alarms.isEmpty()) {
@@ -84,7 +88,8 @@ internal fun AlarmListRoute(
                             alarm = alarm,
                             onToggle = { onToggle(alarm.id, it) },
                             onDelete = { onDelete(alarm.id) },
-                            onEdit = { onEdit(alarm.id) }
+                            onEdit = { onEdit(alarm.id) },
+                            is24Hour = is24Hour
                         )
                     }
                 }
@@ -96,7 +101,8 @@ internal fun AlarmListRoute(
                             alarm = alarm,
                             onToggle = { onToggle(alarm.id, it) },
                             onDelete = { onDelete(alarm.id) },
-                            onEdit = { onEdit(alarm.id) }
+                            onEdit = { onEdit(alarm.id) },
+                            is24Hour = is24Hour
                         )
                     }
                 }
@@ -115,7 +121,7 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?) {
+private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -135,7 +141,7 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?) {
                 )
             } else {
                 Text(
-                    text = upcomingAlarm.triggerAt.toLocalTime().format(timeFormatter),
+                    text = upcomingAlarm.triggerAt.toLocalTime().formatForDisplay(is24Hour),
                     style = MaterialTheme.typography.displaySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -163,7 +169,8 @@ private fun AlarmRow(
     alarm: AlarmUiModel,
     onToggle: (Boolean) -> Unit,
     onDelete: () -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
+    is24Hour: Boolean
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -172,7 +179,7 @@ private fun AlarmRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = alarm.time.format(timeFormatter),
+                    text = alarm.time.formatForDisplay(is24Hour),
                     style = MaterialTheme.typography.headlineMedium
                 )
                 if (alarm.label.isNotBlank()) {

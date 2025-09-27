@@ -11,6 +11,7 @@ import java.util.Locale
 enum class AlarmDestination { List, Create }
 
 internal val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+private val timeFormatter12Hour: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")
 
 internal val dayOrder = listOf(
     DayOfWeek.MONDAY,
@@ -50,6 +51,11 @@ internal fun AlarmUiModel.toCreationState(): AlarmCreationState =
         label = label,
         repeatDays = repeatDays.toSet()
     )
+
+internal fun LocalTime.formatForDisplay(is24Hour: Boolean): String {
+    val formatter = if (is24Hour) timeFormatter else timeFormatter12Hour
+    return format(formatter)
+}
 
 internal fun sampleAlarms(): List<AlarmUiModel> {
     return listOf(

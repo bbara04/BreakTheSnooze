@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,10 +72,17 @@ internal fun AlarmListRoute(
 
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
-    var showUpcoming by remember { mutableStateOf(true) }
     LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            showUpcoming = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+        if (!listState.isScrollInProgress && listState.firstVisibleItemIndex == 0) {
+            val halfOfFirstVisibleItem =
+                listState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.div(
+                    2
+                ) ?: 0
+            if (listState.firstVisibleItemScrollOffset <= halfOfFirstVisibleItem) {
+                listState.animateScrollToItem(0, 0)
+            } else {
+                listState.animateScrollToItem(1, 0)
+            }
         }
     }
 
@@ -109,13 +117,7 @@ internal fun AlarmListRoute(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
-                AnimatedVisibility(
-                    visible = showUpcoming,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    UpcomingAlarmCard(upcomingAlarm, is24Hour)
-                }
+                UpcomingAlarmCard(upcomingAlarm, is24Hour)
             }
 
             if (orderedAlarms.isEmpty()) {

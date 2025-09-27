@@ -44,6 +44,13 @@ data class UpcomingAlarm(
 
 internal val alarmSorter = compareByDescending<AlarmUiModel> { it.isActive }.thenBy { it.time }
 
+internal fun AlarmUiModel.toCreationState(): AlarmCreationState =
+    AlarmCreationState(
+        time = time,
+        label = label,
+        repeatDays = repeatDays.toSet()
+    )
+
 internal fun sampleAlarms(): List<AlarmUiModel> {
     return listOf(
         AlarmUiModel(

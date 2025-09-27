@@ -36,6 +36,7 @@ import java.time.LocalTime
 @Composable
 internal fun AlarmCreateRoute(
     draft: AlarmCreationState,
+    isEditing: Boolean,
     onUpdateDraft: (AlarmCreationState) -> Unit,
     onNudgeTime: () -> Unit,
     onSelectPreset: (LocalTime) -> Unit,
@@ -60,10 +61,10 @@ internal fun AlarmCreateRoute(
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                title = { Text(text = "New alarm") },
+                title = { Text(text = if (isEditing) "Edit alarm" else "New alarm") },
                 actions = {
                     TextButton(onClick = onReset) {
-                        Text(text = "Reset")
+                        Text(text = if (isEditing) "Revert" else "Reset")
                     }
                 }
             )
@@ -77,7 +78,7 @@ internal fun AlarmCreateRoute(
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
-                    Text(text = "Save alarm")
+                    Text(text = if (isEditing) "Update alarm" else "Save alarm")
                 }
             }
         }

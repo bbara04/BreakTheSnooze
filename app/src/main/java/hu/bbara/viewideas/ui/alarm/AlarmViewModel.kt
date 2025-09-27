@@ -1,42 +1,72 @@
 package hu.bbara.viewideas.ui.alarm
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import hu.bbara.viewideas.data.alarm.AlarmRepository
+import hu.bbara.viewideas.data.alarm.toUiModelWithId
 import java.time.DayOfWeek
 import java.time.LocalTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class AlarmViewModel : ViewModel() {
+class AlarmViewModel(
+    private val repository: AlarmRepository
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        AlarmUiState(
-            alarms = sampleAlarms(),
-            draft = sampleDraft()
-        )
-    )
+    private val _uiState = MutableStateFlow(AlarmUiState())
     val uiState: StateFlow<AlarmUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            repository.ensureSeedData()
+        }
+
+        viewModelScope.launch {
+            repository.alarms.collect { alarms ->
+                _uiState.update { state ->
+                    val editing = state.editingAlarm
+                    val updatedEditing = editing?.let { current ->
+                        alarms.firstOrNull { it.id == current.id }
+                    }
+                    state.copy(alarms = alarms, editingAlarm = updatedEditing)
+                }
+            }
+        }
+    }
+
     fun onToggleAlarm(id: Int, isActive: Boolean) {
-        _uiState.update { state ->
-            state.copy(
-                alarms = state.alarms
-                    .map { if (it.id == id) it.copy(isActive = isActive) else it }
-                    .sortedWith(alarmSorter)
-            )
+        viewModelScope.launch {
+            repository.updateAlarmActive(id, isActive)
         }
     }
 
     fun deleteAlarm(id: Int) {
-        _uiState.update { state ->
-            state.copy(alarms = state.alarms.filterNot { it.id == id })
+        viewModelScope.launch {
+            repository.deleteAlarm(id)
         }
     }
 
     fun startCreating() {
         _uiState.update { state ->
-            state.copy(draft = sampleDraft(), destination = AlarmDestination.Create)
+            state.copy(
+                draft = sampleDraft(),
+                destination = AlarmDestination.Create,
+                editingAlarm = null
+            )
+        }
+    }
+
+    fun startEditing(id: Int) {
+        val target = _uiState.value.alarms.firstOrNull { it.id == id } ?: return
+        _uiState.update { state ->
+            state.copy(
+                draft = target.toCreationState(),
+                destination = AlarmDestination.Create,
+                editingAlarm = target
+            )
         }
     }
 
@@ -67,28 +97,31 @@ class AlarmViewModel : ViewModel() {
     }
 
     fun resetDraft() {
-        _uiState.update { state -> state.copy(draft = sampleDraft()) }
+        _uiState.update { state ->
+            val editing = state.editingAlarm
+            if (editing != null) {
+                val refreshed = state.alarms.firstOrNull { it.id == editing.id } ?: editing
+                state.copy(draft = refreshed.toCreationState())
+            } else {
+                state.copy(draft = sampleDraft())
+            }
+        }
     }
 
     fun saveDraft() {
-        _uiState.update { state ->
-            val time = state.draft.time
-            val repeatDays = state.draft.repeatDays
-            if (time == null || repeatDays.isEmpty()) {
-                state
-            } else {
-                val nextId = (state.alarms.maxOfOrNull { it.id } ?: 0) + 1
-                val newAlarm = AlarmUiModel(
-                    id = nextId,
-                    time = time,
-                    label = state.draft.label.ifBlank { "New alarm" },
-                    isActive = true,
-                    repeatDays = repeatDays
-                )
+        val draftSnapshot = _uiState.value.draft
+        val editing = _uiState.value.editingAlarm
+        val model = draftSnapshot.toUiModelWithId(
+            id = editing?.id ?: 0,
+            isActive = editing?.isActive ?: true
+        ) ?: return
+        viewModelScope.launch {
+            repository.upsertAlarm(model)
+            _uiState.update { state ->
                 state.copy(
-                    alarms = (state.alarms + newAlarm).sortedWith(alarmSorter),
                     draft = sampleDraft(),
-                    destination = AlarmDestination.List
+                    destination = AlarmDestination.List,
+                    editingAlarm = null
                 )
             }
         }
@@ -96,7 +129,7 @@ class AlarmViewModel : ViewModel() {
 
     fun cancelCreation() {
         _uiState.update { state ->
-            state.copy(draft = sampleDraft(), destination = AlarmDestination.List)
+            state.copy(draft = sampleDraft(), destination = AlarmDestination.List, editingAlarm = null)
         }
     }
 }
@@ -104,5 +137,6 @@ class AlarmViewModel : ViewModel() {
 data class AlarmUiState(
     val alarms: List<AlarmUiModel> = emptyList(),
     val draft: AlarmCreationState = sampleDraft(),
-    val destination: AlarmDestination = AlarmDestination.List
+    val destination: AlarmDestination = AlarmDestination.List,
+    val editingAlarm: AlarmUiModel? = null
 )

@@ -1,0 +1,14 @@
+package hu.bbara.viewideas.data.alarm
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "alarms")
+data class AlarmEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "time") val time: String,
+    @ColumnInfo(name = "label") val label: String,
+    @ColumnInfo(name = "is_active") val isActive: Boolean,
+    @ColumnInfo(name = "repeat_days") val repeatDays: String
+)

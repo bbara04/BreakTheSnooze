@@ -39,6 +39,10 @@ fun AlarmScreen(
         onResetDraft = alarmViewModel::resetDraft,
         onSaveDraft = alarmViewModel::saveDraft,
         onCancel = alarmViewModel::cancelCreation,
+        onEnterSelection = alarmViewModel::enterSelection,
+        onToggleSelection = alarmViewModel::toggleSelection,
+        onClearSelection = alarmViewModel::clearSelection,
+        onDeleteSelection = alarmViewModel::deleteSelected,
         modifier = modifier.navigationBarsPadding()
     )
 }
@@ -57,6 +61,10 @@ private fun AlarmScreenContent(
     onResetDraft: () -> Unit,
     onSaveDraft: () -> Unit,
     onCancel: () -> Unit,
+    onEnterSelection: (Int) -> Unit,
+    onToggleSelection: (Int) -> Unit,
+    onClearSelection: () -> Unit,
+    onDeleteSelection: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     when (uiState.destination) {
@@ -64,6 +72,11 @@ private fun AlarmScreenContent(
             alarms = uiState.alarms,
             onToggle = onToggle,
             onEdit = onEdit,
+            selectedIds = uiState.selectedAlarmIds,
+            onEnterSelection = onEnterSelection,
+            onToggleSelection = onToggleSelection,
+            onClearSelection = onClearSelection,
+            onDeleteSelection = onDeleteSelection,
             onCreate = onStartCreate,
             modifier = modifier
         )
@@ -106,7 +119,11 @@ private fun AlarmScreenPreview() {
             onToggleDay = {},
             onResetDraft = {},
             onSaveDraft = {},
-            onCancel = {}
+            onCancel = {},
+            onEnterSelection = {},
+            onToggleSelection = {},
+            onClearSelection = {},
+            onDeleteSelection = {}
         )
     }
 }

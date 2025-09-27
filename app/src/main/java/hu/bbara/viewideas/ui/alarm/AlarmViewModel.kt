@@ -76,7 +76,8 @@ class AlarmViewModel(
             state.copy(
                 draft = target.toCreationState(),
                 destination = AlarmDestination.Create,
-                editingAlarm = target
+                editingAlarm = target,
+                selectedAlarmIds = emptySet()
             )
         }
     }
@@ -130,7 +131,8 @@ class AlarmViewModel(
                 state.copy(
                     draft = sampleDraft(),
                     destination = AlarmDestination.List,
-                    editingAlarm = null
+                    editingAlarm = null,
+                    selectedAlarmIds = emptySet()
                 )
             }
         }
@@ -141,11 +143,49 @@ class AlarmViewModel(
             state.copy(draft = sampleDraft(), destination = AlarmDestination.List, editingAlarm = null)
         }
     }
+
+    fun enterSelection(id: Int) {
+        _uiState.update { state ->
+            val updated = state.selectedAlarmIds + id
+            state.copy(selectedAlarmIds = updated)
+        }
+    }
+
+    fun toggleSelection(id: Int) {
+        _uiState.update { state ->
+            val current = state.selectedAlarmIds
+            val updated = if (current.contains(id)) current - id else current + id
+            state.copy(selectedAlarmIds = updated)
+        }
+    }
+
+    fun clearSelection() {
+        _uiState.update { state -> state.copy(selectedAlarmIds = emptySet()) }
+    }
+
+    fun deleteSelected() {
+        val ids = _uiState.value.selectedAlarmIds
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            ids.forEach { repository.deleteAlarm(it) }
+            _uiState.update { state ->
+                val editing = state.editingAlarm
+                val editingCleared = if (editing != null && ids.contains(editing.id)) null else editing
+                state.copy(
+                    draft = if (editingCleared == null) sampleDraft() else state.draft,
+                    destination = if (editingCleared == null) AlarmDestination.List else state.destination,
+                    editingAlarm = editingCleared,
+                    selectedAlarmIds = emptySet()
+                )
+            }
+        }
+    }
 }
 
 data class AlarmUiState(
     val alarms: List<AlarmUiModel> = emptyList(),
     val draft: AlarmCreationState = sampleDraft(),
     val destination: AlarmDestination = AlarmDestination.List,
-    val editingAlarm: AlarmUiModel? = null
+    val editingAlarm: AlarmUiModel? = null,
+    val selectedAlarmIds: Set<Int> = emptySet()
 )

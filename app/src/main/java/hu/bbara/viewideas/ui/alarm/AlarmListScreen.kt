@@ -1,6 +1,7 @@
 package hu.bbara.viewideas.ui.alarm
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,12 +14,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -38,6 +42,11 @@ internal fun AlarmListRoute(
     alarms: List<AlarmUiModel>,
     onToggle: (id: Int, isActive: Boolean) -> Unit,
     onEdit: (id: Int) -> Unit,
+    selectedIds: Set<Int>,
+    onEnterSelection: (Int) -> Unit,
+    onToggleSelection: (Int) -> Unit,
+    onClearSelection: () -> Unit,
+    onDeleteSelection: () -> Unit,
     onCreate: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -50,12 +59,22 @@ internal fun AlarmListRoute(
         active to inactive
     }
 
+    val selectionActive = selectedIds.isNotEmpty()
+
     Scaffold(
         modifier = modifier,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = "Alarms") }
-            )
+            if (selectionActive) {
+                SelectionTopBar(
+                    count = selectedIds.size,
+                    onClearSelection = onClearSelection,
+                    onDeleteSelection = onDeleteSelection
+                )
+            } else {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = "Alarms") }
+                )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreate) {
@@ -84,7 +103,11 @@ internal fun AlarmListRoute(
                             alarm = alarm,
                             onToggle = { onToggle(alarm.id, it) },
                             onEdit = { onEdit(alarm.id) },
-                            is24Hour = is24Hour
+                            onEnterSelection = { onEnterSelection(alarm.id) },
+                            onToggleSelection = { onToggleSelection(alarm.id) },
+                            is24Hour = is24Hour,
+                            selectionActive = selectionActive,
+                            isSelected = selectedIds.contains(alarm.id)
                         )
                     }
                 }
@@ -96,7 +119,11 @@ internal fun AlarmListRoute(
                             alarm = alarm,
                             onToggle = { onToggle(alarm.id, it) },
                             onEdit = { onEdit(alarm.id) },
-                            is24Hour = is24Hour
+                            onEnterSelection = { onEnterSelection(alarm.id) },
+                            onToggleSelection = { onToggleSelection(alarm.id) },
+                            is24Hour = is24Hour,
+                            selectionActive = selectionActive,
+                            isSelected = selectedIds.contains(alarm.id)
                         )
                     }
                 }
@@ -111,6 +138,30 @@ private fun SectionHeader(title: String) {
         text = title,
         style = MaterialTheme.typography.titleMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectionTopBar(
+    count: Int,
+    onClearSelection: () -> Unit,
+    onDeleteSelection: () -> Unit
+) {
+    CenterAlignedTopAppBar(
+        navigationIcon = {
+            IconButton(onClick = onClearSelection) {
+                Icon(imageVector = Icons.Default.Close, contentDescription = "Clear selection")
+            }
+        },
+        title = {
+            Text(text = "$count selected")
+        },
+        actions = {
+            IconButton(onClick = onDeleteSelection) {
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete selected")
+            }
+        }
     )
 }
 
@@ -158,16 +209,43 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AlarmRow(
     alarm: AlarmUiModel,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit,
-    is24Hour: Boolean
+    onEnterSelection: () -> Unit,
+    onToggleSelection: () -> Unit,
+    is24Hour: Boolean,
+    selectionActive: Boolean,
+    isSelected: Boolean
 ) {
+    val containerColor = if (isSelected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onEdit
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    if (selectionActive) {
+                        onToggleSelection()
+                    } else {
+                        onEdit()
+                    }
+                },
+                onLongClick = {
+                    if (!selectionActive) {
+                        onEnterSelection()
+                    } else {
+                        onToggleSelection()
+                    }
+                }
+            ),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),

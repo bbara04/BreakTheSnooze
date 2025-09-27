@@ -1,5 +1,6 @@
 package hu.bbara.viewideas.ui.alarm
 
+import hu.bbara.viewideas.data.alarm.calculateNextTrigger
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDateTime
@@ -94,7 +95,7 @@ internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {
     return alarms
         .filter { it.isActive }
         .mapNotNull { alarm ->
-            nextTriggerFrom(alarm, now)?.let { trigger ->
+            calculateNextTrigger(alarm, now)?.let { trigger ->
                 UpcomingAlarm(
                     alarm = alarm,
                     triggerAt = trigger,
@@ -103,30 +104,6 @@ internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {
             }
         }
         .minByOrNull { it.remaining.toMinutes().coerceAtLeast(0) }
-}
-
-private fun nextTriggerFrom(alarm: AlarmUiModel, reference: LocalDateTime): LocalDateTime? {
-    val days = if (alarm.repeatDays.isEmpty()) setOf(reference.dayOfWeek) else alarm.repeatDays
-    val today = reference.toLocalDate()
-    val nowTime = reference.toLocalTime()
-
-    var soonest: LocalDateTime? = null
-
-    for (day in days) {
-        val dayDifference = ((day.value - reference.dayOfWeek.value) + 7) % 7
-        var date = today.plusDays(dayDifference.toLong())
-        var candidate = LocalDateTime.of(date, alarm.time)
-
-        if (dayDifference == 0 && alarm.time <= nowTime) {
-            candidate = candidate.plusDays(7)
-        }
-
-        if (soonest == null || candidate.isBefore(soonest)) {
-            soonest = candidate
-        }
-    }
-
-    return soonest
 }
 
 internal fun formatRemaining(duration: Duration): String {

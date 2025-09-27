@@ -201,6 +201,8 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
     }
 }
 
+private const val TAG_ALARM_ROW = "AlarmRow"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AlarmRow(
@@ -238,13 +240,16 @@ private fun AlarmRow(
             .fillMaxWidth()
             .combinedClickable(
                 onClick = {
+                    Log.d(TAG_ALARM_ROW, "click id=${alarm.id} selection=$selectionActive")
                     if (selectionActive) {
                         onToggleSelection()
                     } else {
+                        Log.d(TAG_ALARM_ROW, "edit dispatched id=${alarm.id}")
                         onEdit()
                     }
                 },
                 onLongClick = {
+                    Log.d(TAG_ALARM_ROW, "longClick id=${alarm.id} selection=$selectionActive")
                     if (!selectionActive) {
                         onEnterSelection()
                     } else {
@@ -277,7 +282,13 @@ private fun AlarmRow(
                     color = accentColor
                 )
             }
-            Switch(checked = alarm.isActive, onCheckedChange = onToggle)
+            Switch(
+                checked = alarm.isActive,
+                onCheckedChange = {
+                    Log.d(TAG_ALARM_ROW, "switch id=${alarm.id} -> $it")
+                    onToggle(it)
+                }
+            )
         }
     }
 }

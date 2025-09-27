@@ -1,5 +1,6 @@
 package hu.bbara.viewideas.ui.alarm
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,6 +26,13 @@ fun AlarmScreen(
     )
 
     val uiState by alarmViewModel.uiState.collectAsState()
+
+    BackHandler(enabled = uiState.selectedAlarmIds.isNotEmpty() || uiState.destination == AlarmDestination.Create) {
+        when {
+            uiState.selectedAlarmIds.isNotEmpty() -> alarmViewModel.clearSelection()
+            uiState.destination == AlarmDestination.Create -> alarmViewModel.cancelCreation()
+        }
+    }
 
     AlarmScreenContent(
         uiState = uiState,

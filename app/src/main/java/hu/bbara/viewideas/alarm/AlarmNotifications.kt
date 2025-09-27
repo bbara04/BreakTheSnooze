@@ -6,8 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -24,7 +22,13 @@ object AlarmNotifications {
         val notificationManager = ContextCompat.getSystemService(context, NotificationManager::class.java)
             ?: return
         val existing = notificationManager.getNotificationChannel(CHANNEL_ID)
-        if (existing != null) return
+        if (existing != null) {
+            if (existing.sound != null) {
+                notificationManager.deleteNotificationChannel(CHANNEL_ID)
+            } else {
+                return
+            }
+        }
         val channel = NotificationChannel(
             CHANNEL_ID,
             context.getString(R.string.alarm_notification_title),
@@ -33,11 +37,7 @@ object AlarmNotifications {
             description = context.getString(R.string.alarm_notification_content)
             enableVibration(true)
             lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-            val audioAttributes = AudioAttributes.Builder()
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .build()
-            setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
+            setSound(null, null)
         }
         notificationManager.createNotificationChannel(channel)
     }
@@ -66,8 +66,6 @@ object AlarmNotifications {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val defaultSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(smallIcon)
             .setContentTitle(label)
@@ -77,7 +75,6 @@ object AlarmNotifications {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setAutoCancel(false)
-            .setSound(defaultSound)
             .setFullScreenIntent(fullScreenIntent, true)
             .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.alarm_ringing_message)))
             .addAction(smallIcon, context.getString(R.string.alarm_stop), stopIntent)

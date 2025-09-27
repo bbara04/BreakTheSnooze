@@ -87,7 +87,8 @@ private fun AlarmEntity.toUiModel(): AlarmUiModel {
         time = LocalTime.parse(time, timeFormatter),
         label = label,
         isActive = isActive,
-        repeatDays = repeatDays.toDaySet()
+        repeatDays = repeatDays.toDaySet(),
+        soundUri = soundUri
     )
 }
 
@@ -97,7 +98,8 @@ private fun AlarmUiModel.toEntity(): AlarmEntity {
         time = time.format(timeFormatter),
         label = label,
         isActive = isActive,
-        repeatDays = repeatDays.toStorageString()
+        repeatDays = repeatDays.toStorageString(),
+        soundUri = soundUri
     )
 }
 
@@ -122,6 +124,7 @@ fun AlarmCreationState.toUiModelWithId(
         time = time,
         label = label,
         isActive = isActive,
-        repeatDays = repeatDays
+        repeatDays = repeatDays,
+        soundUri = soundUri
     )
 }

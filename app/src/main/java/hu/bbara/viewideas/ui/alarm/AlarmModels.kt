@@ -29,13 +29,15 @@ data class AlarmUiModel(
     val time: LocalTime,
     val label: String,
     val isActive: Boolean,
-    val repeatDays: Set<DayOfWeek>
+    val repeatDays: Set<DayOfWeek>,
+    val soundUri: String?
 )
 
 data class AlarmCreationState(
     val time: LocalTime?,
     val label: String,
-    val repeatDays: Set<DayOfWeek>
+    val repeatDays: Set<DayOfWeek>,
+    val soundUri: String?
 )
 
 data class UpcomingAlarm(
@@ -50,7 +52,8 @@ internal fun AlarmUiModel.toCreationState(): AlarmCreationState =
     AlarmCreationState(
         time = time,
         label = label,
-        repeatDays = repeatDays.toSet()
+        repeatDays = repeatDays.toSet(),
+        soundUri = soundUri
     )
 
 internal fun LocalTime.formatForDisplay(is24Hour: Boolean): String {
@@ -65,21 +68,24 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             time = LocalTime.of(7, 0),
             label = "Morning run",
             isActive = true,
-            repeatDays = dayOrder.take(5).toSet()
+            repeatDays = dayOrder.take(5).toSet(),
+            soundUri = null
         ),
         AlarmUiModel(
             id = 2,
             time = LocalTime.of(8, 30),
             label = "Team standup",
             isActive = true,
-            repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)
+            repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
+            soundUri = null
         ),
         AlarmUiModel(
             id = 3,
             time = LocalTime.of(22, 0),
             label = "Wind down",
             isActive = false,
-            repeatDays = setOf(DayOfWeek.SUNDAY)
+            repeatDays = setOf(DayOfWeek.SUNDAY),
+            soundUri = null
         )
     ).sortedWith(alarmSorter)
 }
@@ -96,7 +102,8 @@ internal fun defaultAlarmTime(): LocalTime {
 internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(
     time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
     label = "Gym",
-    repeatDays = emptySet()
+    repeatDays = emptySet(),
+    soundUri = null
 )
 
 internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {

@@ -13,6 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import android.app.Activity
+import android.content.Intent
+import android.media.Ringtone
+import android.media.RingtoneManager
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BasicAlertDialog
@@ -39,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import java.time.DayOfWeek
 import java.time.LocalTime
 
@@ -50,6 +57,7 @@ internal fun AlarmCreateRoute(
     onUpdateDraft: (AlarmCreationState) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
+    onSoundSelected: (String?) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
@@ -60,6 +68,21 @@ internal fun AlarmCreateRoute(
     val canSave = draft.time != null
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(is24Hour = is24Hour)
+    val soundName = remember(draft.soundUri) { resolveRingtoneTitle(context, draft.soundUri) }
+    val soundPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val uri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            }
+            onSoundSelected(uri?.toString())
+        }
+    }
 
     LaunchedEffect(draft.time) {
         val base = draft.time ?: LocalTime.now().withSecond(0).withNano(0)
@@ -132,6 +155,48 @@ internal fun AlarmCreateRoute(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = "Sound", style = MaterialTheme.typography.titleMedium)
+                Surface(
+                    onClick = {
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+                            val existing = draft.soundUri?.let { Uri.parse(it) }
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existing)
+                        }
+                        soundPickerLauncher.launch(intent)
+                    },
+                    shape = MaterialTheme.shapes.extraLarge,
+                    tonalElevation = 4.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = soundName ?: "Default alarm",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "Tap to choose a ringtone",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (draft.soundUri != null) {
+                    TextButton(onClick = { onSoundSelected(null) }) {
+                        Text(text = "Use default")
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = "Active on", style = MaterialTheme.typography.titleMedium)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -199,4 +264,13 @@ internal fun AlarmCreateRoute(
             }
         }
     }
+}
+
+private fun resolveRingtoneTitle(context: android.content.Context, soundUri: String?): String? {
+    if (soundUri.isNullOrBlank()) return null
+    return runCatching {
+        val uri = Uri.parse(soundUri)
+        val ringtone: Ringtone? = RingtoneManager.getRingtone(context, uri)
+        ringtone?.getTitle(context)
+    }.getOrNull()
 }

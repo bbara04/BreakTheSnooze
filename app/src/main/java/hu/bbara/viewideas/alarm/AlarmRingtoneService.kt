@@ -65,13 +65,24 @@ class AlarmRingtoneService : Service() {
                 AlarmNotifications.buildNotification(applicationContext, alarm)
             }
             startForeground(AlarmNotifications.notificationId(alarmId), notification)
-            startPlayback()
+            launchRingingActivity(alarmId)
+            startPlayback(alarm.soundUri)
         }
     }
 
-    private fun startPlayback() {
+    private fun launchRingingActivity(alarmId: Int) {
+        val intent = hu.bbara.viewideas.ui.alarm.AlarmRingingActivity.createIntent(
+            applicationContext,
+            alarmId
+        )
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { startActivity(intent) }
+    }
+
+    private fun startPlayback(soundUri: String?) {
         stopPlayback()
-        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        val uri = soundUri?.let { runCatching { android.net.Uri.parse(it) }.getOrNull() }
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
             ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             ?: return
         val mediaPlayer = MediaPlayer()

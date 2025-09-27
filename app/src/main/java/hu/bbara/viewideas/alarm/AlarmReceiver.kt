@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -50,7 +51,9 @@ class AlarmReceiver : BroadcastReceiver() {
                 }
 
                 ContextCompat.startForegroundService(context, serviceIntent)
-                context.startActivity(AlarmRingingActivity.createIntent(context, alarmId))
+                withContext(Dispatchers.Main) {
+                    context.startActivity(AlarmRingingActivity.createIntent(context, alarmId))
+                }
             } finally {
                 pendingResult.finish()
             }

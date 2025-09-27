@@ -155,6 +155,12 @@ class AlarmViewModel(
         }
     }
 
+    fun setDraftSound(soundUri: String?) {
+        _uiState.update { state ->
+            state.copy(draft = state.draft.copy(soundUri = soundUri))
+        }
+    }
+
     fun toggleDraftDay(day: DayOfWeek) {
         _uiState.update { state ->
             val current = state.draft.repeatDays

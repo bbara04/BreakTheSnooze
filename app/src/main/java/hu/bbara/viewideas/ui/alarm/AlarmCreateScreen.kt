@@ -51,10 +51,8 @@ internal fun AlarmCreateRoute(
     onSelectPreset: (LocalTime) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
-    onReset: () -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
-    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -84,30 +82,11 @@ internal fun AlarmCreateRoute(
                 },
                 title = { Text(text = if (isEditing) "Edit alarm" else "New alarm") },
                 actions = {
-                    if (isEditing) {
-                        TextButton(onClick = onDelete) {
-                            Text(text = "Delete")
-                        }
-                    } else {
-                        TextButton(onClick = onReset) {
-                            Text(text = "Reset")
-                        }
+                    TextButton(onClick = onSave, enabled = canSave) {
+                        Text(text = if (isEditing) "Update" else "Save")
                     }
                 }
             )
-        },
-        bottomBar = {
-            Surface(tonalElevation = 3.dp) {
-                Button(
-                    onClick = onSave,
-                    enabled = canSave,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                ) {
-                    Text(text = if (isEditing) "Update alarm" else "Save alarm")
-                }
-            }
         }
     ) { innerPadding ->
         Column(

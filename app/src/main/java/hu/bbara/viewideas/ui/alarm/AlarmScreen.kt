@@ -36,7 +36,6 @@ fun AlarmScreen(
         onSelectPreset = alarmViewModel::selectPresetTime,
         onTimeSelected = alarmViewModel::setDraftTime,
         onToggleDay = alarmViewModel::toggleDraftDay,
-        onResetDraft = alarmViewModel::resetDraft,
         onSaveDraft = alarmViewModel::saveDraft,
         onCancel = alarmViewModel::cancelCreation,
         onEnterSelection = alarmViewModel::enterSelection,
@@ -58,7 +57,6 @@ private fun AlarmScreenContent(
     onSelectPreset: (LocalTime) -> Unit,
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
-    onResetDraft: () -> Unit,
     onSaveDraft: () -> Unit,
     onCancel: () -> Unit,
     onEnterSelection: (Int) -> Unit,
@@ -88,12 +86,8 @@ private fun AlarmScreenContent(
             onSelectPreset = onSelectPreset,
             onTimeSelected = onTimeSelected,
             onToggleDay = onToggleDay,
-            onReset = onResetDraft,
             onSave = onSaveDraft,
             onCancel = onCancel,
-            onDelete = {
-                uiState.editingAlarm?.let { onDelete(it.id) }
-            },
             modifier = modifier
         )
     }
@@ -117,7 +111,6 @@ private fun AlarmScreenPreview() {
             onSelectPreset = {},
             onTimeSelected = {},
             onToggleDay = {},
-            onResetDraft = {},
             onSaveDraft = {},
             onCancel = {},
             onEnterSelection = {},

@@ -19,6 +19,7 @@ class AlarmRingtoneService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmId: Int? = null
+    private var playbackJob: kotlinx.coroutines.Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -50,7 +51,8 @@ class AlarmRingtoneService : Service() {
         }
         currentAlarmId = alarmId
 
-        serviceScope.launch {
+        playbackJob?.cancel()
+        playbackJob = serviceScope.launch {
             val repository = AlarmRepositoryProvider.getRepository(applicationContext)
             val alarm = repository.getAlarmById(alarmId)
 
@@ -92,6 +94,8 @@ class AlarmRingtoneService : Service() {
 
     private fun stopAlarm(alarmId: Int) {
         stopPlayback()
+        playbackJob?.cancel()
+        playbackJob = null
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         currentAlarmId = null
         NotificationManagerCompat.from(this).cancel(AlarmNotifications.notificationId(alarmId))
@@ -114,6 +118,8 @@ class AlarmRingtoneService : Service() {
 
     override fun onDestroy() {
         stopPlayback()
+        playbackJob?.cancel()
+        playbackJob = null
         super.onDestroy()
     }
 }

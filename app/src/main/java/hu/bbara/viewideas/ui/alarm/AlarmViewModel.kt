@@ -74,17 +74,15 @@ class AlarmViewModel(
         _uiState.update { state -> state.copy(draft = draft) }
     }
 
-    fun nudgeDraftTime() {
-        _uiState.update { state ->
-            val baseTime = state.draft.time ?: LocalTime.now().withSecond(0).withNano(0)
-            val nudged = baseTime.plusMinutes(15).withSecond(0).withNano(0)
-            state.copy(draft = state.draft.copy(time = nudged))
-        }
-    }
-
     fun selectPresetTime(preset: LocalTime) {
         _uiState.update { state ->
             state.copy(draft = state.draft.copy(time = preset))
+        }
+    }
+
+    fun setDraftTime(time: LocalTime) {
+        _uiState.update { state ->
+            state.copy(draft = state.draft.copy(time = time))
         }
     }
 

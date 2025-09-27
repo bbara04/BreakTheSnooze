@@ -72,13 +72,13 @@ internal fun AlarmListRoute(
                 )
             } else {
                 CenterAlignedTopAppBar(
-                    title = { Text(text = "Alarms") }
+                    title = { Text(text = "Alarms") },
+                    actions = {
+                        IconButton(onClick = onCreate) {
+                            Icon(imageVector = Icons.Default.Add, contentDescription = "Create alarm")
+                        }
+                    }
                 )
-            }
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCreate) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Create alarm")
             }
         }
     ) { innerPadding ->

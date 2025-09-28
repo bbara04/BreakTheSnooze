@@ -91,12 +91,7 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
 }
 
 internal fun defaultAlarmTime(): LocalTime {
-    val now = LocalTime.now()
-    return if (now.minute == 0 && now.second == 0 && now.nano == 0) {
-        now
-    } else {
-        now.plusHours(1).withMinute(0).withSecond(0).withNano(0)
-    }
+    return LocalTime.now().withSecond(0).withNano(0)
 }
 
 internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(

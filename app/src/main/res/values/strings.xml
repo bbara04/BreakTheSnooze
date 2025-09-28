@@ -6,4 +6,7 @@
     <string name="alarm_label_default">Alarm</string>
     <string name="alarm_ringing_message">Alarm is ringing</string>
     <string name="alarm_scan_object">Scan toothbrush</string>
+    <string name="full_screen_permission_title">Allow Full-Screen Alarms</string>
+    <string name="full_screen_permission_message">To make sure alarms can show over the lock screen, enable "Use full-screen intent" for BreakTheSnooze in system notification settings.</string>
+    <string name="full_screen_permission_open_settings">Open settings</string>
 </resources>

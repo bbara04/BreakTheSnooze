@@ -2,9 +2,13 @@ package hu.bbara.viewideas
 
 import android.Manifest
 import android.app.KeyguardManager
+import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -25,15 +29,18 @@ import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 class MainActivity : ComponentActivity() {
 
     private val permissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             permissionsRequested = true
+            maybePromptForFullScreenIntent()
         }
     private var permissionsRequested = false
+    private var fullScreenDialogShown = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestPermissionsIfPossible()
+        maybePromptForFullScreenIntent()
         setContent {
             ViewIdeasTheme {
                 val colorScheme = MaterialTheme.colorScheme
@@ -53,6 +60,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         requestPermissionsIfPossible()
+        maybePromptForFullScreenIntent()
     }
 
     private fun requestPermissionsIfPossible() {
@@ -76,5 +84,27 @@ class MainActivity : ComponentActivity() {
         }
 
         permissionsLauncher.launch(permissionsToRequest.toTypedArray())
+    }
+
+    private fun maybePromptForFullScreenIntent() {
+        if (fullScreenDialogShown) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+        val notificationManager = getSystemService(NotificationManager::class.java) ?: return
+        if (notificationManager.canUseFullScreenIntent()) {
+            fullScreenDialogShown = true
+            return
+        }
+        fullScreenDialogShown = true
+        val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+            data = Uri.fromParts("package", packageName, null)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        runCatching { startActivity(intent) }
+            .onFailure {
+                val fallback = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                    putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                }
+                startActivity(fallback)
+            }
     }
 }

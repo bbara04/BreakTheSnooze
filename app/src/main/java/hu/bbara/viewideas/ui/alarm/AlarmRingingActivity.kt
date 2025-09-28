@@ -40,6 +40,7 @@ import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.MathChallengeDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.ObjectDetectionDismissTask
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import kotlinx.coroutines.launch
@@ -49,7 +50,10 @@ class AlarmRingingActivity : ComponentActivity() {
     private var alarmId: Int = -1
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
-    private val dismissTasks: List<AlarmDismissTask> = listOf(ObjectDetectionDismissTask())
+    private val dismissTasks: List<AlarmDismissTask> = listOf(
+        ObjectDetectionDismissTask(),
+        MathChallengeDismissTask()
+    )
     private val activeTask: MutableState<AlarmDismissTask?> = mutableStateOf(null)
     private var taskCompleted = false
 

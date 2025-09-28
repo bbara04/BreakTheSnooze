@@ -250,6 +250,7 @@ internal fun AlarmCreateRoute(
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     TimePicker(state = timePickerState)

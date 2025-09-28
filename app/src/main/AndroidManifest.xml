@@ -41,11 +41,6 @@
             android:launchMode="singleInstance"
             android:theme="@style/Theme.ViewIdeas" />
 
-        <activity
-            android:name=".ui.alarm.AlarmObjectDetectionActivity"
-            android:exported="false"
-            android:theme="@style/Theme.ViewIdeas" />
-
         <receiver
             android:name=".alarm.AlarmReceiver"
             android:exported="false" />

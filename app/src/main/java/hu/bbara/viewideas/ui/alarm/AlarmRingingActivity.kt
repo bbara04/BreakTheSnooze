@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import hu.bbara.objectdetection.MainScreen
 import hu.bbara.viewideas.R
 import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
@@ -47,6 +48,8 @@ class AlarmRingingActivity : ComponentActivity() {
     private var alarmId: Int = -1
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
+    private val isScanning = mutableStateOf(false)
+    private var detectionSatisfied = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,7 +73,11 @@ class AlarmRingingActivity : ComponentActivity() {
             ViewIdeasTheme {
                 AlarmRingingScreen(
                     alarm = alarmState.value,
-                    onStop = { stopAlarmAndFinish() }
+                    onStop = { stopAlarmAndFinish() },
+                    onScan = { startDetection() },
+                    isScanning = isScanning.value,
+                    onDetectionSuccess = { onDetectionSuccess() },
+                    onCancelScan = { cancelDetection() }
                 )
             }
         }
@@ -79,6 +86,9 @@ class AlarmRingingActivity : ComponentActivity() {
     override fun onDestroy() {
         dismissalReceiver?.let { unregisterReceiver(it) }
         dismissalReceiver = null
+        if (isScanning.value && !detectionSatisfied) {
+            sendAlarmCommand(AlarmIntents.ACTION_RESUME_ALARM)
+        }
         super.onDestroy()
     }
 
@@ -90,12 +100,35 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun stopAlarmAndFinish() {
+        sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM)
+        finish()
+    }
+
+    private fun startDetection() {
+        if (isScanning.value) return
+        sendAlarmCommand(AlarmIntents.ACTION_PAUSE_ALARM)
+        isScanning.value = true
+    }
+
+    private fun cancelDetection() {
+        if (!isScanning.value) return
+        isScanning.value = false
+        sendAlarmCommand(AlarmIntents.ACTION_RESUME_ALARM)
+    }
+
+    private fun onDetectionSuccess() {
+        if (detectionSatisfied) return
+        detectionSatisfied = true
+        sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM)
+        finish()
+    }
+
+    private fun sendAlarmCommand(action: String) {
         val intent = Intent(this, AlarmRingtoneService::class.java).apply {
-            action = AlarmIntents.ACTION_STOP_ALARM
+            this.action = action
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
         }
         ContextCompat.startForegroundService(this, intent)
-        finish()
     }
 
     private fun configureWindow() {
@@ -178,57 +211,83 @@ private fun PowerManager.WakeLock.releaseIfHeld() {
 @Composable
 private fun AlarmRingingScreen(
     alarm: AlarmUiModel?,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    onScan: () -> Unit,
+    isScanning: Boolean,
+    onDetectionSuccess: () -> Unit,
+    onCancelScan: () -> Unit
 ) {
-    val context = LocalContext.current
-    val label = alarm?.label?.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.alarm_label_default)
-    val timeText = alarm?.time?.formatForDisplay(android.text.format.DateFormat.is24HourFormat(context))
+    if (isScanning) {
+        MainScreen(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            onDetectionSuccess = onDetectionSuccess,
+            onCancel = onCancelScan
+        )
+    } else {
+        val context = LocalContext.current
+        val label = alarm?.label?.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.alarm_label_default)
+        val timeText = alarm?.time?.formatForDisplay(android.text.format.DateFormat.is24HourFormat(context))
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = stringResource(id = R.string.alarm_ringing_message),
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-            timeText?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center
-                )
-            }
-            Spacer(modifier = Modifier.height(48.dp))
-            Button(
-                onClick = onStop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = stringResource(id = R.string.alarm_stop),
-                    style = MaterialTheme.typography.titleMedium
+                    text = stringResource(id = R.string.alarm_ringing_message),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    textAlign = TextAlign.Center
+                )
+                timeText?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.displayMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(modifier = Modifier.height(40.dp))
+                Button(
+                    onClick = onScan,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.alarm_scan_object),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onStop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.alarm_stop),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
             }
         }
     }

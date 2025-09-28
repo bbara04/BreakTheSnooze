@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ViewIdeas</string>
+    <string name="app_name">BreakTheSnooze</string>
     <string name="alarm_notification_title">Alarm</string>
     <string name="alarm_notification_content">Tap to stop the alarm.</string>
     <string name="alarm_stop">Stop</string>

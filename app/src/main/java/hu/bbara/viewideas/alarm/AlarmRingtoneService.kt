@@ -1,12 +1,13 @@
 package hu.bbara.viewideas.alarm
 
+import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
-import androidx.core.app.NotificationManagerCompat
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ class AlarmRingtoneService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmId: Int? = null
     private var playbackJob: kotlinx.coroutines.Job? = null
+    private var isPaused: Boolean = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -37,6 +39,14 @@ class AlarmRingtoneService : Service() {
                 return START_NOT_STICKY
             }
 
+            AlarmIntents.ACTION_PAUSE_ALARM -> {
+                pauseAlarm(alarmId)
+            }
+
+            AlarmIntents.ACTION_RESUME_ALARM -> {
+                resumeAlarm(alarmId)
+            }
+
             AlarmIntents.ACTION_ALARM_FIRED, null -> {
                 startAlarm(alarmId)
             }
@@ -50,6 +60,7 @@ class AlarmRingtoneService : Service() {
             return
         }
         currentAlarmId = alarmId
+        isPaused = false
 
         playbackJob?.cancel()
         playbackJob = serviceScope.launch {
@@ -109,12 +120,34 @@ class AlarmRingtoneService : Service() {
         playbackJob = null
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         currentAlarmId = null
-        NotificationManagerCompat.from(this).cancel(AlarmNotifications.notificationId(alarmId))
+        val notificationManager =
+            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        notificationManager?.cancel(AlarmNotifications.notificationId(alarmId))
         sendBroadcast(Intent(AlarmIntents.ACTION_ALARM_DISMISSED).apply {
             setPackage(packageName)
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
         })
         stopSelf()
+    }
+
+    private fun pauseAlarm(alarmId: Int) {
+        if (currentAlarmId != alarmId) return
+        mediaPlayer?.let { player ->
+            if (player.isPlaying) {
+                player.pause()
+                isPaused = true
+            }
+        }
+    }
+
+    private fun resumeAlarm(alarmId: Int) {
+        if (currentAlarmId != alarmId || !isPaused) return
+        mediaPlayer?.let { player ->
+            if (!player.isPlaying) {
+                player.start()
+                isPaused = false
+            }
+        }
     }
 
     private fun stopPlayback() {
@@ -125,6 +158,7 @@ class AlarmRingtoneService : Service() {
             player.release()
         }
         mediaPlayer = null
+        isPaused = false
     }
 
     override fun onDestroy() {

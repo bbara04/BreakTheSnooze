@@ -1,5 +1,6 @@
 package hu.bbara.viewideas.ui.alarm
 
+import android.app.Activity
 import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -12,6 +13,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +49,11 @@ class AlarmRingingActivity : ComponentActivity() {
     private var alarmId: Int = -1
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
+    private val scanLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,7 +77,8 @@ class AlarmRingingActivity : ComponentActivity() {
             ViewIdeasTheme {
                 AlarmRingingScreen(
                     alarm = alarmState.value,
-                    onStop = { stopAlarmAndFinish() }
+                    onStop = { stopAlarmAndFinish() },
+                    onScan = { startDetection() }
                 )
             }
         }
@@ -96,6 +104,11 @@ class AlarmRingingActivity : ComponentActivity() {
         }
         ContextCompat.startForegroundService(this, intent)
         finish()
+    }
+
+    private fun startDetection() {
+        val intent = AlarmObjectDetectionActivity.createIntent(this, alarmId)
+        scanLauncher.launch(intent)
     }
 
     private fun configureWindow() {
@@ -178,7 +191,8 @@ private fun PowerManager.WakeLock.releaseIfHeld() {
 @Composable
 private fun AlarmRingingScreen(
     alarm: AlarmUiModel?,
-    onStop: () -> Unit
+    onStop: () -> Unit,
+    onScan: () -> Unit
 ) {
     val context = LocalContext.current
     val label = alarm?.label?.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.alarm_label_default)
@@ -218,7 +232,19 @@ private fun AlarmRingingScreen(
                     textAlign = TextAlign.Center
                 )
             }
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(40.dp))
+            Button(
+                onClick = onScan,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.alarm_scan_object),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onStop,
                 modifier = Modifier

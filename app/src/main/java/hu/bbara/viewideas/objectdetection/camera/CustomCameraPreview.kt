@@ -1,4 +1,4 @@
-package hu.bbara.objectdetection.camera
+package hu.bbara.viewideas.objectdetection.camera
 
 import android.util.Log
 import android.util.Size
@@ -22,8 +22,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
-import hu.bbara.objectdetection.vision.GraphicOverlay
-import hu.bbara.objectdetection.vision.ObjectDetectorProcessor
+import hu.bbara.viewideas.objectdetection.vision.GraphicOverlay
+import hu.bbara.viewideas.objectdetection.vision.ObjectDetectorProcessor
 import java.util.concurrent.Executors
 
 @Composable
@@ -146,8 +146,8 @@ fun CustomCameraPreview(
 
 private fun processImage(
     imageProxy: androidx.camera.core.ImageProxy,
-    graphicOverlay: hu.bbara.objectdetection.vision.GraphicOverlay,
-    processor: hu.bbara.objectdetection.vision.ObjectDetectorProcessor
+    graphicOverlay: hu.bbara.viewideas.objectdetection.vision.GraphicOverlay,
+    processor: hu.bbara.viewideas.objectdetection.vision.ObjectDetectorProcessor
 ) {
     try {
         processor.processImageProxy(imageProxy, graphicOverlay)

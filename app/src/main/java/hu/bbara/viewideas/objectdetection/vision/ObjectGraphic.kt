@@ -1,4 +1,4 @@
-package hu.bbara.objectdetection.vision
+package hu.bbara.viewideas.objectdetection.vision
 
 import android.graphics.Canvas
 import android.graphics.Color
@@ -50,4 +50,3 @@ class ObjectGraphic(
         }
     }
 }
-

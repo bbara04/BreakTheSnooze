@@ -1,4 +1,4 @@
-package hu.bbara.objectdetection.vision
+package hu.bbara.viewideas.objectdetection.vision
 
 import android.content.Context
 import android.util.Log

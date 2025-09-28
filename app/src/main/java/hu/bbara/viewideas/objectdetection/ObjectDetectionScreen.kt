@@ -1,4 +1,4 @@
-package hu.bbara.objectdetection
+package hu.bbara.viewideas.objectdetection
 
 import android.Manifest
 import android.content.Intent
@@ -30,21 +30,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import hu.bbara.objectdetection.camera.CustomCameraPreview
+import hu.bbara.viewideas.objectdetection.camera.CustomCameraPreview
 import android.util.Size
 
 @Composable
-fun MainScreen(
+fun ObjectDetectionScreen(
     modifier: Modifier = Modifier,
     targetLabel: String = "toothbrush",
     confidenceThreshold: Float = 0.6f,
     onDetectionSuccess: () -> Unit = {},
-    onCancel: () -> Unit = {}
+    onCancel: () -> Unit = {},
+    autoRequestPermission: Boolean = true
 ) {
     val context = LocalContext.current
     val packageName = context.packageName
@@ -77,7 +79,7 @@ fun MainScreen(
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
         hasCameraPermission = granted
-        if (!granted) {
+        if (!granted && autoRequestPermission) {
             permissionLauncher.launch(Manifest.permission.CAMERA)
         }
     }
@@ -124,21 +126,27 @@ fun MainScreen(
         permanentlyDenied -> {
             PermanentlyDeniedContent(
                 modifier = modifier,
-                onOpenSettings = {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.fromParts("package", packageName, null)
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                onOpenSettings = if (autoRequestPermission) {
+                    {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
                     }
-                    context.startActivity(intent)
-                },
-                onCancel = onCancel
+                } else null,
+                onCancel = onCancel,
+                autoRequestPermission = autoRequestPermission
             )
         }
         else -> {
             DeniedContent(
                 modifier = modifier,
-                onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) },
-                onCancel = onCancel
+                onRequest = if (autoRequestPermission) {
+                    { permissionLauncher.launch(Manifest.permission.CAMERA) }
+                } else null,
+                onCancel = onCancel,
+                autoRequestPermission = autoRequestPermission
             )
         }
     }
@@ -206,8 +214,9 @@ private fun GrantedContent(
 @Composable
 private fun DeniedContent(
     modifier: Modifier = Modifier,
-    onRequest: () -> Unit,
-    onCancel: () -> Unit
+    onRequest: (() -> Unit)? = null,
+    onCancel: () -> Unit,
+    autoRequestPermission: Boolean
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
@@ -215,14 +224,21 @@ private fun DeniedContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Camera permission is required to proceed.",
-            style = MaterialTheme.typography.titleMedium
+            text = if (autoRequestPermission) {
+                "Camera permission is required to proceed."
+            } else {
+                "Camera permission is required. Unlock your phone, open the app, and grant camera access before scanning."
+            },
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(12.dp))
-        Button(onClick = onRequest) {
-            Text("Grant permission")
+        onRequest?.let {
+            Button(onClick = it) {
+                Text("Grant permission")
+            }
+            Spacer(Modifier.height(8.dp))
         }
-        Spacer(Modifier.height(8.dp))
         Button(onClick = onCancel) {
             Text("Cancel")
         }
@@ -232,8 +248,9 @@ private fun DeniedContent(
 @Composable
 private fun PermanentlyDeniedContent(
     modifier: Modifier = Modifier,
-    onOpenSettings: () -> Unit,
-    onCancel: () -> Unit
+    onOpenSettings: (() -> Unit)? = null,
+    onCancel: () -> Unit,
+    autoRequestPermission: Boolean
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
@@ -241,16 +258,25 @@ private fun PermanentlyDeniedContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Camera permission permanently denied.",
-            style = MaterialTheme.typography.titleMedium
+            text = if (autoRequestPermission) {
+                "Camera permission permanently denied."
+            } else {
+                "Camera permission permanently denied. Unlock your phone, open the app, and enable the camera permission in settings before scanning."
+            },
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(12.dp))
-        Text("Please enable the Camera permission in App Settings.")
-        Spacer(Modifier.height(12.dp))
-        Button(onClick = onOpenSettings) {
-            Text("Open Settings")
+        if (autoRequestPermission) {
+            Text("Please enable the Camera permission in App Settings.")
+            Spacer(Modifier.height(12.dp))
         }
-        Spacer(Modifier.height(8.dp))
+        onOpenSettings?.let {
+            Button(onClick = it) {
+                Text("Open Settings")
+            }
+            Spacer(Modifier.height(8.dp))
+        }
         Button(onClick = onCancel) {
             Text("Cancel")
         }

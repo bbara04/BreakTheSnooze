@@ -35,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import hu.bbara.objectdetection.MainScreen
+import hu.bbara.viewideas.objectdetection.ObjectDetectionScreen
 import hu.bbara.viewideas.R
 import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
@@ -218,12 +218,13 @@ private fun AlarmRingingScreen(
     onCancelScan: () -> Unit
 ) {
     if (isScanning) {
-        MainScreen(
+        ObjectDetectionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
             onDetectionSuccess = onDetectionSuccess,
-            onCancel = onCancelScan
+            onCancel = onCancelScan,
+            autoRequestPermission = false
         )
     } else {
         val context = LocalContext.current

@@ -1,4 +1,4 @@
-package hu.bbara.objectdetection.ui.theme
+package hu.bbara.viewideas.objectdetection.ui.theme
 
 import android.app.Activity
 import android.os.Build

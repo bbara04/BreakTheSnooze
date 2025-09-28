@@ -3,6 +3,7 @@ package hu.bbara.viewideas
 import android.Manifest
 import android.app.KeyguardManager
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,21 +16,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
-import androidx.core.content.getSystemService
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
-import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import hu.bbara.viewideas.ui.alarm.AlarmScreen
+import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val cameraPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op */ }
-    private var permissionRequestedThisSession = false
+    private val permissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { _ ->
+            permissionsRequested = true
+        }
+    private var permissionsRequested = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        requestPermissionsIfPossible()
         setContent {
             ViewIdeasTheme {
                 val colorScheme = MaterialTheme.colorScheme
@@ -48,19 +52,29 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        requestCameraPermissionIfNeeded()
+        requestPermissionsIfPossible()
     }
 
-    private fun requestCameraPermissionIfNeeded() {
-        val hasPermission = ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-        val keyguardManager = getSystemService<KeyguardManager>()
-        val isLocked = keyguardManager?.isKeyguardLocked == true
-        if (!hasPermission && !isLocked && !permissionRequestedThisSession) {
-            permissionRequestedThisSession = true
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+    private fun requestPermissionsIfPossible() {
+        if (permissionsRequested) return
+        val isLocked = getSystemService<KeyguardManager>()?.isKeyguardLocked == true
+        if (isLocked) return
+
+        val permissionsToRequest = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest += Manifest.permission.CAMERA
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest += Manifest.permission.POST_NOTIFICATIONS
+        }
+
+        if (permissionsToRequest.isEmpty()) {
+            permissionsRequested = true
+            return
+        }
+
+        permissionsLauncher.launch(permissionsToRequest.toTypedArray())
     }
 }

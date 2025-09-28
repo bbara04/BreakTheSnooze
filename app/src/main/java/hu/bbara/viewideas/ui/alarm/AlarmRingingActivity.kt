@@ -40,6 +40,7 @@ import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.MathChallengeDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.ObjectDetectionDismissTask
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
@@ -52,7 +53,8 @@ class AlarmRingingActivity : ComponentActivity() {
     private var dismissalReceiver: BroadcastReceiver? = null
     private val dismissTasks: List<AlarmDismissTask> = listOf(
         ObjectDetectionDismissTask(),
-        MathChallengeDismissTask()
+        MathChallengeDismissTask(),
+        FocusTimerDismissTask()
     )
     private val activeTask: MutableState<AlarmDismissTask?> = mutableStateOf(null)
     private var taskCompleted = false

@@ -15,6 +15,11 @@
     <string name="math_challenge_incorrect">Incorrect, try again.</string>
     <string name="math_challenge_delete">Delete</string>
     <string name="math_challenge_enter">Enter</string>
+    <string name="alarm_focus_task">Stay focused</string>
+    <string name="focus_timer_remaining">%1$d:%2$02d</string>
+    <string name="focus_confirm_title">Still awake?</string>
+    <string name="focus_confirm_button">Confirm</string>
+    <string name="focus_fail_message">Confirmation missed.</string>
     <string name="full_screen_permission_title">Allow Full-Screen Alarms</string>
     <string name="full_screen_permission_message">To make sure alarms can show over the lock screen, enable "Use full-screen intent" for BreakTheSnooze in system notification settings.</string>
     <string name="full_screen_permission_open_settings">Open settings</string>

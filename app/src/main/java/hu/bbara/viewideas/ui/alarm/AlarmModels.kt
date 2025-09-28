@@ -96,7 +96,7 @@ internal fun defaultAlarmTime(): LocalTime {
 
 internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(
     time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
-    label = "Gym",
+    label = "",
     repeatDays = emptySet(),
     soundUri = null
 )

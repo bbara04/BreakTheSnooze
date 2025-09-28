@@ -21,6 +21,7 @@ import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -209,12 +210,20 @@ internal fun AlarmCreateRoute(
                             modifier = Modifier
                                 .weight(1f)
                                 .defaultMinSize(minWidth = 0.dp),
-                            contentPadding = PaddingValues(vertical = 8.dp)
+                            shape = MaterialTheme.shapes.large,
+                            contentPadding = PaddingValues(vertical = 8.dp),
+                            colors = if (selected) {
+                                ButtonDefaults.textButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         ) {
-                            Text(
-                                text = day.displayName(),
-                                color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
+                            Text(text = day.displayName())
                         }
                     }
                 }

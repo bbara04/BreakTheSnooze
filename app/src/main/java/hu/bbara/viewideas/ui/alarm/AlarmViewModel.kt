@@ -186,7 +186,7 @@ class AlarmViewModel(
         val editing = _uiState.value.editingAlarm
         val model = draftSnapshot.toUiModelWithId(
             id = editing?.id ?: 0,
-            isActive = editing?.isActive ?: true
+            isActive = true
         ) ?: return
         viewModelScope.launch {
             val saved = withContext(Dispatchers.IO) {

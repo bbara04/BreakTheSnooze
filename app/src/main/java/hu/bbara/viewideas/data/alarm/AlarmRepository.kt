@@ -63,7 +63,9 @@ class DefaultAlarmRepository(
     override suspend fun ensureSeedData() {
         withContext(ioDispatcher) {
             if (alarmDao.countAlarms() == 0) {
-                sampleAlarms().forEach { alarm ->
+                sampleAlarms().map { alarm ->
+                    alarm.copy(isActive = false)
+                }.forEach { alarm ->
                     alarmDao.insertOrReplace(alarm.toEntity())
                 }
             }

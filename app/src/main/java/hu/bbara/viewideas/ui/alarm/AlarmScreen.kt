@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.data.alarm.AlarmSchedulerProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.viewideas.ui.settings.SettingsRoute
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import java.time.DayOfWeek
 import java.time.LocalTime
@@ -53,10 +54,15 @@ fun AlarmScreen(
 
     val uiState by alarmViewModel.uiState.collectAsState()
 
-    BackHandler(enabled = uiState.selectedAlarmIds.isNotEmpty() || uiState.destination == AlarmDestination.Create) {
+    BackHandler(
+        enabled = uiState.selectedAlarmIds.isNotEmpty() ||
+            uiState.destination == AlarmDestination.Create ||
+            uiState.destination == AlarmDestination.Settings
+    ) {
         when {
             uiState.selectedAlarmIds.isNotEmpty() -> alarmViewModel.clearSelection()
             uiState.destination == AlarmDestination.Create -> alarmViewModel.cancelCreation()
+            uiState.destination == AlarmDestination.Settings -> alarmViewModel.closeSettings()
         }
     }
 
@@ -73,6 +79,8 @@ fun AlarmScreen(
         onDismissTaskSelected = alarmViewModel::setDraftDismissTask,
         onSaveDraft = alarmViewModel::saveDraft,
         onCancel = alarmViewModel::cancelCreation,
+        onOpenSettings = alarmViewModel::openSettings,
+        onCloseSettings = alarmViewModel::closeSettings,
         onEnterSelection = alarmViewModel::enterSelection,
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
@@ -95,6 +103,8 @@ private fun AlarmScreenContent(
     onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
     onSaveDraft: () -> Unit,
     onCancel: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onCloseSettings: () -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -112,6 +122,7 @@ private fun AlarmScreenContent(
             onClearSelection = onClearSelection,
             onDeleteSelection = onDeleteSelection,
             onCreate = onStartCreate,
+            onOpenSettings = onOpenSettings,
             modifier = modifier
         )
 
@@ -125,6 +136,11 @@ private fun AlarmScreenContent(
             onDismissTaskSelected = onDismissTaskSelected,
             onSave = onSaveDraft,
             onCancel = onCancel,
+            modifier = modifier
+        )
+
+        AlarmDestination.Settings -> SettingsRoute(
+            onBack = onCloseSettings,
             modifier = modifier
         )
     }
@@ -151,6 +167,8 @@ private fun AlarmScreenPreview() {
             onDismissTaskSelected = {},
             onSaveDraft = {},
             onCancel = {},
+            onOpenSettings = {},
+            onCloseSettings = {},
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},

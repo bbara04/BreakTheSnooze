@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-enum class AlarmDestination { List, Create }
+enum class AlarmDestination { List, Create, Settings }
 
 internal val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 private val timeFormatter12Hour: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")

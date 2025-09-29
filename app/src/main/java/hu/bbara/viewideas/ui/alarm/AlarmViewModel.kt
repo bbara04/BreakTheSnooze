@@ -127,6 +127,21 @@ class AlarmViewModel(
         }
     }
 
+    fun openSettings() {
+        _uiState.update { state ->
+            state.copy(
+                destination = AlarmDestination.Settings,
+                selectedAlarmIds = emptySet()
+            )
+        }
+    }
+
+    fun closeSettings() {
+        _uiState.update { state ->
+            state.copy(destination = AlarmDestination.List)
+        }
+    }
+
     fun startEditing(id: Int) {
         logDuration(TAG, "startEditing_$id") {}
         val target = _uiState.value.alarms.firstOrNull { it.id == id } ?: return

@@ -98,7 +98,7 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
 }
 
 internal fun defaultAlarmTime(): LocalTime {
-    return LocalTime.now().withSecond(0).withNano(0)
+    return LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
 }
 
 internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(

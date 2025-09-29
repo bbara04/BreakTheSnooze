@@ -98,7 +98,7 @@ internal fun AlarmCreateRoute(
     }
 
     LaunchedEffect(draft.time) {
-        val base = draft.time ?: LocalTime.now().withSecond(0).withNano(0)
+        val base = draft.time ?: LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
         timePickerState.hour = base.hour
         timePickerState.minute = base.minute
     }

@@ -2,6 +2,7 @@ package hu.bbara.viewideas.ui.alarm
 
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
@@ -238,6 +240,14 @@ private fun AlarmRow(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .graphicsLayer { clip = true }
+            .then(
+                if (isSelected) Modifier.border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = MaterialTheme.shapes.medium
+                ) else Modifier
+            )
             .combinedClickable(
                 onClick = {
                     Log.d(TAG_ALARM_ROW, "click id=${alarm.id} selection=$selectionActive")

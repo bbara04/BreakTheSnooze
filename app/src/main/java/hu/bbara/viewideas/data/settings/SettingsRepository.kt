@@ -3,6 +3,7 @@ package hu.bbara.viewideas.data.settings
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -16,20 +17,23 @@ val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(na
 
 data class SettingsState(
     val defaultDismissTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT,
-    val defaultRingtoneUri: String? = null
+    val defaultRingtoneUri: String? = null,
+    val debugModeEnabled: Boolean = false
 )
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     private val defaultTaskKey = stringPreferencesKey("default_dismiss_task")
     private val defaultRingtoneKey = stringPreferencesKey("default_ringtone_uri")
+    private val debugModeKey = booleanPreferencesKey("debug_mode_enabled")
 
     val settings: Flow<SettingsState> = dataStore.data.map { prefs ->
         val storedTask = prefs[defaultTaskKey]
         val storedRingtone = prefs[defaultRingtoneKey]
         SettingsState(
             defaultDismissTask = AlarmDismissTaskType.fromStorageKey(storedTask),
-            defaultRingtoneUri = storedRingtone
+            defaultRingtoneUri = storedRingtone,
+            debugModeEnabled = prefs[debugModeKey] ?: false
         )
     }
 
@@ -46,6 +50,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             } else {
                 prefs[defaultRingtoneKey] = uri
             }
+        }
+    }
+
+    suspend fun setDebugModeEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[debugModeKey] = enabled
         }
     }
 }

@@ -212,6 +212,12 @@ class AlarmViewModel(
         }
     }
 
+    fun setDebugMode(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setDebugModeEnabled(enabled)
+        }
+    }
+
     fun toggleDraftDay(day: DayOfWeek) {
         _uiState.update { state ->
             val current = state.draft.repeatDays

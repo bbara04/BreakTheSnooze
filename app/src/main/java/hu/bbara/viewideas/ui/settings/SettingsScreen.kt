@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -48,6 +49,7 @@ internal fun SettingsRoute(
     settings: SettingsState,
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
+    onDebugModeToggled: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -174,6 +176,38 @@ internal fun SettingsRoute(
                     TextButton(onClick = { onDefaultRingtoneSelected(null) }) {
                         Text(text = stringResource(id = R.string.settings_default_ringtone_clear))
                     }
+                }
+            }
+
+            SettingsSection(
+                title = stringResource(id = R.string.settings_debug_title)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.settings_debug_description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(id = R.string.settings_debug_toggle_title),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_debug_toggle_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = settings.debugModeEnabled,
+                        onCheckedChange = onDebugModeToggled
+                    )
                 }
             }
         }

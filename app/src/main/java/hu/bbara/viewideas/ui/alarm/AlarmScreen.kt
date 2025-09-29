@@ -87,6 +87,7 @@ fun AlarmScreen(
         onCloseSettings = alarmViewModel::closeSettings,
         onDefaultTaskSelected = alarmViewModel::setDefaultDismissTask,
         onDefaultRingtoneSelected = alarmViewModel::setDefaultRingtone,
+        onDebugModeToggled = alarmViewModel::setDebugMode,
         onEnterSelection = alarmViewModel::enterSelection,
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
@@ -113,6 +114,7 @@ private fun AlarmScreenContent(
     onCloseSettings: () -> Unit,
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
+    onDebugModeToggled: (Boolean) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -151,6 +153,7 @@ private fun AlarmScreenContent(
             settings = uiState.settings,
             onDefaultTaskSelected = onDefaultTaskSelected,
             onDefaultRingtoneSelected = onDefaultRingtoneSelected,
+            onDebugModeToggled = onDebugModeToggled,
             onBack = onCloseSettings,
             modifier = modifier
         )
@@ -182,6 +185,7 @@ private fun AlarmScreenPreview() {
             onCloseSettings = {},
             onDefaultTaskSelected = {},
             onDefaultRingtoneSelected = {},
+            onDebugModeToggled = {},
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},

@@ -103,12 +103,13 @@ internal fun defaultAlarmTime(): LocalTime {
 
 internal fun sampleDraft(
     useCurrentTime: Boolean = true,
-    defaultTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT
+    defaultTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT,
+    defaultSound: String? = null
 ): AlarmCreationState = AlarmCreationState(
     time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
     label = "Alarm",
     repeatDays = emptySet(),
-    soundUri = null,
+    soundUri = defaultSound,
     dismissTask = defaultTask
 )
 

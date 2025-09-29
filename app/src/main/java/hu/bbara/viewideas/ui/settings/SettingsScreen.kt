@@ -1,6 +1,12 @@
 package hu.bbara.viewideas.ui.settings
 
+import android.app.Activity
+import android.content.Intent
+import android.media.RingtoneManager
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,27 +23,20 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import hu.bbara.viewideas.R
 import hu.bbara.viewideas.data.settings.SettingsState
@@ -48,16 +47,30 @@ import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 internal fun SettingsRoute(
     settings: SettingsState,
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
+    onDefaultRingtoneSelected: (String?) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBack)
-
-    var vibrationEnabled by rememberSaveable { mutableStateOf(true) }
-    var requireDismissTask by rememberSaveable { mutableStateOf(true) }
-    var playBackupSound by rememberSaveable { mutableStateOf(false) }
-    var snoozeMinutes by rememberSaveable { mutableFloatStateOf(5f) }
     val selectedTask = settings.defaultDismissTask
+    val context = LocalContext.current
+    val ringtoneLabel = resolveRingtoneTitle(context, settings.defaultRingtoneUri)
+        ?: stringResource(id = R.string.settings_default_ringtone_fallback)
+
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val pickedUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            }
+            onDefaultRingtoneSelected(pickedUri?.toString())
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -109,53 +122,59 @@ internal fun SettingsRoute(
             }
 
             SettingsSection(
-                title = stringResource(id = R.string.settings_general_title)
-            ) {
-                SettingsToggleRow(
-                    title = stringResource(id = R.string.settings_vibration_title),
-                    description = stringResource(id = R.string.settings_vibration_subtitle),
-                    checked = vibrationEnabled,
-                    onCheckedChange = { vibrationEnabled = it }
-                )
-                HorizontalDivider()
-                SettingsToggleRow(
-                    title = stringResource(id = R.string.settings_require_task_title),
-                    description = stringResource(id = R.string.settings_require_task_subtitle),
-                    checked = requireDismissTask,
-                    onCheckedChange = { requireDismissTask = it }
-                )
-            }
-
-            SettingsSection(
-                title = stringResource(id = R.string.settings_notifications_title)
-            ) {
-                SettingsToggleRow(
-                    title = stringResource(id = R.string.settings_backup_sound_title),
-                    description = stringResource(id = R.string.settings_backup_sound_subtitle),
-                    checked = playBackupSound,
-                    onCheckedChange = { playBackupSound = it }
-                )
-            }
-
-            SettingsSection(
-                title = stringResource(id = R.string.settings_snooze_title)
+                title = stringResource(id = R.string.settings_sound_title)
             ) {
                 Text(
-                    text = stringResource(id = R.string.settings_snooze_description, snoozeMinutes.toInt()),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Slider(
-                    value = snoozeMinutes,
-                    onValueChange = { snoozeMinutes = it },
-                    valueRange = 1f..15f,
-                    steps = 14
+                    text = stringResource(id = R.string.settings_default_ringtone_title),
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = stringResource(id = R.string.settings_snooze_hint),
+                    text = stringResource(id = R.string.settings_default_ringtone_description),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Start
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+                Surface(
+                    onClick = {
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                            putExtra(
+                                RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
+                                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                            )
+                            val existing = settings.defaultRingtoneUri?.let { Uri.parse(it) }
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existing)
+                        }
+                        ringtonePickerLauncher.launch(intent)
+                    },
+                    shape = MaterialTheme.shapes.large,
+                    tonalElevation = 4.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = ringtoneLabel,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_default_ringtone_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (settings.defaultRingtoneUri != null) {
+                    TextButton(onClick = { onDefaultRingtoneSelected(null) }) {
+                        Text(text = stringResource(id = R.string.settings_default_ringtone_clear))
+                    }
+                }
             }
         }
     }
@@ -230,34 +249,11 @@ private fun DefaultTaskOption(
     }
 }
 
-@Composable
-private fun SettingsToggleRow(
-    title: String,
-    description: String?,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            description?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
+private fun resolveRingtoneTitle(context: android.content.Context, ringtoneUri: String?): String? {
+    if (ringtoneUri.isNullOrBlank()) return null
+    return runCatching {
+        val uri = Uri.parse(ringtoneUri)
+        val ringtone = RingtoneManager.getRingtone(context, uri)
+        ringtone?.getTitle(context)
+    }.getOrNull()
 }

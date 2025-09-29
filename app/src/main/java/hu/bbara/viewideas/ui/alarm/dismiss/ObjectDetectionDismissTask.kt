@@ -5,7 +5,9 @@ import androidx.compose.ui.Modifier
 import hu.bbara.viewideas.R
 import hu.bbara.viewideas.objectdetection.ObjectDetectionScreen
 
-class ObjectDetectionDismissTask : AlarmDismissTask {
+class ObjectDetectionDismissTask(
+    private val showDebugOverlay: Boolean = false
+) : AlarmDismissTask {
     override val id: String = "object_detection"
     override val labelResId: Int = R.string.alarm_scan_object
 
@@ -19,7 +21,8 @@ class ObjectDetectionDismissTask : AlarmDismissTask {
             modifier = modifier,
             onDetectionSuccess = onCompleted,
             onCancel = onCancelled,
-            autoRequestPermission = false
+            autoRequestPermission = false,
+            showDebugOverlay = showDebugOverlay
         )
     }
 }

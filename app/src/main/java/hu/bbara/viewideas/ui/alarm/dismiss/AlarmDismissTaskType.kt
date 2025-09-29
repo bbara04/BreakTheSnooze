@@ -18,8 +18,8 @@ enum class AlarmDismissTaskType(val storageKey: String, @StringRes val optionLab
     }
 }
 
-fun AlarmDismissTaskType.createTask(): AlarmDismissTask = when (this) {
-    AlarmDismissTaskType.OBJECT_DETECTION -> ObjectDetectionDismissTask()
+fun AlarmDismissTaskType.createTask(showDebugOverlay: Boolean = false): AlarmDismissTask = when (this) {
+    AlarmDismissTaskType.OBJECT_DETECTION -> ObjectDetectionDismissTask(showDebugOverlay = showDebugOverlay)
     AlarmDismissTaskType.MATH_CHALLENGE -> MathChallengeDismissTask()
     AlarmDismissTaskType.FOCUS_TIMER -> FocusTimerDismissTask()
 }

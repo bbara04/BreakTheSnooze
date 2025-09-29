@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.util.Size
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,8 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,13 +32,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import android.util.Size
-import androidx.compose.ui.tooling.preview.Preview
 import hu.bbara.viewideas.objectdetection.camera.CustomCameraPreview
 
 @Composable
@@ -47,7 +47,8 @@ fun ObjectDetectionScreen(
     confidenceThreshold: Float = 0.6f,
     onDetectionSuccess: () -> Unit = {},
     onCancel: () -> Unit = {},
-    autoRequestPermission: Boolean = true
+    autoRequestPermission: Boolean = true,
+    showDebugOverlay: Boolean = false
 ) {
     val context = LocalContext.current
     val packageName = context.packageName
@@ -121,7 +122,8 @@ fun ObjectDetectionScreen(
                 targetLabel = targetLabel,
                 confidenceThreshold = confidenceThreshold,
                 onDetectionSuccess = onDetectionSuccess,
-                onCancel = onCancel
+                onCancel = onCancel,
+                showOverlay = showDebugOverlay
             )
         }
         permanentlyDenied -> {
@@ -173,7 +175,8 @@ private fun GrantedContent(
     targetLabel: String,
     confidenceThreshold: Float,
     onDetectionSuccess: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    showOverlay: Boolean
 ) {
     val context = LocalContext.current
     // Keep the screen on while this composable (camera preview) is visible
@@ -194,6 +197,7 @@ private fun GrantedContent(
         CustomCameraPreview(
             modifier = Modifier.fillMaxSize(),
             targetResolution = target,
+            showOverlay = showOverlay,
             onObjectsDetected = { detectedObjects ->
                 if (!detectionHandled.value) {
                     val success = detectedObjects.any { detected ->
@@ -209,12 +213,14 @@ private fun GrantedContent(
                 }
             }
         )
-        ResolutionBadge(
-            text = "Resolution: ${target.width}x${target.height}",
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(12.dp)
-        )
+        if (showOverlay) {
+            ResolutionBadge(
+                text = "Resolution: ${target.width}x${target.height}",
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp)
+            )
+        }
         Button(
             onClick = onCancel,
             modifier = Modifier

@@ -46,7 +46,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setDefaultRingtone(uri: String?) {
         dataStore.edit { prefs ->
             if (uri.isNullOrBlank()) {
-                prefs.remove(defaultRingtoneKey)
+                prefs -= defaultRingtoneKey
             } else {
                 prefs[defaultRingtoneKey] = uri
             }

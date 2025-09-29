@@ -42,6 +42,7 @@ import hu.bbara.viewideas.R
 import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
+import hu.bbara.viewideas.data.settings.SettingsRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.createTask
@@ -56,6 +57,7 @@ class AlarmRingingActivity : ComponentActivity() {
     private val availableTasks: MutableState<List<AlarmDismissTask>> = mutableStateOf(emptyList())
     private val activeTask: MutableState<AlarmDismissTask?> = mutableStateOf(null)
     private var taskCompleted = false
+    private val debugModeEnabled = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,6 +71,7 @@ class AlarmRingingActivity : ComponentActivity() {
         wakeScreen()
         dismissKeyguard()
         observeAlarm()
+        observeSettings()
         registerDismissReceiver()
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -84,7 +87,9 @@ class AlarmRingingActivity : ComponentActivity() {
                     activeTask = activeTask.value,
                     onTaskSelected = { startTask(it) },
                     onTaskCompleted = { onTaskCompleted() },
-                    onTaskCancelled = { cancelActiveTask() }
+                    onTaskCancelled = { cancelActiveTask() },
+                    showDebugCancel = debugModeEnabled.value,
+                    onDebugCancel = { stopAlarmAndFinish() }
                 )
             }
         }
@@ -115,6 +120,16 @@ class AlarmRingingActivity : ComponentActivity() {
         }
     }
 
+    private fun observeSettings() {
+        lifecycleScope.launch {
+            val settingsRepository = SettingsRepositoryProvider.getRepository(applicationContext)
+            settingsRepository.settings.collect { settings ->
+                debugModeEnabled.value = settings.debugModeEnabled
+                updateTasksForAlarm(alarmState.value)
+            }
+        }
+    }
+
     private fun updateTasksForAlarm(alarm: AlarmUiModel?) {
         val tasks = alarm?.let { buildTasksForAlarm(it) } ?: emptyList()
         availableTasks.value = tasks
@@ -125,7 +140,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun buildTasksForAlarm(alarm: AlarmUiModel): List<AlarmDismissTask> {
-        val primary = alarm.dismissTask.createTask()
+        val primary = alarm.dismissTask.createTask(showDebugOverlay = debugModeEnabled.value)
         val backup = FocusTimerDismissTask()
         return if (primary.id == backup.id) {
             listOf(primary)
@@ -263,16 +278,30 @@ private fun AlarmRingingScreen(
     activeTask: AlarmDismissTask?,
     onTaskSelected: (AlarmDismissTask) -> Unit,
     onTaskCompleted: () -> Unit,
-    onTaskCancelled: () -> Unit
+    onTaskCancelled: () -> Unit,
+    showDebugCancel: Boolean,
+    onDebugCancel: () -> Unit
 ) {
     if (activeTask != null) {
-        activeTask.Content(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-            onCompleted = onTaskCompleted,
-            onCancelled = onTaskCancelled
-        )
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            activeTask.Content(
+                modifier = Modifier.fillMaxSize(),
+                onCompleted = onTaskCompleted,
+                onCancelled = onTaskCancelled
+            )
+            if (showDebugCancel) {
+                DebugCancelButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp),
+                    onClick = onDebugCancel
+                )
+            }
+        }
         return
     }
 
@@ -287,6 +316,14 @@ private fun AlarmRingingScreen(
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
+        if (showDebugCancel) {
+            DebugCancelButton(
+                onClick = onDebugCancel,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            )
+        }
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -348,5 +385,19 @@ private fun AlarmRingingScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DebugCancelButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(44.dp)
+    ) {
+        Text(text = "Cancel")
     }
 }

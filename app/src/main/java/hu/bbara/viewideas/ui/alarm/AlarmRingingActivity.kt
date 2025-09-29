@@ -369,20 +369,6 @@ private fun AlarmRingingScreen(
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-            } else {
-                Spacer(modifier = Modifier.height(48.dp))
-            }
-            Button(
-                onClick = onStop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-            ) {
-                Text(
-                    text = stringResource(id = R.string.alarm_stop),
-                    style = MaterialTheme.typography.titleMedium
-                )
             }
         }
     }

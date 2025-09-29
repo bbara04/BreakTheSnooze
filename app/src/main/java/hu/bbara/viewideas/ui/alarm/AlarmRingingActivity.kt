@@ -40,7 +40,6 @@ import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
-import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.createTask
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
@@ -311,15 +310,6 @@ private fun AlarmRingingScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
-                }
-                if (tasks.any { it.id == AlarmDismissTaskType.FOCUS_TIMER.storageKey }) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(id = R.string.alarm_task_backup_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center
-                    )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             } else {

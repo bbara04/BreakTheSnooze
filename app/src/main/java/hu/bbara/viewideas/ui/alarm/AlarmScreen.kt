@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.data.alarm.AlarmSchedulerProvider
+import hu.bbara.viewideas.data.settings.SettingsRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.ui.settings.SettingsRoute
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
@@ -32,8 +33,11 @@ fun AlarmScreen(
     val context = LocalContext.current
     val repository = remember(context) { AlarmRepositoryProvider.getRepository(context) }
     val scheduler = remember(context) { AlarmSchedulerProvider.getScheduler(context) }
+    val settingsRepository = remember(context) { SettingsRepositoryProvider.getRepository(context) }
     val alarmViewModel: AlarmViewModel = viewModel(
-        factory = remember(repository, scheduler) { AlarmViewModelFactory(repository, scheduler) }
+        factory = remember(repository, scheduler, settingsRepository) {
+            AlarmViewModelFactory(repository, scheduler, settingsRepository)
+        }
     )
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -81,6 +85,7 @@ fun AlarmScreen(
         onCancel = alarmViewModel::cancelCreation,
         onOpenSettings = alarmViewModel::openSettings,
         onCloseSettings = alarmViewModel::closeSettings,
+        onDefaultTaskSelected = alarmViewModel::setDefaultDismissTask,
         onEnterSelection = alarmViewModel::enterSelection,
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
@@ -105,6 +110,7 @@ private fun AlarmScreenContent(
     onCancel: () -> Unit,
     onOpenSettings: () -> Unit,
     onCloseSettings: () -> Unit,
+    onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -140,6 +146,8 @@ private fun AlarmScreenContent(
         )
 
         AlarmDestination.Settings -> SettingsRoute(
+            settings = uiState.settings,
+            onDefaultTaskSelected = onDefaultTaskSelected,
             onBack = onCloseSettings,
             modifier = modifier
         )
@@ -169,6 +177,7 @@ private fun AlarmScreenPreview() {
             onCancel = {},
             onOpenSettings = {},
             onCloseSettings = {},
+            onDefaultTaskSelected = {},
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},

@@ -30,6 +30,9 @@
     <string name="settings_snooze_title">Snooze length</string>
     <string name="settings_snooze_description">Mock snooze length: %1$d min</string>
     <string name="settings_snooze_hint">Placeholder control for snooze length preview.</string>
+    <string name="settings_defaults_title">Defaults</string>
+    <string name="settings_default_task_title">Default dismiss task</string>
+    <string name="settings_default_task_subtitle">Automatically applied to new alarms.</string>
     <string name="focus_timer_remaining">%1$d:%2$02d</string>
     <string name="focus_confirm_title">Still awake?</string>
     <string name="focus_confirm_button">Confirm</string>

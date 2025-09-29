@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import hu.bbara.viewideas.data.alarm.AlarmRepository
 import hu.bbara.viewideas.data.alarm.AlarmScheduler
 import hu.bbara.viewideas.data.alarm.toUiModelWithId
+import hu.bbara.viewideas.data.settings.SettingsRepository
+import hu.bbara.viewideas.data.settings.SettingsState
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.util.logDuration
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +23,8 @@ import java.time.LocalTime
 
 class AlarmViewModel(
     private val repository: AlarmRepository,
-    private val scheduler: AlarmScheduler
+    private val scheduler: AlarmScheduler,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AlarmUiState())
@@ -48,6 +51,14 @@ class AlarmViewModel(
                     Log.d(TAG, "collect size=${alarms.size}")
                 }
                 synchronizeAlarms(alarms)
+            }
+        }
+
+        viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _uiState.update { state ->
+                    state.copy(settings = settings)
+                }
             }
         }
     }
@@ -102,7 +113,7 @@ class AlarmViewModel(
                 _uiState.update { state ->
                     if (state.editingAlarm?.id == id) {
                         state.copy(
-                            draft = sampleDraft(),
+                            draft = sampleDraft(defaultTask = state.settings.defaultDismissTask),
                             destination = AlarmDestination.List,
                             editingAlarm = null
                         )
@@ -120,7 +131,7 @@ class AlarmViewModel(
         logDuration(TAG, "startCreating") {}
         _uiState.update { state ->
             state.copy(
-                draft = sampleDraft(),
+                draft = sampleDraft(defaultTask = state.settings.defaultDismissTask),
                 destination = AlarmDestination.Create,
                 editingAlarm = null
             )
@@ -183,6 +194,12 @@ class AlarmViewModel(
         }
     }
 
+    fun setDefaultDismissTask(task: AlarmDismissTaskType) {
+        viewModelScope.launch {
+            settingsRepository.setDefaultDismissTask(task)
+        }
+    }
+
     fun toggleDraftDay(day: DayOfWeek) {
         _uiState.update { state ->
             val current = state.draft.repeatDays
@@ -198,7 +215,7 @@ class AlarmViewModel(
                 val refreshed = state.alarms.firstOrNull { it.id == editing.id } ?: editing
                 state.copy(draft = refreshed.toCreationState())
             } else {
-                state.copy(draft = sampleDraft())
+                state.copy(draft = sampleDraft(defaultTask = state.settings.defaultDismissTask))
             }
         }
     }
@@ -226,7 +243,7 @@ class AlarmViewModel(
                 }
                 _uiState.update { state ->
                     state.copy(
-                        draft = sampleDraft(),
+                        draft = sampleDraft(defaultTask = state.settings.defaultDismissTask),
                         destination = AlarmDestination.List,
                         editingAlarm = null,
                         selectedAlarmIds = emptySet()
@@ -238,7 +255,11 @@ class AlarmViewModel(
 
     fun cancelCreation() {
         _uiState.update { state ->
-            state.copy(draft = sampleDraft(), destination = AlarmDestination.List, editingAlarm = null)
+            state.copy(
+                draft = sampleDraft(defaultTask = state.settings.defaultDismissTask),
+                destination = AlarmDestination.List,
+                editingAlarm = null
+            )
         }
     }
 
@@ -288,7 +309,7 @@ class AlarmViewModel(
                     val editing = state.editingAlarm
                     val editingCleared = if (editing != null && ids.contains(editing.id)) null else editing
                     state.copy(
-                        draft = if (editingCleared == null) sampleDraft() else state.draft,
+                        draft = if (editingCleared == null) sampleDraft(defaultTask = state.settings.defaultDismissTask) else state.draft,
                         destination = if (editingCleared == null) AlarmDestination.List else state.destination,
                         editingAlarm = editingCleared,
                         selectedAlarmIds = emptySet()
@@ -316,7 +337,8 @@ class AlarmViewModel(
 
 data class AlarmUiState(
     val alarms: List<AlarmUiModel> = emptyList(),
-    val draft: AlarmCreationState = sampleDraft(),
+    val settings: SettingsState = SettingsState(),
+    val draft: AlarmCreationState = sampleDraft(defaultTask = settings.defaultDismissTask),
     val destination: AlarmDestination = AlarmDestination.List,
     val editingAlarm: AlarmUiModel? = null,
     val selectedAlarmIds: Set<Int> = emptySet()

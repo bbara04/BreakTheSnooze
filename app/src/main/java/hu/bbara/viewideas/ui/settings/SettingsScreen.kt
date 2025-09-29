@@ -4,8 +4,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -19,8 +21,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -36,10 +40,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import hu.bbara.viewideas.R
+import hu.bbara.viewideas.data.settings.SettingsState
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsRoute(
+    settings: SettingsState,
+    onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -49,6 +57,7 @@ internal fun SettingsRoute(
     var requireDismissTask by rememberSaveable { mutableStateOf(true) }
     var playBackupSound by rememberSaveable { mutableStateOf(false) }
     var snoozeMinutes by rememberSaveable { mutableFloatStateOf(5f) }
+    val selectedTask = settings.defaultDismissTask
 
     Scaffold(
         modifier = modifier,
@@ -75,6 +84,30 @@ internal fun SettingsRoute(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            SettingsSection(
+                title = stringResource(id = R.string.settings_defaults_title)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.settings_default_task_title),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = stringResource(id = R.string.settings_default_task_subtitle),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AlarmDismissTaskType.values().forEach { option ->
+                        DefaultTaskOption(
+                            option = option,
+                            selected = option == selectedTask,
+                            onSelect = { onDefaultTaskSelected(option) }
+                        )
+                    }
+                }
+            }
+
             SettingsSection(
                 title = stringResource(id = R.string.settings_general_title)
             ) {
@@ -155,6 +188,44 @@ private fun SettingsSection(
             ) {
                 content()
             }
+        }
+    }
+}
+
+@Composable
+private fun DefaultTaskOption(
+    option: AlarmDismissTaskType,
+    selected: Boolean,
+    onSelect: () -> Unit
+) {
+    Surface(
+        onClick = onSelect,
+        shape = MaterialTheme.shapes.large,
+        tonalElevation = if (selected) 6.dp else 2.dp,
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        contentColor = if (selected) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            RadioButton(selected = selected, onClick = null)
+            Text(
+                text = stringResource(id = option.optionLabelResId),
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }

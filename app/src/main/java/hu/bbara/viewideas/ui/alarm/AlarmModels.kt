@@ -101,12 +101,15 @@ internal fun defaultAlarmTime(): LocalTime {
     return LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
 }
 
-internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(
+internal fun sampleDraft(
+    useCurrentTime: Boolean = true,
+    defaultTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT
+): AlarmCreationState = AlarmCreationState(
     time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
     label = "Alarm",
     repeatDays = emptySet(),
     soundUri = null,
-    dismissTask = AlarmDismissTaskType.DEFAULT
+    dismissTask = defaultTask
 )
 
 internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -52,6 +53,7 @@ internal fun AlarmListRoute(
     onClearSelection: () -> Unit,
     onDeleteSelection: () -> Unit,
     onCreate: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -93,6 +95,11 @@ internal fun AlarmListRoute(
             } else {
                 CenterAlignedTopAppBar(
                     title = { Text(text = "Alarms") },
+                    navigationIcon = {
+                        IconButton(onClick = onOpenSettings) {
+                            Icon(imageVector = Icons.Default.Settings, contentDescription = "Open settings")
+                        }
+                    },
                     actions = {
                         IconButton(onClick = onCreate) {
                             Icon(imageVector = Icons.Default.Add, contentDescription = "Create alarm")

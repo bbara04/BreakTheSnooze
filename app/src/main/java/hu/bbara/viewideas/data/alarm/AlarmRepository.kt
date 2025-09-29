@@ -1,18 +1,19 @@
 package hu.bbara.viewideas.data.alarm
 
+import android.util.Log
 import hu.bbara.viewideas.ui.alarm.AlarmCreationState
 import hu.bbara.viewideas.ui.alarm.AlarmUiModel
 import hu.bbara.viewideas.ui.alarm.dayOrder
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.ui.alarm.sampleAlarms
 import hu.bbara.viewideas.ui.alarm.timeFormatter
-import java.time.DayOfWeek
-import java.time.LocalTime
-import android.util.Log
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.time.DayOfWeek
+import java.time.LocalTime
 
 interface AlarmRepository {
     val alarms: Flow<List<AlarmUiModel>>
@@ -90,7 +91,8 @@ private fun AlarmEntity.toUiModel(): AlarmUiModel {
         label = label,
         isActive = isActive,
         repeatDays = repeatDays.toDaySet(),
-        soundUri = soundUri
+        soundUri = soundUri,
+        dismissTask = AlarmDismissTaskType.fromStorageKey(dismissTask)
     )
 }
 
@@ -101,7 +103,8 @@ private fun AlarmUiModel.toEntity(): AlarmEntity {
         label = label,
         isActive = isActive,
         repeatDays = repeatDays.toStorageString(),
-        soundUri = soundUri
+        soundUri = soundUri,
+        dismissTask = dismissTask.storageKey
     )
 }
 
@@ -127,6 +130,7 @@ fun AlarmCreationState.toUiModelWithId(
         label = label,
         isActive = isActive,
         repeatDays = repeatDays,
-        soundUri = soundUri
+        soundUri = soundUri,
+        dismissTask = dismissTask
     )
 }

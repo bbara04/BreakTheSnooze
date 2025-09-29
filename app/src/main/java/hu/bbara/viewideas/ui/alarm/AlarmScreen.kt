@@ -8,20 +8,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.data.alarm.AlarmSchedulerProvider
+import hu.bbara.viewideas.data.settings.SettingsRepositoryProvider
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.viewideas.ui.settings.SettingsRoute
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import java.time.DayOfWeek
 import java.time.LocalTime
-import androidx.core.content.ContextCompat
 
 @Composable
 fun AlarmScreen(
@@ -30,8 +33,11 @@ fun AlarmScreen(
     val context = LocalContext.current
     val repository = remember(context) { AlarmRepositoryProvider.getRepository(context) }
     val scheduler = remember(context) { AlarmSchedulerProvider.getScheduler(context) }
+    val settingsRepository = remember(context) { SettingsRepositoryProvider.getRepository(context) }
     val alarmViewModel: AlarmViewModel = viewModel(
-        factory = remember(repository, scheduler) { AlarmViewModelFactory(repository, scheduler) }
+        factory = remember(repository, scheduler, settingsRepository) {
+            AlarmViewModelFactory(repository, scheduler, settingsRepository)
+        }
     )
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -52,10 +58,15 @@ fun AlarmScreen(
 
     val uiState by alarmViewModel.uiState.collectAsState()
 
-    BackHandler(enabled = uiState.selectedAlarmIds.isNotEmpty() || uiState.destination == AlarmDestination.Create) {
+    BackHandler(
+        enabled = uiState.selectedAlarmIds.isNotEmpty() ||
+            uiState.destination == AlarmDestination.Create ||
+            uiState.destination == AlarmDestination.Settings
+    ) {
         when {
             uiState.selectedAlarmIds.isNotEmpty() -> alarmViewModel.clearSelection()
             uiState.destination == AlarmDestination.Create -> alarmViewModel.cancelCreation()
+            uiState.destination == AlarmDestination.Settings -> alarmViewModel.closeSettings()
         }
     }
 
@@ -69,8 +80,12 @@ fun AlarmScreen(
         onTimeSelected = alarmViewModel::setDraftTime,
         onToggleDay = alarmViewModel::toggleDraftDay,
         onSoundSelected = alarmViewModel::setDraftSound,
+        onDismissTaskSelected = alarmViewModel::setDraftDismissTask,
         onSaveDraft = alarmViewModel::saveDraft,
         onCancel = alarmViewModel::cancelCreation,
+        onOpenSettings = alarmViewModel::openSettings,
+        onCloseSettings = alarmViewModel::closeSettings,
+        onDefaultTaskSelected = alarmViewModel::setDefaultDismissTask,
         onEnterSelection = alarmViewModel::enterSelection,
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
@@ -90,8 +105,12 @@ private fun AlarmScreenContent(
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
     onSoundSelected: (String?) -> Unit,
+    onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
     onSaveDraft: () -> Unit,
     onCancel: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onCloseSettings: () -> Unit,
+    onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -109,6 +128,7 @@ private fun AlarmScreenContent(
             onClearSelection = onClearSelection,
             onDeleteSelection = onDeleteSelection,
             onCreate = onStartCreate,
+            onOpenSettings = onOpenSettings,
             modifier = modifier
         )
 
@@ -119,8 +139,16 @@ private fun AlarmScreenContent(
             onTimeSelected = onTimeSelected,
             onToggleDay = onToggleDay,
             onSoundSelected = onSoundSelected,
+            onDismissTaskSelected = onDismissTaskSelected,
             onSave = onSaveDraft,
             onCancel = onCancel,
+            modifier = modifier
+        )
+
+        AlarmDestination.Settings -> SettingsRoute(
+            settings = uiState.settings,
+            onDefaultTaskSelected = onDefaultTaskSelected,
+            onBack = onCloseSettings,
             modifier = modifier
         )
     }
@@ -144,8 +172,12 @@ private fun AlarmScreenPreview() {
             onTimeSelected = {},
             onToggleDay = {},
             onSoundSelected = {},
+            onDismissTaskSelected = {},
             onSaveDraft = {},
             onCancel = {},
+            onOpenSettings = {},
+            onCloseSettings = {},
+            onDefaultTaskSelected = {},
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},

@@ -1,11 +1,20 @@
 package hu.bbara.viewideas.ui.alarm
 
+import android.app.Activity
+import android.content.Intent
+import android.media.Ringtone
+import android.media.RingtoneManager
+import android.net.Uri
 import android.text.format.DateFormat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,13 +22,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import android.app.Activity
-import android.content.Intent
-import android.media.Ringtone
-import android.media.RingtoneManager
-import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -43,10 +50,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import hu.bbara.viewideas.R
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.DayOfWeek
 import java.time.LocalTime
 
@@ -59,6 +69,7 @@ internal fun AlarmCreateRoute(
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
     onSoundSelected: (String?) -> Unit,
+    onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
@@ -70,6 +81,7 @@ internal fun AlarmCreateRoute(
     var showTimePicker by rememberSaveable { mutableStateOf(false) }
     val timePickerState = rememberTimePickerState(is24Hour = is24Hour)
     val soundName = remember(draft.soundUri) { resolveRingtoneTitle(context, draft.soundUri) }
+    var showTaskDialog by rememberSaveable { mutableStateOf(false) }
     val soundPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -86,7 +98,7 @@ internal fun AlarmCreateRoute(
     }
 
     LaunchedEffect(draft.time) {
-        val base = draft.time ?: LocalTime.now().withSecond(0).withNano(0)
+        val base = draft.time ?: LocalTime.now().plusMinutes(1).withSecond(0).withNano(0)
         timePickerState.hour = base.hour
         timePickerState.minute = base.minute
     }
@@ -197,6 +209,112 @@ internal fun AlarmCreateRoute(
                 }
             }
 
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(id = R.string.alarm_task_section_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Surface(
+                    onClick = { showTaskDialog = true },
+                    shape = MaterialTheme.shapes.extraLarge,
+                    tonalElevation = 4.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = taskIconFor(draft.dismissTask),
+                            contentDescription = null
+                        )
+                        Text(
+                            text = stringResource(id = draft.dismissTask.optionLabelResId),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+            }
+
+            if (showTaskDialog) {
+                BasicAlertDialog(onDismissRequest = { showTaskDialog = false }) {
+                    Surface(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        tonalElevation = 6.dp
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.alarm_task_section_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            AlarmDismissTaskType.values().toList().chunked(2).forEach { rowTasks ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    rowTasks.forEach { option ->
+                                        val selected = option == draft.dismissTask
+                                        Surface(
+                                            onClick = {
+                                                onDismissTaskSelected(option)
+                                                showTaskDialog = false
+                                            },
+                                            shape = MaterialTheme.shapes.large,
+                                            tonalElevation = if (selected) 6.dp else 2.dp,
+                                            color = if (selected) {
+                                                MaterialTheme.colorScheme.primaryContainer
+                                            } else {
+                                                MaterialTheme.colorScheme.surfaceVariant
+                                            },
+                                            contentColor = if (selected) {
+                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .aspectRatio(1f)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Column(
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = taskIconFor(option),
+                                                        contentDescription = null
+                                                    )
+                                                    Text(
+                                                        text = stringResource(id = option.optionLabelResId),
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (rowTasks.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    }
+                }
+            }
+
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = "Active on", style = MaterialTheme.typography.titleMedium)
                 Row(
@@ -283,4 +401,10 @@ private fun resolveRingtoneTitle(context: android.content.Context, soundUri: Str
         val ringtone: Ringtone? = RingtoneManager.getRingtone(context, uri)
         ringtone?.getTitle(context)
     }.getOrNull()
+}
+
+private fun taskIconFor(type: AlarmDismissTaskType): ImageVector = when (type) {
+    AlarmDismissTaskType.OBJECT_DETECTION -> Icons.Filled.PhotoCamera
+    AlarmDismissTaskType.MATH_CHALLENGE -> Icons.Filled.Calculate
+    AlarmDismissTaskType.FOCUS_TIMER -> Icons.Filled.Timer
 }

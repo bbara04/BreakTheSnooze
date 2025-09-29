@@ -36,8 +36,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import hu.bbara.viewideas.objectdetection.camera.CustomCameraPreview
 import android.util.Size
+import androidx.compose.ui.tooling.preview.Preview
+import hu.bbara.viewideas.objectdetection.camera.CustomCameraPreview
 
 @Composable
 fun ObjectDetectionScreen(
@@ -147,6 +148,20 @@ fun ObjectDetectionScreen(
                 } else null,
                 onCancel = onCancel,
                 autoRequestPermission = autoRequestPermission
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ObjectDetectionScreenPreview() {
+    MaterialTheme {
+        Surface {
+            ObjectDetectionScreen(
+                onDetectionSuccess = {},
+                onCancel = {},
+                autoRequestPermission = false
             )
         }
     }

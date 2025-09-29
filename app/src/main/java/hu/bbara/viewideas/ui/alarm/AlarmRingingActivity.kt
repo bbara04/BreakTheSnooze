@@ -34,12 +34,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import hu.bbara.viewideas.objectdetection.ObjectDetectionScreen
 import hu.bbara.viewideas.R
 import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.FocusTimerDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.createTask
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import kotlinx.coroutines.launch
 
@@ -48,8 +53,9 @@ class AlarmRingingActivity : ComponentActivity() {
     private var alarmId: Int = -1
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
-    private val isScanning = mutableStateOf(false)
-    private var detectionSatisfied = false
+    private val availableTasks: MutableState<List<AlarmDismissTask>> = mutableStateOf(emptyList())
+    private val activeTask: MutableState<AlarmDismissTask?> = mutableStateOf(null)
+    private var taskCompleted = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,19 +80,27 @@ class AlarmRingingActivity : ComponentActivity() {
                 AlarmRingingScreen(
                     alarm = alarmState.value,
                     onStop = { stopAlarmAndFinish() },
-                    onScan = { startDetection() },
-                    isScanning = isScanning.value,
-                    onDetectionSuccess = { onDetectionSuccess() },
-                    onCancelScan = { cancelDetection() }
+                    tasks = availableTasks.value,
+                    activeTask = activeTask.value,
+                    onTaskSelected = { startTask(it) },
+                    onTaskCompleted = { onTaskCompleted() },
+                    onTaskCancelled = { cancelActiveTask() }
                 )
             }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemBars()
         }
     }
 
     override fun onDestroy() {
         dismissalReceiver?.let { unregisterReceiver(it) }
         dismissalReceiver = null
-        if (isScanning.value && !detectionSatisfied) {
+        if (activeTask.value != null && !taskCompleted) {
             sendAlarmCommand(AlarmIntents.ACTION_RESUME_ALARM)
         }
         super.onDestroy()
@@ -95,7 +109,28 @@ class AlarmRingingActivity : ComponentActivity() {
     private fun observeAlarm() {
         lifecycleScope.launch {
             val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            alarmState.value = repository.getAlarmById(alarmId)
+            val alarm = repository.getAlarmById(alarmId)
+            alarmState.value = alarm
+            updateTasksForAlarm(alarm)
+        }
+    }
+
+    private fun updateTasksForAlarm(alarm: AlarmUiModel?) {
+        val tasks = alarm?.let { buildTasksForAlarm(it) } ?: emptyList()
+        availableTasks.value = tasks
+        val currentId = activeTask.value?.id
+        if (currentId != null && tasks.none { it.id == currentId }) {
+            activeTask.value = null
+        }
+    }
+
+    private fun buildTasksForAlarm(alarm: AlarmUiModel): List<AlarmDismissTask> {
+        val primary = alarm.dismissTask.createTask()
+        val backup = FocusTimerDismissTask()
+        return if (primary.id == backup.id) {
+            listOf(primary)
+        } else {
+            listOf(primary, backup)
         }
     }
 
@@ -104,21 +139,22 @@ class AlarmRingingActivity : ComponentActivity() {
         finish()
     }
 
-    private fun startDetection() {
-        if (isScanning.value) return
+    private fun startTask(task: AlarmDismissTask) {
+        if (activeTask.value?.id == task.id) return
         sendAlarmCommand(AlarmIntents.ACTION_PAUSE_ALARM)
-        isScanning.value = true
+        taskCompleted = false
+        activeTask.value = task
     }
 
-    private fun cancelDetection() {
-        if (!isScanning.value) return
-        isScanning.value = false
+    private fun cancelActiveTask() {
+        if (activeTask.value == null) return
+        activeTask.value = null
         sendAlarmCommand(AlarmIntents.ACTION_RESUME_ALARM)
     }
 
-    private fun onDetectionSuccess() {
-        if (detectionSatisfied) return
-        detectionSatisfied = true
+    private fun onTaskCompleted() {
+        if (taskCompleted) return
+        taskCompleted = true
         sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM)
         finish()
     }
@@ -147,6 +183,17 @@ class AlarmRingingActivity : ComponentActivity() {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
         )
+
+        hideSystemBars()
+    }
+
+    private fun hideSystemBars() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, window.decorView)?.let { controller ->
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.navigationBars())
+        }
     }
 
     private fun wakeScreen() {
@@ -212,83 +259,93 @@ private fun PowerManager.WakeLock.releaseIfHeld() {
 private fun AlarmRingingScreen(
     alarm: AlarmUiModel?,
     onStop: () -> Unit,
-    onScan: () -> Unit,
-    isScanning: Boolean,
-    onDetectionSuccess: () -> Unit,
-    onCancelScan: () -> Unit
+    tasks: List<AlarmDismissTask>,
+    activeTask: AlarmDismissTask?,
+    onTaskSelected: (AlarmDismissTask) -> Unit,
+    onTaskCompleted: () -> Unit,
+    onTaskCancelled: () -> Unit
 ) {
-    if (isScanning) {
-        ObjectDetectionScreen(
+    if (activeTask != null) {
+        activeTask.Content(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background),
-            onDetectionSuccess = onDetectionSuccess,
-            onCancel = onCancelScan,
-            autoRequestPermission = false
+            onCompleted = onTaskCompleted,
+            onCancelled = onTaskCancelled
         )
-    } else {
-        val context = LocalContext.current
-        val label = alarm?.label?.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.alarm_label_default)
-        val timeText = alarm?.time?.formatForDisplay(android.text.format.DateFormat.is24HourFormat(context))
+        return
+    }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
+    val context = LocalContext.current
+    val label = alarm?.label?.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.alarm_label_default)
+    val timeText = alarm?.time?.formatForDisplay(android.text.format.DateFormat.is24HourFormat(context))
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
+            Text(
+                text = stringResource(id = R.string.alarm_ringing_message),
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            timeText?.let {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = stringResource(id = R.string.alarm_ringing_message),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    text = it,
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center
-                )
-                timeText?.let {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.displayMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
-                    )
-                }
+            }
+            if (tasks.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(40.dp))
-                Button(
-                    onClick = onScan,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(64.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.alarm_scan_object),
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                tasks.forEachIndexed { index, task ->
+                    if (index > 0) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    Button(
+                        onClick = { onTaskSelected(task) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp)
+                    ) {
+                        Text(
+                            text = stringResource(id = task.labelResId),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onStop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(72.dp)
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.alarm_stop),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+            } else {
+                Spacer(modifier = Modifier.height(48.dp))
+            }
+            Button(
+                onClick = onStop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.alarm_stop),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
         }
     }

@@ -11,5 +11,6 @@ data class AlarmEntity(
     @ColumnInfo(name = "label") val label: String,
     @ColumnInfo(name = "is_active") val isActive: Boolean,
     @ColumnInfo(name = "repeat_days") val repeatDays: String,
-    @ColumnInfo(name = "sound_uri") val soundUri: String?
+    @ColumnInfo(name = "sound_uri") val soundUri: String?,
+    @ColumnInfo(name = "dismiss_task") val dismissTask: String
 )

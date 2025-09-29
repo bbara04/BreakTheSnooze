@@ -1,6 +1,13 @@
 package hu.bbara.viewideas.ui.alarm
 
+import android.app.Activity
+import android.content.Intent
+import android.media.Ringtone
+import android.media.RingtoneManager
+import android.net.Uri
 import android.text.format.DateFormat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,11 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import android.app.Activity
-import android.content.Intent
-import android.media.Ringtone
-import android.media.RingtoneManager
-import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.BasicAlertDialog
@@ -44,9 +46,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import hu.bbara.viewideas.R
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.DayOfWeek
 import java.time.LocalTime
 
@@ -59,6 +62,7 @@ internal fun AlarmCreateRoute(
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
     onSoundSelected: (String?) -> Unit,
+    onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
@@ -195,6 +199,45 @@ internal fun AlarmCreateRoute(
                         Text(text = "Use default")
                     }
                 }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = stringResource(id = R.string.alarm_task_section_title),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    AlarmDismissTaskType.values().forEach { option ->
+                        val selected = option == draft.dismissTask
+                        Surface(
+                            onClick = { onDismissTaskSelected(option) },
+                            shape = MaterialTheme.shapes.extraLarge,
+                            modifier = Modifier.fillMaxWidth(),
+                            color = if (selected) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceVariant
+                            },
+                            contentColor = if (selected) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            },
+                            tonalElevation = if (selected) 6.dp else 2.dp
+                        ) {
+                            Text(
+                                text = stringResource(id = option.optionLabelResId),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = stringResource(id = R.string.alarm_task_backup_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

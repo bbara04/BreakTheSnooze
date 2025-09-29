@@ -1,14 +1,13 @@
 package hu.bbara.viewideas.ui.alarm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.util.Log
 import hu.bbara.viewideas.data.alarm.AlarmRepository
 import hu.bbara.viewideas.data.alarm.AlarmScheduler
 import hu.bbara.viewideas.data.alarm.toUiModelWithId
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.util.logDuration
-import java.time.DayOfWeek
-import java.time.LocalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.DayOfWeek
+import java.time.LocalTime
 
 class AlarmViewModel(
     private val repository: AlarmRepository,
@@ -158,6 +159,12 @@ class AlarmViewModel(
     fun setDraftSound(soundUri: String?) {
         _uiState.update { state ->
             state.copy(draft = state.draft.copy(soundUri = soundUri))
+        }
+    }
+
+    fun setDraftDismissTask(task: AlarmDismissTaskType) {
+        _uiState.update { state ->
+            state.copy(draft = state.draft.copy(dismissTask = task))
         }
     }
 

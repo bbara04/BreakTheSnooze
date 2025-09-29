@@ -8,20 +8,21 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.data.alarm.AlarmSchedulerProvider
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import java.time.DayOfWeek
 import java.time.LocalTime
-import androidx.core.content.ContextCompat
 
 @Composable
 fun AlarmScreen(
@@ -69,6 +70,7 @@ fun AlarmScreen(
         onTimeSelected = alarmViewModel::setDraftTime,
         onToggleDay = alarmViewModel::toggleDraftDay,
         onSoundSelected = alarmViewModel::setDraftSound,
+        onDismissTaskSelected = alarmViewModel::setDraftDismissTask,
         onSaveDraft = alarmViewModel::saveDraft,
         onCancel = alarmViewModel::cancelCreation,
         onEnterSelection = alarmViewModel::enterSelection,
@@ -90,6 +92,7 @@ private fun AlarmScreenContent(
     onTimeSelected: (LocalTime) -> Unit,
     onToggleDay: (DayOfWeek) -> Unit,
     onSoundSelected: (String?) -> Unit,
+    onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
     onSaveDraft: () -> Unit,
     onCancel: () -> Unit,
     onEnterSelection: (Int) -> Unit,
@@ -119,6 +122,7 @@ private fun AlarmScreenContent(
             onTimeSelected = onTimeSelected,
             onToggleDay = onToggleDay,
             onSoundSelected = onSoundSelected,
+            onDismissTaskSelected = onDismissTaskSelected,
             onSave = onSaveDraft,
             onCancel = onCancel,
             modifier = modifier
@@ -144,6 +148,7 @@ private fun AlarmScreenPreview() {
             onTimeSelected = {},
             onToggleDay = {},
             onSoundSelected = {},
+            onDismissTaskSelected = {},
             onSaveDraft = {},
             onCancel = {},
             onEnterSelection = {},

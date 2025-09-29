@@ -40,9 +40,9 @@ import hu.bbara.viewideas.alarm.AlarmIntents
 import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.ui.alarm.dismiss.FocusTimerDismissTask
-import hu.bbara.viewideas.ui.alarm.dismiss.MathChallengeDismissTask
-import hu.bbara.viewideas.ui.alarm.dismiss.ObjectDetectionDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.createTask
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import kotlinx.coroutines.launch
 
@@ -51,11 +51,7 @@ class AlarmRingingActivity : ComponentActivity() {
     private var alarmId: Int = -1
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
-    private val dismissTasks: List<AlarmDismissTask> = listOf(
-        ObjectDetectionDismissTask(),
-        MathChallengeDismissTask(),
-        FocusTimerDismissTask()
-    )
+    private val availableTasks: MutableState<List<AlarmDismissTask>> = mutableStateOf(emptyList())
     private val activeTask: MutableState<AlarmDismissTask?> = mutableStateOf(null)
     private var taskCompleted = false
 
@@ -82,7 +78,7 @@ class AlarmRingingActivity : ComponentActivity() {
                 AlarmRingingScreen(
                     alarm = alarmState.value,
                     onStop = { stopAlarmAndFinish() },
-                    tasks = dismissTasks,
+                    tasks = availableTasks.value,
                     activeTask = activeTask.value,
                     onTaskSelected = { startTask(it) },
                     onTaskCompleted = { onTaskCompleted() },
@@ -104,7 +100,28 @@ class AlarmRingingActivity : ComponentActivity() {
     private fun observeAlarm() {
         lifecycleScope.launch {
             val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            alarmState.value = repository.getAlarmById(alarmId)
+            val alarm = repository.getAlarmById(alarmId)
+            alarmState.value = alarm
+            updateTasksForAlarm(alarm)
+        }
+    }
+
+    private fun updateTasksForAlarm(alarm: AlarmUiModel?) {
+        val tasks = alarm?.let { buildTasksForAlarm(it) } ?: emptyList()
+        availableTasks.value = tasks
+        val currentId = activeTask.value?.id
+        if (currentId != null && tasks.none { it.id == currentId }) {
+            activeTask.value = null
+        }
+    }
+
+    private fun buildTasksForAlarm(alarm: AlarmUiModel): List<AlarmDismissTask> {
+        val primary = alarm.dismissTask.createTask()
+        val backup = FocusTimerDismissTask()
+        return if (primary.id == backup.id) {
+            listOf(primary)
+        } else {
+            listOf(primary, backup)
         }
     }
 
@@ -294,6 +311,15 @@ private fun AlarmRingingScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
+                }
+                if (tasks.any { it.id == AlarmDismissTaskType.FOCUS_TIMER.storageKey }) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(id = R.string.alarm_task_backup_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             } else {

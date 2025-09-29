@@ -1,6 +1,7 @@
 package hu.bbara.viewideas.ui.alarm
 
 import hu.bbara.viewideas.data.alarm.calculateNextTrigger
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDateTime
@@ -30,14 +31,16 @@ data class AlarmUiModel(
     val label: String,
     val isActive: Boolean,
     val repeatDays: Set<DayOfWeek>,
-    val soundUri: String?
+    val soundUri: String?,
+    val dismissTask: AlarmDismissTaskType
 )
 
 data class AlarmCreationState(
     val time: LocalTime?,
     val label: String,
     val repeatDays: Set<DayOfWeek>,
-    val soundUri: String?
+    val soundUri: String?,
+    val dismissTask: AlarmDismissTaskType
 )
 
 data class UpcomingAlarm(
@@ -53,7 +56,8 @@ internal fun AlarmUiModel.toCreationState(): AlarmCreationState =
         time = time,
         label = label,
         repeatDays = repeatDays.toSet(),
-        soundUri = soundUri
+        soundUri = soundUri,
+        dismissTask = dismissTask
     )
 
 internal fun LocalTime.formatForDisplay(is24Hour: Boolean): String {
@@ -69,7 +73,8 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             label = "Morning run",
             isActive = true,
             repeatDays = dayOrder.take(5).toSet(),
-            soundUri = null
+            soundUri = null,
+            dismissTask = AlarmDismissTaskType.OBJECT_DETECTION
         ),
         AlarmUiModel(
             id = 2,
@@ -77,7 +82,8 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             label = "Team standup",
             isActive = true,
             repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
-            soundUri = null
+            soundUri = null,
+            dismissTask = AlarmDismissTaskType.MATH_CHALLENGE
         ),
         AlarmUiModel(
             id = 3,
@@ -85,7 +91,8 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             label = "Wind down",
             isActive = false,
             repeatDays = setOf(DayOfWeek.SUNDAY),
-            soundUri = null
+            soundUri = null,
+            dismissTask = AlarmDismissTaskType.FOCUS_TIMER
         )
     ).sortedWith(alarmSorter)
 }
@@ -96,9 +103,10 @@ internal fun defaultAlarmTime(): LocalTime {
 
 internal fun sampleDraft(useCurrentTime: Boolean = true): AlarmCreationState = AlarmCreationState(
     time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
-    label = "",
+    label = "Alarm",
     repeatDays = emptySet(),
-    soundUri = null
+    soundUri = null,
+    dismissTask = AlarmDismissTaskType.DEFAULT
 )
 
 internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {

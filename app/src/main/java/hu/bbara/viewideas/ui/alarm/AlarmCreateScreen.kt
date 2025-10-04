@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -407,4 +408,5 @@ private fun taskIconFor(type: AlarmDismissTaskType): ImageVector = when (type) {
     AlarmDismissTaskType.OBJECT_DETECTION -> Icons.Filled.PhotoCamera
     AlarmDismissTaskType.MATH_CHALLENGE -> Icons.Filled.Calculate
     AlarmDismissTaskType.FOCUS_TIMER -> Icons.Filled.Timer
+    AlarmDismissTaskType.QR_BARCODE_SCAN -> Icons.Filled.QrCode2
 }

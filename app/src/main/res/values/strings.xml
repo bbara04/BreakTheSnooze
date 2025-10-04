@@ -7,6 +7,11 @@
     <string name="alarm_ringing_message">Alarm is ringing</string>
     <string name="alarm_scan_object">Scan toothbrush</string>
     <string name="alarm_math_challenge">Solve math challenge</string>
+    <string name="alarm_qr_barcode_scan">Scan QR/Barcode</string>
+    <string name="qr_barcode_title">Scan QR or Barcode</string>
+    <string name="qr_barcode_instructions">Point camera at any QR code or barcode</string>
+    <string name="qr_barcode_detected">Code detected!</string>
+    <string name="qr_barcode_cancel">Cancel</string>
     <string name="math_challenge_title">Multiplication challenge</string>
     <string name="math_challenge_progress">Question %1$d of %2$d</string>
     <string name="math_challenge_instructions">Enter the result:</string>

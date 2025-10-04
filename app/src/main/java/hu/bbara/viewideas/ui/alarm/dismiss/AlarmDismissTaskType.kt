@@ -6,7 +6,8 @@ import hu.bbara.viewideas.R
 enum class AlarmDismissTaskType(val storageKey: String, @StringRes val optionLabelResId: Int) {
     OBJECT_DETECTION("object_detection", R.string.alarm_scan_object),
     MATH_CHALLENGE("math_challenge", R.string.alarm_math_challenge),
-    FOCUS_TIMER("focus_timer", R.string.alarm_focus_task);
+    FOCUS_TIMER("focus_timer", R.string.alarm_focus_task),
+    QR_BARCODE_SCAN("qr_barcode_scan", R.string.alarm_qr_barcode_scan);
 
     companion object {
         val DEFAULT: AlarmDismissTaskType = MATH_CHALLENGE
@@ -22,4 +23,5 @@ fun AlarmDismissTaskType.createTask(showDebugOverlay: Boolean = false): AlarmDis
     AlarmDismissTaskType.OBJECT_DETECTION -> ObjectDetectionDismissTask(showDebugOverlay = showDebugOverlay)
     AlarmDismissTaskType.MATH_CHALLENGE -> MathChallengeDismissTask()
     AlarmDismissTaskType.FOCUS_TIMER -> FocusTimerDismissTask()
+    AlarmDismissTaskType.QR_BARCODE_SCAN -> QrBarcodeScanDismissTask()
 }

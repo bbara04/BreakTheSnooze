@@ -10,8 +10,12 @@
     <string name="alarm_qr_barcode_scan">Scan QR/Barcode</string>
     <string name="qr_barcode_title">Scan QR or Barcode</string>
     <string name="qr_barcode_instructions">Point camera at any QR code or barcode</string>
+    <string name="qr_barcode_specific_instructions">Scan the assigned code to dismiss the alarm</string>
+    <string name="qr_barcode_mismatch">Scanned code does not match the assigned code.</string>
     <string name="qr_barcode_detected">Code detected!</string>
     <string name="qr_barcode_cancel">Cancel</string>
+    <string name="qr_barcode_assign_title">Assign QR or Barcode</string>
+    <string name="qr_barcode_assign_instructions">Point the camera at the code you want to assign</string>
     <string name="math_challenge_title">Multiplication challenge</string>
     <string name="math_challenge_progress">Question %1$d of %2$d</string>
     <string name="math_challenge_instructions">Enter the result:</string>
@@ -22,6 +26,11 @@
     <string name="math_challenge_enter">Enter</string>
     <string name="alarm_focus_task">Stay focused</string>
     <string name="alarm_task_section_title">Dismiss task</string>
+    <string name="alarm_qr_assignment_title">Assigned QR/Barcode</string>
+    <string name="alarm_qr_assignment_hint">Tap to scan a code</string>
+    <string name="alarm_qr_assignment_value_label">Assigned code</string>
+    <string name="alarm_qr_assignment_scan">Scan code</string>
+    <string name="alarm_qr_assignment_clear">Clear assigned code</string>
     <string name="settings_title">Settings</string>
     <string name="settings_back_content_description">Back</string>
     <string name="settings_defaults_title">Defaults</string>

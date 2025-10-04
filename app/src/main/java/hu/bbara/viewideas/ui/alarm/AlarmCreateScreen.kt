@@ -5,7 +5,9 @@ import android.content.Intent
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.net.Uri
+import android.provider.Settings
 import android.text.format.DateFormat
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -55,9 +57,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import hu.bbara.viewideas.R
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.viewideas.ui.alarm.dismiss.BarcodeScannerContent
+import hu.bbara.viewideas.ui.alarm.dismiss.PermissionDeniedContent
 import java.time.DayOfWeek
 import java.time.LocalTime
 
@@ -71,6 +76,7 @@ internal fun AlarmCreateRoute(
     onToggleDay: (DayOfWeek) -> Unit,
     onSoundSelected: (String?) -> Unit,
     onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
+    onQrBarcodeValueChange: (String?) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
@@ -83,6 +89,7 @@ internal fun AlarmCreateRoute(
     val timePickerState = rememberTimePickerState(is24Hour = is24Hour)
     val soundName = remember(draft.soundUri) { resolveRingtoneTitle(context, draft.soundUri) }
     var showTaskDialog by rememberSaveable { mutableStateOf(false) }
+    var showQrScanner by rememberSaveable { mutableStateOf(false) }
     val soundPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -316,6 +323,61 @@ internal fun AlarmCreateRoute(
                 }
             }
 
+            if (draft.dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = stringResource(id = R.string.alarm_qr_assignment_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Surface(
+                        onClick = { showQrScanner = true },
+                        shape = MaterialTheme.shapes.extraLarge,
+                        tonalElevation = 4.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.alarm_qr_assignment_value_label),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            val assignedValue = draft.qrBarcodeValue
+                            if (assignedValue.isNullOrBlank()) {
+                                Text(
+                                    text = stringResource(id = R.string.alarm_qr_assignment_hint),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Text(
+                                    text = assignedValue,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        TextButton(onClick = { showQrScanner = true }) {
+                            Text(text = stringResource(id = R.string.alarm_qr_assignment_scan))
+                        }
+                        if (!draft.qrBarcodeValue.isNullOrBlank()) {
+                            TextButton(onClick = { onQrBarcodeValueChange(null) }) {
+                                Text(text = stringResource(id = R.string.alarm_qr_assignment_clear))
+                            }
+                        }
+                    }
+                }
+            }
+
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(text = "Active on", style = MaterialTheme.typography.titleMedium)
                 Row(
@@ -361,6 +423,16 @@ internal fun AlarmCreateRoute(
         }
     }
 
+    if (showQrScanner) {
+        AssignQrBarcodeScreen(
+            onDismiss = { showQrScanner = false },
+            onBarcodeCaptured = { value ->
+                onQrBarcodeValueChange(value.trim())
+                showQrScanner = false
+            }
+        )
+    }
+
     if (showTimePicker) {
         BasicAlertDialog(onDismissRequest = { showTimePicker = false }) {
             Surface(
@@ -390,6 +462,65 @@ internal fun AlarmCreateRoute(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssignQrBarcodeScreen(
+    onDismiss: () -> Unit,
+    onBarcodeCaptured: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val permissionState = rememberCameraPermissionState()
+    val title = stringResource(id = R.string.qr_barcode_assign_title)
+    val instructions = stringResource(id = R.string.qr_barcode_assign_instructions)
+    val cancelLabel = stringResource(id = R.string.qr_barcode_cancel)
+    val packageName = context.packageName
+    BackHandler(enabled = true, onBack = onDismiss)
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        when {
+            permissionState.hasPermission -> {
+                BarcodeScannerContent(
+                    modifier = Modifier.fillMaxSize(),
+                    title = title,
+                    instructions = instructions,
+                    cancelLabel = cancelLabel,
+                    onBarcodeDetected = { value ->
+                        onBarcodeCaptured(value.trim())
+                        true
+                    },
+                    onCancel = onDismiss
+                )
+            }
+
+            permissionState.permanentlyDenied -> {
+                PermissionDeniedContent(
+                    modifier = Modifier.fillMaxSize(),
+                    isPermanent = true,
+                    onOpenSettings = {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.fromParts("package", packageName, null)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                    },
+                    onCancel = onDismiss
+                )
+            }
+
+            else -> {
+                PermissionDeniedContent(
+                    modifier = Modifier.fillMaxSize(),
+                    isPermanent = false,
+                    onRequest = { permissionState.requestPermission() },
+                    onCancel = onDismiss
+                )
             }
         }
     }

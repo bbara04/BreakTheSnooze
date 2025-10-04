@@ -1,13 +1,9 @@
 package hu.bbara.viewideas.ui.alarm.dismiss
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
@@ -16,20 +12,23 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,14 +42,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import hu.bbara.viewideas.R
+import hu.bbara.viewideas.ui.alarm.rememberCameraPermissionState
 import java.util.concurrent.Executors
 
-class QrBarcodeScanDismissTask : AlarmDismissTask {
+class QrBarcodeScanDismissTask(private val expectedValue: String? = null) : AlarmDismissTask {
     override val id: String = "qr_barcode_scan"
     override val labelResId: Int = R.string.alarm_qr_barcode_scan
 
@@ -62,78 +60,44 @@ class QrBarcodeScanDismissTask : AlarmDismissTask {
     ) {
         val context = LocalContext.current
         val packageName = context.packageName
-        val lifecycleOwner = LocalLifecycleOwner.current
-
-        var hasCameraPermission by remember { mutableStateOf(false) }
-        var permanentlyDenied by remember { mutableStateOf(false) }
-
-        val permissionLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission()
-        ) { isGranted ->
-            hasCameraPermission = isGranted
-            if (!isGranted) {
-                val activity = context as? android.app.Activity
-                permanentlyDenied = activity?.let {
-                    !androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(
-                        it,
-                        Manifest.permission.CAMERA
-                    )
-                } ?: false
-            } else {
-                permanentlyDenied = false
-            }
+        val permissionState = rememberCameraPermissionState()
+        val expectedNormalized = remember(expectedValue) { expectedValue?.trim() }
+        val title = stringResource(id = R.string.qr_barcode_title)
+        val instructions = if (expectedNormalized.isNullOrBlank()) {
+            stringResource(id = R.string.qr_barcode_instructions)
+        } else {
+            stringResource(id = R.string.qr_barcode_specific_instructions)
         }
+        val cancelLabel = stringResource(id = R.string.qr_barcode_cancel)
+        val mismatchText = stringResource(id = R.string.qr_barcode_mismatch)
 
-        // Initial check and request on first composition
-        LaunchedEffect(Unit) {
-            val granted = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-            hasCameraPermission = granted
-            if (!granted) {
-                permissionLauncher.launch(Manifest.permission.CAMERA)
-            }
-        }
-
-        // Re-check on resume
-        DisposableEffect(lifecycleOwner) {
-            val observer = LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    val granted = ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.CAMERA
-                    ) == PackageManager.PERMISSION_GRANTED
-                    hasCameraPermission = granted
-                    if (!granted) {
-                        val activity = context as? android.app.Activity
-                        permanentlyDenied = activity?.let {
-                            !androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale(
-                                it,
-                                Manifest.permission.CAMERA
-                            )
-                        } ?: false
-                    } else {
-                        permanentlyDenied = false
-                    }
-                }
-            }
-            val lifecycle = lifecycleOwner.lifecycle
-            lifecycle.addObserver(observer)
-            onDispose { lifecycle.removeObserver(observer) }
-        }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
 
         BackHandler { onCancelled() }
 
         when {
-            hasCameraPermission -> {
+            permissionState.hasPermission -> {
                 BarcodeScannerContent(
                     modifier = modifier,
-                    onBarcodeDetected = onCompleted,
+                    title = title,
+                    instructions = instructions,
+                    cancelLabel = cancelLabel,
+                    errorMessage = errorMessage,
+                    onBarcodeDetected = { rawValue ->
+                        val normalized = rawValue.trim()
+                        if (expectedNormalized.isNullOrBlank() || normalized == expectedNormalized) {
+                            errorMessage = null
+                            onCompleted()
+                            true
+                        } else {
+                            errorMessage = mismatchText
+                            false
+                        }
+                    },
                     onCancel = onCancelled
                 )
             }
-            permanentlyDenied -> {
+            permissionState.permanentlyDenied -> {
                 PermissionDeniedContent(
                     modifier = modifier,
                     isPermanent = true,
@@ -151,7 +115,7 @@ class QrBarcodeScanDismissTask : AlarmDismissTask {
                 PermissionDeniedContent(
                     modifier = modifier,
                     isPermanent = false,
-                    onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                    onRequest = { permissionState.requestPermission() },
                     onCancel = onCancelled
                 )
             }
@@ -160,9 +124,13 @@ class QrBarcodeScanDismissTask : AlarmDismissTask {
 }
 
 @Composable
-private fun BarcodeScannerContent(
+internal fun BarcodeScannerContent(
     modifier: Modifier = Modifier,
-    onBarcodeDetected: () -> Unit,
+    title: String,
+    instructions: String,
+    cancelLabel: String,
+    errorMessage: String? = null,
+    onBarcodeDetected: (String) -> Boolean,
     onCancel: () -> Unit
 ) {
     val context = LocalContext.current
@@ -184,109 +152,135 @@ private fun BarcodeScannerContent(
         }
     }
 
-    Surface(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        shape = MaterialTheme.shapes.extraLarge,
-        tonalElevation = 6.dp,
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AndroidView(
-                modifier = Modifier.fillMaxSize(),
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx)
-                    
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        
-                        val preview = Preview.Builder()
-                            .build()
-                            .also {
-                                it.setSurfaceProvider(previewView.surfaceProvider)
-                            }
-                        
-                        val imageAnalysis = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .build()
-                            .also {
-                                it.setAnalyzer(executor) { imageProxy ->
+    Box(modifier = modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                val previewView = PreviewView(ctx)
+
+                cameraProviderFuture.addListener({
+                    val cameraProvider = cameraProviderFuture.get()
+
+                    val preview = Preview.Builder()
+                        .build()
+                        .also {
+                            it.setSurfaceProvider(previewView.surfaceProvider)
+                        }
+
+                    val imageAnalysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                        .also {
+                            it.setAnalyzer(executor) { imageProxy ->
+                                if (detectionHandled) {
+                                    imageProxy.close()
+                                } else {
                                     processImageProxy(
                                         barcodeScanner,
                                         imageProxy,
-                                        onBarcodeDetected = {
-                                            if (!detectionHandled) {
-                                                detectionHandled = true
-                                                onBarcodeDetected()
-                                            }
+                                        onBarcodeDetected = onBarcodeDetected
+                                    ) { accepted ->
+                                        if (accepted) {
+                                            detectionHandled = true
                                         }
-                                    )
+                                    }
                                 }
                             }
-                        
-                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                        
-                        try {
-                            cameraProvider.unbindAll()
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                cameraSelector,
-                                preview,
-                                imageAnalysis
-                            )
-                        } catch (e: Exception) {
-                            // Handle camera binding errors
                         }
-                    }, ContextCompat.getMainExecutor(ctx))
-                    
-                    previewView
-                }
-            )
-            
-            // Overlay UI
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceBetween
+
+                    val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                    try {
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            imageAnalysis
+                        )
+                    } catch (e: Exception) {
+                        // Handle camera binding errors
+                    }
+                }, ContextCompat.getMainExecutor(ctx))
+
+                previewView
+            }
+        )
+
+        // Viewfinder square
+        val viewfinderSize = 260.dp
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(viewfinderSize)
+                .border(
+                    width = 3.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(12.dp)
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(top = 32.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = stringResource(id = R.string.qr_barcode_title),
-                        style = MaterialTheme.typography.headlineMedium,
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = stringResource(id = R.string.qr_barcode_instructions),
+                        text = instructions,
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (!errorMessage.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = errorMessage,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
-                
-                Button(
-                    onClick = onCancel,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                ) {
-                    Text(text = stringResource(id = R.string.qr_barcode_cancel))
-                }
+            }
+
+            Button(
+                onClick = onCancel,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Text(text = cancelLabel)
             }
         }
     }
 }
 
 @OptIn(ExperimentalGetImage::class)
-private fun processImageProxy(
+internal fun processImageProxy(
     barcodeScanner: com.google.mlkit.vision.barcode.BarcodeScanner,
     imageProxy: ImageProxy,
-    onBarcodeDetected: () -> Unit
+    onBarcodeDetected: (String) -> Boolean,
+    onResult: (Boolean) -> Unit
 ) {
     val mediaImage = imageProxy.image
     if (mediaImage != null) {
@@ -297,9 +291,20 @@ private fun processImageProxy(
         
         barcodeScanner.process(image)
             .addOnSuccessListener { barcodes ->
+                var accepted = false
                 if (barcodes.isNotEmpty()) {
-                    onBarcodeDetected()
+                    for (barcode in barcodes) {
+                        val value = barcode.rawValue?.trim() ?: continue
+                        if (onBarcodeDetected(value)) {
+                            accepted = true
+                            break
+                        }
+                    }
                 }
+                onResult(accepted)
+            }
+            .addOnFailureListener {
+                onResult(false)
             }
             .addOnCompleteListener {
                 imageProxy.close()
@@ -310,7 +315,7 @@ private fun processImageProxy(
 }
 
 @Composable
-private fun PermissionDeniedContent(
+internal fun PermissionDeniedContent(
     modifier: Modifier = Modifier,
     isPermanent: Boolean,
     onRequest: (() -> Unit)? = null,
@@ -318,17 +323,14 @@ private fun PermissionDeniedContent(
     onCancel: () -> Unit
 ) {
     Surface(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        shape = MaterialTheme.shapes.extraLarge,
-        tonalElevation = 6.dp,
-        color = MaterialTheme.colorScheme.surface
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(horizontal = 32.dp)
+                .padding(top = 48.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

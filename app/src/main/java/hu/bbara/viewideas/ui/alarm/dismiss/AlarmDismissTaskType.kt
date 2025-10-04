@@ -19,9 +19,12 @@ enum class AlarmDismissTaskType(val storageKey: String, @StringRes val optionLab
     }
 }
 
-fun AlarmDismissTaskType.createTask(showDebugOverlay: Boolean = false): AlarmDismissTask = when (this) {
+fun AlarmDismissTaskType.createTask(
+    showDebugOverlay: Boolean = false,
+    qrBarcodeValue: String? = null
+): AlarmDismissTask = when (this) {
     AlarmDismissTaskType.OBJECT_DETECTION -> ObjectDetectionDismissTask(showDebugOverlay = showDebugOverlay)
     AlarmDismissTaskType.MATH_CHALLENGE -> MathChallengeDismissTask()
     AlarmDismissTaskType.FOCUS_TIMER -> FocusTimerDismissTask()
-    AlarmDismissTaskType.QR_BARCODE_SCAN -> QrBarcodeScanDismissTask()
+    AlarmDismissTaskType.QR_BARCODE_SCAN -> QrBarcodeScanDismissTask(expectedValue = qrBarcodeValue)
 }

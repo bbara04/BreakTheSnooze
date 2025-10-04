@@ -196,7 +196,21 @@ class AlarmViewModel(
 
     fun setDraftDismissTask(task: AlarmDismissTaskType) {
         _uiState.update { state ->
-            state.copy(draft = state.draft.copy(dismissTask = task))
+            val updatedDraft = state.draft.copy(
+                dismissTask = task,
+                qrBarcodeValue = if (task == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                    state.draft.qrBarcodeValue
+                } else {
+                    null
+                }
+            )
+            state.copy(draft = updatedDraft)
+        }
+    }
+
+    fun setDraftQrBarcodeValue(value: String?) {
+        _uiState.update { state ->
+            state.copy(draft = state.draft.copy(qrBarcodeValue = value))
         }
     }
 

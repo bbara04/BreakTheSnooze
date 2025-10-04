@@ -140,7 +140,10 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun buildTasksForAlarm(alarm: AlarmUiModel): List<AlarmDismissTask> {
-        val primary = alarm.dismissTask.createTask(showDebugOverlay = debugModeEnabled.value)
+        val primary = alarm.dismissTask.createTask(
+            showDebugOverlay = debugModeEnabled.value,
+            qrBarcodeValue = alarm.qrBarcodeValue
+        )
         val backup = FocusTimerDismissTask()
         return if (primary.id == backup.id) {
             listOf(primary)

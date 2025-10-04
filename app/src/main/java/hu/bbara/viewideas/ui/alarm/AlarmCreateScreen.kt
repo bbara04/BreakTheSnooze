@@ -290,7 +290,9 @@ internal fun AlarmCreateRoute(
                                         Surface(
                                             onClick = {
                                                 onDismissTaskSelected(option)
-                                                showTaskDialog = false
+                                                if (option != AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                                                    showTaskDialog = false
+                                                }
                                             },
                                             shape = MaterialTheme.shapes.large,
                                             tonalElevation = if (selected) 6.dp else 2.dp,
@@ -334,158 +336,23 @@ internal fun AlarmCreateRoute(
                                     }
                                 }
                             }
+                            if (draft.dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                                QrBarcodeSettings(
+                                    draft = draft,
+                                    qrMode = qrMode,
+                                    onQrScanModeChange = onQrScanModeChange,
+                                    onQrBarcodeValueChange = onQrBarcodeValueChange,
+                                    onQrUniqueCountChange = onQrUniqueCountChange,
+                                    onShowQrScanner = { showQrScanner = true }
+                                )
+                            }
                             Spacer(modifier = Modifier.height(4.dp))
-                        }
-                    }
-                }
-            }
-
-            if (draft.dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Text(
-                        text = stringResource(id = R.string.alarm_qr_mode_title),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        listOf(QrScanMode.SpecificCode, QrScanMode.UniqueCodes).forEach { mode ->
-                            val selected = mode == qrMode
-                            Surface(
-                                onClick = { onQrScanModeChange(mode) },
-                                shape = MaterialTheme.shapes.large,
-                                tonalElevation = if (selected) 6.dp else 2.dp,
-                                color = if (selected) {
-                                    MaterialTheme.colorScheme.primaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.surfaceVariant
-                                },
-                                contentColor = if (selected) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                },
-                                modifier = Modifier.weight(1f)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
                             ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    val icon = if (mode == QrScanMode.SpecificCode) Icons.Filled.QrCode2 else Icons.Filled.PhotoCamera
-                                    Icon(imageVector = icon, contentDescription = null)
-                                    Text(
-                                        text = stringResource(
-                                            id = if (mode == QrScanMode.SpecificCode) {
-                                                R.string.alarm_qr_mode_specific
-                                            } else {
-                                                R.string.alarm_qr_mode_unique
-                                            }
-                                        ),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    when (qrMode) {
-                        QrScanMode.SpecificCode -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Surface(
-                                    onClick = { showQrScanner = true },
-                                    shape = MaterialTheme.shapes.extraLarge,
-                                    tonalElevation = 4.dp,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 20.dp, vertical = 18.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = R.string.alarm_qr_assignment_value_label),
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        val assignedValue = draft.qrBarcodeValue
-                                        if (assignedValue.isNullOrBlank()) {
-                                            Text(
-                                                text = stringResource(id = R.string.alarm_qr_assignment_hint),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        } else {
-                                            Text(
-                                                text = assignedValue,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                maxLines = 2,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        }
-                                    }
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    TextButton(onClick = { showQrScanner = true }) {
-                                        Text(text = stringResource(id = R.string.alarm_qr_assignment_scan))
-                                    }
-                                    if (!draft.qrBarcodeValue.isNullOrBlank()) {
-                                        TextButton(onClick = { onQrBarcodeValueChange(null) }) {
-                                            Text(text = stringResource(id = R.string.alarm_qr_assignment_clear))
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        QrScanMode.UniqueCodes -> {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Surface(
-                                    shape = MaterialTheme.shapes.extraLarge,
-                                    tonalElevation = 4.dp,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 20.dp, vertical = 18.dp),
-                                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(id = R.string.alarm_qr_unique_count_label),
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        Text(
-                                            text = stringResource(
-                                                id = R.string.alarm_qr_unique_count_hint,
-                                                draft.qrRequiredUniqueCount
-                                            ),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    IconButton(onClick = { onQrUniqueCountChange(draft.qrRequiredUniqueCount - 1) }, enabled = draft.qrRequiredUniqueCount > MIN_QR_UNIQUE_COUNT) {
-                                        Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-                                    }
-                                    Text(
-                                        text = draft.qrRequiredUniqueCount.toString(),
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        modifier = Modifier.padding(horizontal = 12.dp)
-                                    )
-                                    IconButton(onClick = { onQrUniqueCountChange(draft.qrRequiredUniqueCount + 1) }, enabled = draft.qrRequiredUniqueCount < MAX_QR_UNIQUE_COUNT) {
-                                        Icon(imageVector = Icons.Filled.Add, contentDescription = null)
-                                    }
+                                TextButton(onClick = { showTaskDialog = false }) {
+                                    Text("Done")
                                 }
                             }
                         }
@@ -517,7 +384,7 @@ internal fun AlarmCreateRoute(
                                 ButtonDefaults.textButtonColors(
                                     contentColor = MaterialTheme.colorScheme.onSurface
                                 )
-                            }
+                            },
                         ) {
                             Text(text = day.displayName())
                         }
@@ -581,6 +448,168 @@ internal fun AlarmCreateRoute(
         }
     }
 }
+
+@Composable
+private fun QrBarcodeSettings(
+    draft: AlarmCreationState,
+    qrMode: QrScanMode,
+    onQrScanModeChange: (QrScanMode) -> Unit,
+    onQrBarcodeValueChange: (String?) -> Unit,
+    onQrUniqueCountChange: (Int) -> Unit,
+    onShowQrScanner: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = stringResource(id = R.string.alarm_qr_mode_title),
+            style = MaterialTheme.typography.titleMedium
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            listOf(QrScanMode.SpecificCode, QrScanMode.UniqueCodes).forEach { mode ->
+                val selected = mode == qrMode
+                Surface(
+                    onClick = { onQrScanModeChange(mode) },
+                    shape = MaterialTheme.shapes.large,
+                    tonalElevation = if (selected) 6.dp else 2.dp,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    contentColor = if (selected) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val icon = if (mode == QrScanMode.SpecificCode) Icons.Filled.QrCode2 else Icons.Filled.PhotoCamera
+                        Icon(imageVector = icon, contentDescription = null)
+                        Text(
+                            text = stringResource(
+                                id = if (mode == QrScanMode.SpecificCode) {
+                                    R.string.alarm_qr_mode_specific
+                                } else {
+                                    R.string.alarm_qr_mode_unique
+                                }
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        when (qrMode) {
+            QrScanMode.SpecificCode -> {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        onClick = { onShowQrScanner() },
+                        shape = MaterialTheme.shapes.extraLarge,
+                        tonalElevation = 4.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.alarm_qr_assignment_value_label),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            val assignedValue = draft.qrBarcodeValue
+                            if (assignedValue.isNullOrBlank()) {
+                                Text(
+                                    text = stringResource(id = R.string.alarm_qr_assignment_hint),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            } else {
+                                Text(
+                                    text = assignedValue,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        TextButton(onClick = { onShowQrScanner() }) {
+                            Text(text = stringResource(id = R.string.alarm_qr_assignment_scan))
+                        }
+                        if (!draft.qrBarcodeValue.isNullOrBlank()) {
+                            TextButton(onClick = { onQrBarcodeValueChange(null) }) {
+                                Text(text = stringResource(id = R.string.alarm_qr_assignment_clear))
+                            }
+                        }
+                    }
+                }
+            }
+
+            QrScanMode.UniqueCodes -> {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Surface(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        tonalElevation = 4.dp,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.alarm_qr_unique_count_label),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(
+                                    id = R.string.alarm_qr_unique_count_hint,
+                                    draft.qrRequiredUniqueCount
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { onQrUniqueCountChange(draft.qrRequiredUniqueCount - 1) }, enabled = draft.qrRequiredUniqueCount > MIN_QR_UNIQUE_COUNT) {
+                            Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
+                        }
+                        Text(
+                            text = draft.qrRequiredUniqueCount.toString(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(horizontal = 12.dp)
+                        )
+                        IconButton(onClick = { onQrUniqueCountChange(draft.qrRequiredUniqueCount + 1) }, enabled = draft.qrRequiredUniqueCount < MAX_QR_UNIQUE_COUNT) {
+                            Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun AssignQrBarcodeScreen(
@@ -653,6 +682,6 @@ private fun resolveRingtoneTitle(context: android.content.Context, soundUri: Str
 private fun taskIconFor(type: AlarmDismissTaskType): ImageVector = when (type) {
     AlarmDismissTaskType.OBJECT_DETECTION -> Icons.Filled.PhotoCamera
     AlarmDismissTaskType.MATH_CHALLENGE -> Icons.Filled.Calculate
-    AlarmDismissTaskType.FOCUS_TIMER -> Icons.Filled.Timer
     AlarmDismissTaskType.QR_BARCODE_SCAN -> Icons.Filled.QrCode2
+    AlarmDismissTaskType.FOCUS_TIMER -> Icons.Filled.Timer
 }

@@ -48,7 +48,10 @@ import hu.bbara.viewideas.R
 import hu.bbara.viewideas.ui.alarm.rememberCameraPermissionState
 import java.util.concurrent.Executors
 
-class QrBarcodeScanDismissTask(private val expectedValue: String? = null) : AlarmDismissTask {
+class QrBarcodeScanDismissTask(
+    private val expectedValue: String? = null,
+    private val requiredUniqueCount: Int = 0
+) : AlarmDismissTask {
     override val id: String = "qr_barcode_scan"
     override val labelResId: Int = R.string.alarm_qr_barcode_scan
 
@@ -62,36 +65,71 @@ class QrBarcodeScanDismissTask(private val expectedValue: String? = null) : Alar
         val packageName = context.packageName
         val permissionState = rememberCameraPermissionState()
         val expectedNormalized = remember(expectedValue) { expectedValue?.trim() }
+        val uniqueGoal = remember(requiredUniqueCount) { requiredUniqueCount.coerceAtLeast(0) }
+        val uniqueMode = expectedNormalized.isNullOrBlank() && uniqueGoal > 0
         val title = stringResource(id = R.string.qr_barcode_title)
-        val instructions = if (expectedNormalized.isNullOrBlank()) {
-            stringResource(id = R.string.qr_barcode_instructions)
-        } else {
-            stringResource(id = R.string.qr_barcode_specific_instructions)
+        val instructions = when {
+            expectedNormalized != null -> stringResource(id = R.string.qr_barcode_specific_instructions)
+            uniqueMode -> stringResource(id = R.string.qr_barcode_unique_instructions, uniqueGoal)
+            else -> stringResource(id = R.string.qr_barcode_instructions)
         }
         val cancelLabel = stringResource(id = R.string.qr_barcode_cancel)
         val mismatchText = stringResource(id = R.string.qr_barcode_mismatch)
+        val duplicateText = stringResource(id = R.string.qr_barcode_duplicate)
 
         var errorMessage by remember { mutableStateOf<String?>(null) }
+        var scannedCodes by remember { mutableStateOf(setOf<String>()) }
 
         BackHandler { onCancelled() }
 
         when {
             permissionState.hasPermission -> {
+                val progressText = if (uniqueMode) {
+                    stringResource(
+                        id = R.string.qr_barcode_unique_progress,
+                        scannedCodes.size,
+                        uniqueGoal
+                    )
+                } else {
+                    null
+                }
                 BarcodeScannerContent(
                     modifier = modifier,
                     title = title,
                     instructions = instructions,
                     cancelLabel = cancelLabel,
                     errorMessage = errorMessage,
+                    progressText = progressText,
                     onBarcodeDetected = { rawValue ->
                         val normalized = rawValue.trim()
-                        if (expectedNormalized.isNullOrBlank() || normalized == expectedNormalized) {
+                        if (expectedNormalized != null) {
+                            if (normalized == expectedNormalized) {
+                                errorMessage = null
+                                onCompleted()
+                                true
+                            } else {
+                                errorMessage = mismatchText
+                                false
+                            }
+                        } else if (uniqueMode) {
+                            if (scannedCodes.contains(normalized)) {
+                                errorMessage = duplicateText
+                                false
+                            } else {
+                                val updatedSet = scannedCodes + normalized
+                                scannedCodes = updatedSet
+                                errorMessage = null
+                                if (updatedSet.size >= uniqueGoal) {
+                                    onCompleted()
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                        } else {
                             errorMessage = null
                             onCompleted()
                             true
-                        } else {
-                            errorMessage = mismatchText
-                            false
                         }
                     },
                     onCancel = onCancelled
@@ -130,6 +168,7 @@ internal fun BarcodeScannerContent(
     instructions: String,
     cancelLabel: String,
     errorMessage: String? = null,
+    progressText: String? = null,
     onBarcodeDetected: (String) -> Boolean,
     onCancel: () -> Unit
 ) {
@@ -251,6 +290,15 @@ internal fun BarcodeScannerContent(
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (!progressText.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = progressText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     if (!errorMessage.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(

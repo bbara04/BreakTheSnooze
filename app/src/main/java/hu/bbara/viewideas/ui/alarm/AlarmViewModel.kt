@@ -196,21 +196,53 @@ class AlarmViewModel(
 
     fun setDraftDismissTask(task: AlarmDismissTaskType) {
         _uiState.update { state ->
-            val updatedDraft = state.draft.copy(
-                dismissTask = task,
-                qrBarcodeValue = if (task == AlarmDismissTaskType.QR_BARCODE_SCAN) {
-                    state.draft.qrBarcodeValue
-                } else {
-                    null
-                }
-            )
+            val updatedDraft = if (task == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                state.draft.copy(dismissTask = task)
+            } else {
+                state.draft.copy(
+                    dismissTask = task,
+                    qrBarcodeValue = null,
+                    qrRequiredUniqueCount = 0
+                )
+            }
             state.copy(draft = updatedDraft)
         }
     }
 
     fun setDraftQrBarcodeValue(value: String?) {
         _uiState.update { state ->
-            state.copy(draft = state.draft.copy(qrBarcodeValue = value))
+            state.copy(
+                draft = state.draft.copy(
+                    qrBarcodeValue = value,
+                    qrRequiredUniqueCount = if (value.isNullOrBlank()) state.draft.qrRequiredUniqueCount else 0
+                )
+            )
+        }
+    }
+
+    fun setDraftQrScanMode(mode: QrScanMode) {
+        _uiState.update { state ->
+            if (state.draft.dismissTask != AlarmDismissTaskType.QR_BARCODE_SCAN) return@update state
+            val updated = when (mode) {
+                QrScanMode.SpecificCode -> state.draft.copy(qrRequiredUniqueCount = 0)
+                QrScanMode.UniqueCodes -> state.draft.copy(
+                    qrBarcodeValue = null,
+                    qrRequiredUniqueCount = if (state.draft.qrRequiredUniqueCount >= MIN_QR_UNIQUE_COUNT) {
+                        state.draft.qrRequiredUniqueCount
+                    } else {
+                        DEFAULT_QR_UNIQUE_COUNT
+                    }
+                )
+            }
+            state.copy(draft = updated)
+        }
+    }
+
+    fun setDraftQrUniqueCount(count: Int) {
+        _uiState.update { state ->
+            if (state.draft.dismissTask != AlarmDismissTaskType.QR_BARCODE_SCAN) return@update state
+            val clamped = count.coerceIn(MIN_QR_UNIQUE_COUNT, MAX_QR_UNIQUE_COUNT)
+            state.copy(draft = state.draft.copy(qrRequiredUniqueCount = clamped, qrBarcodeValue = null))
         }
     }
 

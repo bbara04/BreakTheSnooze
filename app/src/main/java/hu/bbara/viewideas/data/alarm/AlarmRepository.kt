@@ -93,7 +93,8 @@ private fun AlarmEntity.toUiModel(): AlarmUiModel {
         repeatDays = repeatDays.toDaySet(),
         soundUri = soundUri,
         dismissTask = AlarmDismissTaskType.fromStorageKey(dismissTask),
-        qrBarcodeValue = qrBarcodeValue
+        qrBarcodeValue = qrBarcodeValue,
+        qrRequiredUniqueCount = qrUniqueRequiredCount
     )
 }
 
@@ -106,7 +107,8 @@ private fun AlarmUiModel.toEntity(): AlarmEntity {
         repeatDays = repeatDays.toStorageString(),
         soundUri = soundUri,
         dismissTask = dismissTask.storageKey,
-        qrBarcodeValue = qrBarcodeValue
+        qrBarcodeValue = qrBarcodeValue,
+        qrUniqueRequiredCount = qrRequiredUniqueCount
     )
 }
 
@@ -134,6 +136,7 @@ fun AlarmCreationState.toUiModelWithId(
         repeatDays = repeatDays,
         soundUri = soundUri,
         dismissTask = dismissTask,
-        qrBarcodeValue = qrBarcodeValue
+        qrBarcodeValue = qrBarcodeValue,
+        qrRequiredUniqueCount = qrRequiredUniqueCount
     )
 }

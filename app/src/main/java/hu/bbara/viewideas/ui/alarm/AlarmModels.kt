@@ -12,6 +12,12 @@ import java.util.Locale
 
 enum class AlarmDestination { List, Create, Settings }
 
+enum class QrScanMode { SpecificCode, UniqueCodes }
+
+internal const val MIN_QR_UNIQUE_COUNT: Int = 2
+internal const val MAX_QR_UNIQUE_COUNT: Int = 5
+internal const val DEFAULT_QR_UNIQUE_COUNT: Int = 3
+
 internal val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 private val timeFormatter12Hour: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")
 
@@ -33,7 +39,8 @@ data class AlarmUiModel(
     val repeatDays: Set<DayOfWeek>,
     val soundUri: String?,
     val dismissTask: AlarmDismissTaskType,
-    val qrBarcodeValue: String?
+    val qrBarcodeValue: String?,
+    val qrRequiredUniqueCount: Int
 )
 
 data class AlarmCreationState(
@@ -42,7 +49,8 @@ data class AlarmCreationState(
     val repeatDays: Set<DayOfWeek>,
     val soundUri: String?,
     val dismissTask: AlarmDismissTaskType,
-    val qrBarcodeValue: String?
+    val qrBarcodeValue: String?,
+    val qrRequiredUniqueCount: Int
 )
 
 data class UpcomingAlarm(
@@ -60,7 +68,8 @@ internal fun AlarmUiModel.toCreationState(): AlarmCreationState =
         repeatDays = repeatDays.toSet(),
         soundUri = soundUri,
         dismissTask = dismissTask,
-        qrBarcodeValue = qrBarcodeValue
+        qrBarcodeValue = qrBarcodeValue,
+        qrRequiredUniqueCount = qrRequiredUniqueCount
     )
 
 internal fun LocalTime.formatForDisplay(is24Hour: Boolean): String {
@@ -78,7 +87,8 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             repeatDays = dayOrder.take(5).toSet(),
             soundUri = null,
             dismissTask = AlarmDismissTaskType.OBJECT_DETECTION,
-            qrBarcodeValue = null
+            qrBarcodeValue = null,
+            qrRequiredUniqueCount = 0
         ),
         AlarmUiModel(
             id = 2,
@@ -88,7 +98,8 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
             soundUri = null,
             dismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
-            qrBarcodeValue = null
+            qrBarcodeValue = null,
+            qrRequiredUniqueCount = 0
         ),
         AlarmUiModel(
             id = 3,
@@ -98,7 +109,8 @@ internal fun sampleAlarms(): List<AlarmUiModel> {
             repeatDays = setOf(DayOfWeek.SUNDAY),
             soundUri = null,
             dismissTask = AlarmDismissTaskType.FOCUS_TIMER,
-            qrBarcodeValue = null
+            qrBarcodeValue = null,
+            qrRequiredUniqueCount = 0
         )
     ).sortedWith(alarmSorter)
 }
@@ -117,7 +129,8 @@ internal fun sampleDraft(
     repeatDays = emptySet(),
     soundUri = defaultSound,
     dismissTask = defaultTask,
-    qrBarcodeValue = null
+    qrBarcodeValue = null,
+    qrRequiredUniqueCount = 0
 )
 
 internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {

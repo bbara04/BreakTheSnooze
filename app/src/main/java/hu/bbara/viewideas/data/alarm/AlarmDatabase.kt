@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [AlarmEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AlarmDatabase : RoomDatabase() {
@@ -32,13 +32,19 @@ abstract class AlarmDatabase : RoomDatabase() {
             database.execSQL("ALTER TABLE alarms ADD COLUMN qr_barcode_value TEXT")
         }
 
+        private val MIGRATION_4_5 = androidx.room.migration.Migration(4, 5) { database ->
+            database.execSQL(
+                "ALTER TABLE alarms ADD COLUMN qr_unique_required_count INTEGER NOT NULL DEFAULT 0"
+            )
+        }
+
         fun getInstance(context: Context): AlarmDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     AlarmDatabase::class.java,
                     "alarms.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { INSTANCE = it }
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { INSTANCE = it }
             }
         }
     }

@@ -8,6 +8,7 @@
     <string name="alarm_scan_object">Scan toothbrush</string>
     <string name="alarm_math_challenge">Solve math challenge</string>
     <string name="alarm_qr_barcode_scan">Scan QR/Barcode</string>
+    <string name="alarm_memory_task">Memory sequence</string>
     <string name="qr_barcode_title">Scan QR or Barcode</string>
     <string name="qr_barcode_instructions">Point camera at any QR code or barcode</string>
     <string name="qr_barcode_specific_instructions">Scan the assigned code to dismiss the alarm</string>
@@ -61,4 +62,10 @@
     <string name="full_screen_permission_title">Allow Full-Screen Alarms</string>
     <string name="full_screen_permission_message">To make sure alarms can show over the lock screen, enable "Use full-screen intent" for BreakTheSnooze in system notification settings.</string>
     <string name="full_screen_permission_open_settings">Open settings</string>
+    <string name="memory_title">Repeat the sequence</string>
+    <string name="memory_instructions">Watch the squares light up, then tap them in the same order.</string>
+    <string name="memory_progress">Round %1$d of %2$d</string>
+    <string name="memory_cancel">Cancel</string>
+    <string name="memory_replay">Watch again</string>
+    <string name="memory_wrong">Incorrect order, try again.</string>
 </resources>

@@ -15,6 +15,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
@@ -47,12 +48,20 @@ class MainActivity : ComponentActivity() {
                 val view = LocalView.current
                 if (!view.isInEditMode) {
                     SideEffect {
+                        val useDarkIcons = colorScheme.background.luminance() > 0.5f
+                        window.decorView.setBackgroundColor(colorScheme.background.toArgb())
                         window.navigationBarColor = colorScheme.background.toArgb()
                         val controller = WindowCompat.getInsetsController(window, view)
-                        controller.isAppearanceLightNavigationBars = colorScheme.background.luminance() > 0.5f
+                        controller.isAppearanceLightNavigationBars = useDarkIcons
+                        controller.isAppearanceLightStatusBars = useDarkIcons
                     }
                 }
-                AlarmScreen(modifier = Modifier.fillMaxSize())
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = colorScheme.background
+                ) {
+                    AlarmScreen(modifier = Modifier.fillMaxSize())
+                }
             }
         }
     }

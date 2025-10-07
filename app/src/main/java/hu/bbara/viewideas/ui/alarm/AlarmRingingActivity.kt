@@ -1,6 +1,5 @@
 package hu.bbara.viewideas.ui.alarm
 
-import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -69,7 +68,6 @@ class AlarmRingingActivity : ComponentActivity() {
 
         configureWindow()
         wakeScreen()
-        dismissKeyguard()
         observeAlarm()
         observeSettings()
         registerDismissReceiver()
@@ -198,10 +196,7 @@ class AlarmRingingActivity : ComponentActivity() {
             )
         }
 
-        window.addFlags(
-            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-        )
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         hideSystemBars()
     }
@@ -229,11 +224,6 @@ class AlarmRingingActivity : ComponentActivity() {
         if (wakeLock.isHeld) {
             window.decorView.postDelayed({ wakeLock.releaseIfHeld() }, 2_000)
         }
-    }
-
-    private fun dismissKeyguard() {
-        val manager = ContextCompat.getSystemService(this, KeyguardManager::class.java)
-        manager?.requestDismissKeyguard(this, null)
     }
 
     private fun registerDismissReceiver() {

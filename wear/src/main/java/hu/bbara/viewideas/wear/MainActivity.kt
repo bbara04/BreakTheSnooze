@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Scaffold
@@ -28,15 +29,18 @@ import androidx.wear.compose.material.Text
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 
-class WearOverlayActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
 
     private var overlayVisible by mutableStateOf(false)
+    private var alarmId: Int = -1
     private lateinit var messageClient: MessageClient
     private val messageListener = MessageClient.OnMessageReceivedListener { event ->
         Log.d(TAG, "Activity listener received path=${event.path}")
         if (event.path == PhoneMessageListenerService.MESSAGE_PATH) {
+            val receivedId = event.data?.decodeToString()?.toIntOrNull() ?: -1
             runOnUiThread {
                 overlayVisible = true
+                alarmId = receivedId
                 Log.d(TAG, "Overlay made visible from activity listener")
             }
         }
@@ -50,14 +54,16 @@ class WearOverlayActivity : ComponentActivity() {
 
         messageClient = Wearable.getMessageClient(this)
 
-        overlayVisible = isOverlayIntent(intent)
-        Log.d(TAG, "onCreate overlayVisible=$overlayVisible action=${intent?.action}")
+        overlayVisible = shouldShowOverlay(intent)
+        alarmId = intent?.getIntExtra(EXTRA_ALARM_ID, -1) ?: -1
+        Log.d(TAG, "onCreate overlayVisible=$overlayVisible action=${intent?.action} alarmId=$alarmId")
+        cancelOverlayNotification()
 
         setContent {
             MaterialTheme {
                 Scaffold {
                     if (overlayVisible) {
-                        OverlayScreen(onDismiss = ::dismissOverlay)
+                        OverlayScreen(alarmId = alarmId, onDismiss = ::dismissOverlay)
                     } else {
                         IdleScreen()
                     }
@@ -80,28 +86,36 @@ class WearOverlayActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        overlayVisible = isOverlayIntent(intent)
-        Log.d(TAG, "onNewIntent overlayVisible=$overlayVisible action=${intent.action}")
+        overlayVisible = shouldShowOverlay(intent)
+        alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
+        Log.d(TAG, "onNewIntent overlayVisible=$overlayVisible action=${intent.action} alarmId=$alarmId")
+        cancelOverlayNotification()
     }
 
     private fun dismissOverlay() {
         overlayVisible = false
         finish()
         Log.d(TAG, "dismissOverlay invoked")
+        cancelOverlayNotification()
     }
 
-    private fun isOverlayIntent(intent: Intent?): Boolean {
+    private fun shouldShowOverlay(intent: Intent?): Boolean {
         return intent?.action == ACTION_SHOW_OVERLAY
+    }
+
+    private fun cancelOverlayNotification() {
+        NotificationManagerCompat.from(this).cancel(PhoneMessageListenerService.NOTIFICATION_ID)
     }
 
     companion object {
         const val ACTION_SHOW_OVERLAY = "hu.bbara.viewideas.wear.action.SHOW_OVERLAY"
-        private const val TAG = "WearOverlayActivity"
+        const val EXTRA_ALARM_ID = "hu.bbara.viewideas.wear.extra.ALARM_ID"
+        private const val TAG = "WearMainActivity"
     }
 }
 
 @Composable
-private fun OverlayScreen(onDismiss: () -> Unit) {
+private fun OverlayScreen(alarmId: Int, onDismiss: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -124,6 +138,14 @@ private fun OverlayScreen(onDismiss: () -> Unit) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
+            if (alarmId >= 0) {
+                Text(
+                    text = stringResource(id = R.string.overlay_alarm_id, alarmId),
+                    style = MaterialTheme.typography.caption1,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             Button(
                 modifier = Modifier.padding(top = 16.dp),
                 onClick = onDismiss

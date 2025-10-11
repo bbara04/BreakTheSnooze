@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.objectdetection.custom)
     implementation(libs.mlkit.barcode.scanning)
+    implementation(libs.play.services.wearable)
+    implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -69,4 +71,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     kapt(libs.androidx.room.compiler)
+    wearApp(project(":wear"))
 }

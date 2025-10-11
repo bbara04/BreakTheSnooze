@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">ViewIdeas Wear</string>
+    <string name="overlay_title">Phone alarm triggered</string>
+    <string name="overlay_message">Tap to dismiss overlay.</string>
+    <string name="overlay_dismiss">Dismiss</string>
+    <string name="idle_message">Waiting for phone alarm</string>
+</resources>

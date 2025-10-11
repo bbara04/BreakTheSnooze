@@ -8,7 +8,10 @@ import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
+import android.util.Log
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
+import hu.bbara.viewideas.wear.WearAlarmMessenger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -22,6 +25,7 @@ class AlarmRingtoneService : Service() {
     private var currentAlarmId: Int? = null
     private var playbackJob: kotlinx.coroutines.Job? = null
     private var isPaused: Boolean = false
+    private var wearNotificationSentForId: Int? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -29,25 +33,30 @@ class AlarmRingtoneService : Service() {
         val action = intent?.action
         val alarmId = intent?.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1) ?: -1
         if (alarmId == -1) {
+            Log.w(TAG, "onStartCommand without valid alarmId, stopping service")
             stopSelf()
             return START_NOT_STICKY
         }
 
         when (action) {
             AlarmIntents.ACTION_STOP_ALARM -> {
+                Log.d(TAG, "Received stop command for alarmId=$alarmId")
                 stopAlarm(alarmId)
                 return START_NOT_STICKY
             }
 
             AlarmIntents.ACTION_PAUSE_ALARM -> {
+                Log.d(TAG, "Received pause command for alarmId=$alarmId")
                 pauseAlarm(alarmId)
             }
 
             AlarmIntents.ACTION_RESUME_ALARM -> {
+                Log.d(TAG, "Received resume command for alarmId=$alarmId")
                 resumeAlarm(alarmId)
             }
 
             AlarmIntents.ACTION_ALARM_FIRED, null -> {
+                Log.d(TAG, "Received fired command for alarmId=$alarmId")
                 startAlarm(alarmId)
             }
         }
@@ -57,6 +66,7 @@ class AlarmRingtoneService : Service() {
 
     private fun startAlarm(alarmId: Int) {
         if (currentAlarmId == alarmId && mediaPlayer?.isPlaying == true) {
+            Log.d(TAG, "startAlarm ignored; already playing for alarmId=$alarmId")
             return
         }
         currentAlarmId = alarmId
@@ -68,6 +78,7 @@ class AlarmRingtoneService : Service() {
             val alarm = repository.getAlarmById(alarmId)
 
             if (alarm == null) {
+                Log.w(TAG, "No alarm found for alarmId=$alarmId, stopping service")
                 stopSelf()
                 return@launch
             }
@@ -76,7 +87,9 @@ class AlarmRingtoneService : Service() {
                 AlarmNotifications.buildNotification(applicationContext, alarm)
             }
             startForeground(AlarmNotifications.notificationId(alarmId), notification)
+            Log.d(TAG, "Foreground notification started for alarmId=$alarmId")
             launchRingingActivity(alarmId)
+            notifyWearDevice(alarmId)
             startPlayback(alarm.soundUri)
         }
     }
@@ -88,6 +101,8 @@ class AlarmRingtoneService : Service() {
         )
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         runCatching { startActivity(intent) }
+            .onSuccess { Log.d(TAG, "Launched AlarmRingingActivity for alarmId=$alarmId") }
+            .onFailure { Log.w(TAG, "Failed to launch AlarmRingingActivity for alarmId=$alarmId", it) }
     }
 
     private fun startPlayback(soundUri: String?) {
@@ -115,11 +130,13 @@ class AlarmRingtoneService : Service() {
     }
 
     private fun stopAlarm(alarmId: Int) {
+        Log.d(TAG, "Stopping alarm for alarmId=$alarmId")
         stopPlayback()
         playbackJob?.cancel()
         playbackJob = null
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         currentAlarmId = null
+        wearNotificationSentForId = null
         val notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         notificationManager?.cancel(AlarmNotifications.notificationId(alarmId))
@@ -166,5 +183,24 @@ class AlarmRingtoneService : Service() {
         playbackJob?.cancel()
         playbackJob = null
         super.onDestroy()
+        Log.d(TAG, "Service destroyed")
+    }
+
+    private suspend fun notifyWearDevice(alarmId: Int) {
+        if (wearNotificationSentForId == alarmId) return
+        Log.d(TAG, "notifyWearDevice invoked for alarmId=$alarmId")
+        runCatching {
+            WearAlarmMessenger.notifyAlarmStarted(this@AlarmRingtoneService, alarmId)
+        }.onSuccess {
+            wearNotificationSentForId = alarmId
+            Log.i(TAG, "Wear notification sent for alarmId=$alarmId")
+        }.onFailure { error ->
+            if (error is CancellationException) throw error
+            Log.w(TAG, "Failed to notify wear device for alarmId=$alarmId", error)
+        }
+    }
+
+    companion object {
+        private const val TAG = "AlarmRingtoneService"
     }
 }

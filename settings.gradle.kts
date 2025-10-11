@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "ViewIdeas"
 include(":app")
+include(":wear")
  

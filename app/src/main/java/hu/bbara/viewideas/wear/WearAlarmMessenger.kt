@@ -14,16 +14,7 @@ object WearAlarmMessenger {
     private const val ATTRIBUTION_TAG = "wear_alarm_bridge"
 
     suspend fun notifyAlarmStarted(context: Context, alarmId: Int) {
-        val attrContext = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            runCatching { context.createAttributionContext(ATTRIBUTION_TAG) }
-                .onFailure { error ->
-                    Log.w(TAG, "Failed to create attribution context", error)
-                }
-                .getOrNull() ?: context
-        } else {
-            context
-        }
-        val appContext = attrContext.applicationContext ?: attrContext
+        val appContext = prepareContext(context)
         Log.d(TAG, "notifyAlarmStarted for alarmId=$alarmId")
         val nodes = getConnectedNodes(appContext) ?: run {
             Log.w(TAG, "No connected nodes (null list) for alarmId=$alarmId")
@@ -50,10 +41,32 @@ object WearAlarmMessenger {
         }
     }
 
+    suspend fun hasConnectedWearDevice(context: Context): Boolean {
+        val appContext = prepareContext(context)
+        val nodes = getConnectedNodes(appContext) ?: return false
+        val hasConnectedNode = nodes.isNotEmpty()
+        Log.d(TAG, "hasConnectedWearDevice result=$hasConnectedNode (nodes=${nodes.size})")
+        return hasConnectedNode
+    }
+
     private suspend fun getConnectedNodes(context: Context) = runCatching {
         Wearable.getNodeClient(context).connectedNodes.await()
     }.onFailure { error ->
         if (error is CancellationException) throw error
         Log.w(TAG, "Unable to query connected wear nodes", error)
     }.getOrNull()
+
+    private fun prepareContext(context: Context): Context {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val attrContext = runCatching { context.createAttributionContext(ATTRIBUTION_TAG) }
+                .onFailure { error ->
+                    Log.w(TAG, "Failed to create attribution context", error)
+                }
+                .getOrNull()
+            if (attrContext != null) {
+                return attrContext.applicationContext ?: attrContext
+            }
+        }
+        return context.applicationContext ?: context
+    }
 }

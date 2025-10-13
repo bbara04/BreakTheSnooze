@@ -89,8 +89,20 @@ class AlarmRingtoneService : Service() {
             startForeground(AlarmNotifications.notificationId(alarmId), notification)
             Log.d(TAG, "Foreground notification started for alarmId=$alarmId")
             launchRingingActivity(alarmId)
+            val isWearConnected = withContext(Dispatchers.IO) {
+                runCatching {
+                    WearAlarmMessenger.hasConnectedWearDevice(applicationContext)
+                }.onFailure { error ->
+                    if (error is CancellationException) throw error
+                    Log.w(TAG, "Failed to determine wear connection state", error)
+                }.getOrDefault(false)
+            }
             notifyWearDevice(alarmId)
-            startPlayback(alarm.soundUri)
+            if (isWearConnected) {
+                Log.i(TAG, "Skipping phone ringtone because a wear device is connected")
+            } else {
+                startPlayback(alarm.soundUri)
+            }
         }
     }
 

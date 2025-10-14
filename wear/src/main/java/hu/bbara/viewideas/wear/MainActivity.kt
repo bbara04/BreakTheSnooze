@@ -1,7 +1,12 @@
 package hu.bbara.viewideas.wear
 
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,6 +39,8 @@ class MainActivity : ComponentActivity() {
     private var overlayVisible by mutableStateOf(false)
     private var alarmId: Int = -1
     private lateinit var messageClient: MessageClient
+    private var isVibrating = false
+    private val vibrator: Vibrator? by lazy { resolveVibrator() }
     private val messageListener = MessageClient.OnMessageReceivedListener { event ->
         Log.d(TAG, "Activity listener received path=${event.path}")
         if (event.path == PhoneMessageListenerService.MESSAGE_PATH) {
@@ -42,6 +49,7 @@ class MainActivity : ComponentActivity() {
                 overlayVisible = true
                 alarmId = receivedId
                 Log.d(TAG, "Overlay made visible from activity listener")
+                updateVibrationState()
             }
         }
     }
@@ -58,6 +66,7 @@ class MainActivity : ComponentActivity() {
         alarmId = intent?.getIntExtra(EXTRA_ALARM_ID, -1) ?: -1
         Log.d(TAG, "onCreate overlayVisible=$overlayVisible action=${intent?.action} alarmId=$alarmId")
         cancelOverlayNotification()
+        updateVibrationState()
 
         setContent {
             MaterialTheme {
@@ -90,10 +99,12 @@ class MainActivity : ComponentActivity() {
         alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
         Log.d(TAG, "onNewIntent overlayVisible=$overlayVisible action=${intent.action} alarmId=$alarmId")
         cancelOverlayNotification()
+        updateVibrationState()
     }
 
     private fun dismissOverlay() {
         overlayVisible = false
+        updateVibrationState()
         finish()
         Log.d(TAG, "dismissOverlay invoked")
         cancelOverlayNotification()
@@ -107,10 +118,66 @@ class MainActivity : ComponentActivity() {
         NotificationManagerCompat.from(this).cancel(PhoneMessageListenerService.NOTIFICATION_ID)
     }
 
+    override fun onDestroy() {
+        stopVibration()
+        super.onDestroy()
+    }
+
+    private fun updateVibrationState() {
+        if (overlayVisible) {
+            startVibration()
+        } else {
+            stopVibration()
+        }
+    }
+
+    private fun startVibration() {
+        if (isVibrating) {
+            return
+        }
+        val resolvedVibrator = vibrator
+        if (resolvedVibrator == null) {
+            Log.w(TAG, "No vibrator service available")
+            return
+        }
+        if (!resolvedVibrator.hasVibrator()) {
+            Log.w(TAG, "Device does not support vibration")
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val effect = VibrationEffect.createWaveform(VIBRATION_PATTERN, 0)
+            resolvedVibrator.vibrate(effect)
+        } else {
+            @Suppress("DEPRECATION")
+            resolvedVibrator.vibrate(VIBRATION_PATTERN, 0)
+        }
+        isVibrating = true
+        Log.d(TAG, "Alarm vibration started")
+    }
+
+    private fun stopVibration() {
+        if (!isVibrating) {
+            return
+        }
+        vibrator?.cancel()
+        isVibrating = false
+        Log.d(TAG, "Alarm vibration stopped")
+    }
+
+    private fun resolveVibrator(): Vibrator? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
+    }
+
     companion object {
         const val ACTION_SHOW_OVERLAY = "hu.bbara.viewideas.wear.action.SHOW_OVERLAY"
         const val EXTRA_ALARM_ID = "hu.bbara.viewideas.wear.extra.ALARM_ID"
         private const val TAG = "WearMainActivity"
+        private val VIBRATION_PATTERN = longArrayOf(0, 600, 400)
     }
 }
 

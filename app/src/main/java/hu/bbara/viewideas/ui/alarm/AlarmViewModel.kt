@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import hu.bbara.viewideas.data.alarm.AlarmRepository
 import hu.bbara.viewideas.data.alarm.AlarmScheduler
+import hu.bbara.viewideas.data.alarm.WakeEvent
 import hu.bbara.viewideas.data.alarm.toUiModelWithId
 import hu.bbara.viewideas.data.settings.SettingsRepository
 import hu.bbara.viewideas.data.settings.SettingsState
@@ -58,6 +59,14 @@ class AlarmViewModel(
             settingsRepository.settings.collect { settings ->
                 _uiState.update { state ->
                     state.copy(settings = settings)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            repository.wakeEvents.collect { events ->
+                _uiState.update { state ->
+                    state.copy(wakeEvents = events)
                 }
             }
         }
@@ -157,6 +166,14 @@ class AlarmViewModel(
         _uiState.update { state ->
             state.copy(destination = AlarmDestination.List)
         }
+    }
+
+    fun selectHomeTab(tab: AlarmHomeTab) {
+        _uiState.update { state -> state.copy(homeTab = tab) }
+    }
+
+    fun setBreakdownPeriod(period: BreakdownPeriod) {
+        _uiState.update { state -> state.copy(breakdownPeriod = period) }
     }
 
     fun startEditing(id: Int) {
@@ -417,12 +434,19 @@ class AlarmViewModel(
 
 data class AlarmUiState(
     val alarms: List<AlarmUiModel> = emptyList(),
+    val wakeEvents: List<WakeEvent> = emptyList(),
     val settings: SettingsState = SettingsState(),
     val draft: AlarmCreationState = sampleDraft(
         defaultTask = settings.defaultDismissTask,
         defaultSound = settings.defaultRingtoneUri
     ),
     val destination: AlarmDestination = AlarmDestination.List,
+    val homeTab: AlarmHomeTab = AlarmHomeTab.Alarms,
+    val breakdownPeriod: BreakdownPeriod = BreakdownPeriod.Weekly,
     val editingAlarm: AlarmUiModel? = null,
     val selectedAlarmIds: Set<Int> = emptySet()
 )
+
+enum class AlarmHomeTab { Alarms, Breakdown }
+
+enum class BreakdownPeriod { Weekly, Monthly }

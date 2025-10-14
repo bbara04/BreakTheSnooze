@@ -6,7 +6,15 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -14,9 +22,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import hu.bbara.viewideas.R
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.data.alarm.AlarmSchedulerProvider
 import hu.bbara.viewideas.data.settings.SettingsRepositoryProvider
@@ -95,7 +105,9 @@ fun AlarmScreen(
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
         onDeleteSelection = alarmViewModel::deleteSelected,
-        modifier = modifier.navigationBarsPadding()
+        onSelectHomeTab = alarmViewModel::selectHomeTab,
+        onBreakdownPeriodSelected = alarmViewModel::setBreakdownPeriod,
+        modifier = modifier
     )
 }
 
@@ -125,20 +137,23 @@ private fun AlarmScreenContent(
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
     onDeleteSelection: () -> Unit,
+    onSelectHomeTab: (AlarmHomeTab) -> Unit,
+    onBreakdownPeriodSelected: (BreakdownPeriod) -> Unit,
     modifier: Modifier = Modifier
 ) {
     when (uiState.destination) {
-        AlarmDestination.List -> AlarmListRoute(
-            alarms = uiState.alarms,
+        AlarmDestination.List -> AlarmHomeRoute(
+            uiState = uiState,
             onToggle = onToggle,
             onEdit = onEdit,
-            selectedIds = uiState.selectedAlarmIds,
             onEnterSelection = onEnterSelection,
             onToggleSelection = onToggleSelection,
             onClearSelection = onClearSelection,
             onDeleteSelection = onDeleteSelection,
             onCreate = onStartCreate,
             onOpenSettings = onOpenSettings,
+            onSelectHomeTab = onSelectHomeTab,
+            onBreakdownPeriodSelected = onBreakdownPeriodSelected,
             modifier = modifier
         )
 
@@ -166,6 +181,66 @@ private fun AlarmScreenContent(
             onBack = onCloseSettings,
             modifier = modifier
         )
+    }
+}
+
+@Composable
+private fun AlarmHomeRoute(
+    uiState: AlarmUiState,
+    onToggle: (Int, Boolean) -> Unit,
+    onEdit: (Int) -> Unit,
+    onEnterSelection: (Int) -> Unit,
+    onToggleSelection: (Int) -> Unit,
+    onClearSelection: () -> Unit,
+    onDeleteSelection: () -> Unit,
+    onCreate: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onSelectHomeTab: (AlarmHomeTab) -> Unit,
+    onBreakdownPeriodSelected: (BreakdownPeriod) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = modifier,
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = uiState.homeTab == AlarmHomeTab.Alarms,
+                    onClick = { onSelectHomeTab(AlarmHomeTab.Alarms) },
+                    icon = { Icon(imageVector = Icons.Default.Alarm, contentDescription = null) },
+                    label = { Text(text = stringResource(id = R.string.alarm_tab_alarms)) }
+                )
+                NavigationBarItem(
+                    selected = uiState.homeTab == AlarmHomeTab.Breakdown,
+                    onClick = { onSelectHomeTab(AlarmHomeTab.Breakdown) },
+                    icon = { Icon(imageVector = Icons.Default.Leaderboard, contentDescription = null) },
+                    label = { Text(text = stringResource(id = R.string.alarm_tab_breakdown)) }
+                )
+            }
+        }
+    ) { innerPadding ->
+        when (uiState.homeTab) {
+            AlarmHomeTab.Alarms -> AlarmListRoute(
+                alarms = uiState.alarms,
+                onToggle = onToggle,
+                onEdit = onEdit,
+                selectedIds = uiState.selectedAlarmIds,
+                onEnterSelection = onEnterSelection,
+                onToggleSelection = onToggleSelection,
+                onClearSelection = onClearSelection,
+                onDeleteSelection = onDeleteSelection,
+                onCreate = onCreate,
+                onOpenSettings = onOpenSettings,
+                modifier = Modifier.padding(innerPadding)
+            )
+
+            AlarmHomeTab.Breakdown -> AlarmBreakdownRoute(
+                events = uiState.wakeEvents,
+                period = uiState.breakdownPeriod,
+                onPeriodChange = onBreakdownPeriodSelected,
+                onOpenSettings = onOpenSettings,
+                modifier = Modifier.padding(innerPadding)
+            )
+        }
     }
 }
 
@@ -201,7 +276,9 @@ private fun AlarmScreenPreview() {
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},
-            onDeleteSelection = {}
+            onDeleteSelection = {},
+            onSelectHomeTab = {},
+            onBreakdownPeriodSelected = {}
         )
     }
 }

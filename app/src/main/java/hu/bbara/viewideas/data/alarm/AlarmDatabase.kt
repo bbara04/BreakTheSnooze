@@ -6,13 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [AlarmEntity::class],
-    version = 5,
+    entities = [AlarmEntity::class, WakeEventEntity::class],
+    version = 6,
     exportSchema = false
 )
 abstract class AlarmDatabase : RoomDatabase() {
 
     abstract fun alarmDao(): AlarmDao
+    abstract fun wakeEventDao(): WakeEventDao
 
     companion object {
         @Volatile
@@ -38,13 +39,34 @@ abstract class AlarmDatabase : RoomDatabase() {
             )
         }
 
+        private val MIGRATION_5_6 = androidx.room.migration.Migration(5, 6) { database ->
+            database.execSQL(
+                "CREATE TABLE IF NOT EXISTS wake_events (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "alarm_id INTEGER NOT NULL, " +
+                    "alarm_label TEXT NOT NULL, " +
+                    "dismiss_task TEXT NOT NULL, " +
+                    "completed_at INTEGER NOT NULL"
+                    + ")"
+            )
+            database.execSQL(
+                "CREATE INDEX IF NOT EXISTS index_wake_events_completed_at ON wake_events(completed_at)"
+            )
+        }
+
         fun getInstance(context: Context): AlarmDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
                     context.applicationContext,
                     AlarmDatabase::class.java,
                     "alarms.db"
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { INSTANCE = it }
+                ).addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                    MIGRATION_5_6
+                ).build().also { INSTANCE = it }
             }
         }
     }

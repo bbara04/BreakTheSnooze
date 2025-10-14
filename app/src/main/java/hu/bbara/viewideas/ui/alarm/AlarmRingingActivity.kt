@@ -43,10 +43,12 @@ import hu.bbara.viewideas.alarm.AlarmRingtoneService
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
 import hu.bbara.viewideas.data.settings.SettingsRepositoryProvider
 import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTask
+import hu.bbara.viewideas.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.viewideas.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.viewideas.ui.alarm.dismiss.createTask
 import hu.bbara.viewideas.ui.theme.ViewIdeasTheme
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 class AlarmRingingActivity : ComponentActivity() {
 
@@ -54,7 +56,9 @@ class AlarmRingingActivity : ComponentActivity() {
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
     private val availableTasks: MutableState<List<AlarmDismissTask>> = mutableStateOf(emptyList())
+    private val taskTypeById: MutableState<Map<String, AlarmDismissTaskType>> = mutableStateOf(emptyMap())
     private val activeTask: MutableState<AlarmDismissTask?> = mutableStateOf(null)
+    private val activeTaskType: MutableState<AlarmDismissTaskType?> = mutableStateOf(null)
     private var taskCompleted = false
     private val debugModeEnabled = mutableStateOf(false)
 
@@ -131,9 +135,11 @@ class AlarmRingingActivity : ComponentActivity() {
     private fun updateTasksForAlarm(alarm: AlarmUiModel?) {
         val tasks = alarm?.let { buildTasksForAlarm(it) } ?: emptyList()
         availableTasks.value = tasks
+        taskTypeById.value = alarm?.let { buildTaskTypeMap(it, tasks) } ?: emptyMap()
         val currentId = activeTask.value?.id
         if (currentId != null && tasks.none { it.id == currentId }) {
             activeTask.value = null
+            activeTaskType.value = null
         }
     }
 
@@ -151,6 +157,22 @@ class AlarmRingingActivity : ComponentActivity() {
         }
     }
 
+    private fun buildTaskTypeMap(
+        alarm: AlarmUiModel,
+        tasks: List<AlarmDismissTask>
+    ): Map<String, AlarmDismissTaskType> {
+        if (tasks.isEmpty()) return emptyMap()
+        val mapping = mutableMapOf<String, AlarmDismissTaskType>()
+        tasks.forEach { task ->
+            val type = when (task) {
+                is FocusTimerDismissTask -> AlarmDismissTaskType.FOCUS_TIMER
+                else -> alarm.dismissTask
+            }
+            mapping[task.id] = type
+        }
+        return mapping
+    }
+
     private fun stopAlarmAndFinish() {
         sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM)
         finish()
@@ -161,19 +183,36 @@ class AlarmRingingActivity : ComponentActivity() {
         sendAlarmCommand(AlarmIntents.ACTION_PAUSE_ALARM)
         taskCompleted = false
         activeTask.value = task
+        activeTaskType.value = taskTypeById.value[task.id] ?: alarmState.value?.dismissTask
     }
 
     private fun cancelActiveTask() {
         if (activeTask.value == null) return
         activeTask.value = null
         sendAlarmCommand(AlarmIntents.ACTION_RESUME_ALARM)
+        activeTaskType.value = null
     }
 
     private fun onTaskCompleted() {
         if (taskCompleted) return
         taskCompleted = true
+        recordWakeEvent()
         sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM)
         finish()
+    }
+
+    private fun recordWakeEvent() {
+        val alarm = alarmState.value ?: return
+        lifecycleScope.launch {
+            val taskType = activeTaskType.value ?: alarm.dismissTask
+            val repository = AlarmRepositoryProvider.getRepository(applicationContext)
+            repository.addWakeEvent(
+                alarmId = alarm.id,
+                alarmLabel = alarm.label,
+                dismissTask = taskType,
+                completedAt = Instant.now()
+            )
+        }
     }
 
     private fun sendAlarmCommand(action: String) {

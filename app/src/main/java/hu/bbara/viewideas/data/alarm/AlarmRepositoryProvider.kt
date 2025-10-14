@@ -8,9 +8,12 @@ object AlarmRepositoryProvider {
 
     fun getRepository(context: Context): AlarmRepository {
         return repository ?: synchronized(this) {
-            repository ?: DefaultAlarmRepository(
-                AlarmDatabase.getInstance(context).alarmDao()
-            ).also { repository = it }
+            repository ?: AlarmDatabase.getInstance(context).let { database ->
+                DefaultAlarmRepository(
+                    alarmDao = database.alarmDao(),
+                    wakeEventDao = database.wakeEventDao()
+                )
+            }.also { repository = it }
         }
     }
 }

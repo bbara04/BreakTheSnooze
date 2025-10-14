@@ -68,4 +68,11 @@
     <string name="memory_cancel">Cancel</string>
     <string name="memory_replay">Watch again</string>
     <string name="memory_wrong">Incorrect order, try again.</string>
+    <string name="alarm_breakdown_title">Wake stats</string>
+    <string name="alarm_breakdown_weekly">Weekly</string>
+    <string name="alarm_breakdown_monthly">Monthly</string>
+    <string name="alarm_breakdown_empty_title">No wake-ups yet</string>
+    <string name="alarm_breakdown_empty_subtitle">Dismiss an alarm to start tracking your progress.</string>
+    <string name="alarm_tab_alarms">Alarms</string>
+    <string name="alarm_tab_breakdown">Breakdown</string>
 </resources>

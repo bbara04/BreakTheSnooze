@@ -13,25 +13,40 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 interface AlarmRepository {
     val alarms: Flow<List<AlarmUiModel>>
+    val wakeEvents: Flow<List<WakeEvent>>
     suspend fun upsertAlarm(alarm: AlarmUiModel): AlarmUiModel?
     suspend fun updateAlarmActive(id: Int, isActive: Boolean): AlarmUiModel?
     suspend fun deleteAlarm(id: Int)
     suspend fun ensureSeedData()
     suspend fun getAlarmById(id: Int): AlarmUiModel?
+    suspend fun addWakeEvent(
+        alarmId: Int,
+        alarmLabel: String,
+        dismissTask: AlarmDismissTaskType,
+        completedAt: Instant = Instant.now()
+    )
 }
 
 class DefaultAlarmRepository(
     private val alarmDao: AlarmDao,
+    private val wakeEventDao: WakeEventDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AlarmRepository {
 
     override val alarms: Flow<List<AlarmUiModel>> =
         alarmDao.observeAlarms().map { entities ->
             entities.map { it.toUiModel() }
+        }
+
+    override val wakeEvents: Flow<List<WakeEvent>> =
+        wakeEventDao.observeEvents().map { events ->
+            events.map { it.toDomain() }
         }
 
     override suspend fun upsertAlarm(alarm: AlarmUiModel): AlarmUiModel? {
@@ -79,8 +94,29 @@ class DefaultAlarmRepository(
         }
     }
 
+    override suspend fun addWakeEvent(
+        alarmId: Int,
+        alarmLabel: String,
+        dismissTask: AlarmDismissTaskType,
+        completedAt: Instant
+    ) {
+        withContext(ioDispatcher) {
+            wakeEventDao.insert(
+                WakeEventEntity(
+                    alarmId = alarmId,
+                    alarmLabel = alarmLabel,
+                    dismissTask = dismissTask.storageKey,
+                    completedAt = completedAt.toEpochMilli()
+                )
+            )
+            val retentionThreshold = Instant.now().minus(RETENTION_DAYS, ChronoUnit.DAYS)
+            wakeEventDao.deleteOlderThan(retentionThreshold.toEpochMilli())
+        }
+    }
+
     companion object {
         private const val TAG = "AlarmRepository"
+        private const val RETENTION_DAYS = 365L
     }
 }
 
@@ -109,6 +145,16 @@ private fun AlarmUiModel.toEntity(): AlarmEntity {
         dismissTask = dismissTask.storageKey,
         qrBarcodeValue = qrBarcodeValue,
         qrUniqueRequiredCount = qrRequiredUniqueCount
+    )
+}
+
+private fun WakeEventEntity.toDomain(): WakeEvent {
+    return WakeEvent(
+        id = id,
+        alarmId = alarmId,
+        alarmLabel = alarmLabel,
+        dismissTask = AlarmDismissTaskType.fromStorageKey(dismissTask),
+        completedAt = Instant.ofEpochMilli(completedAt)
     )
 }
 

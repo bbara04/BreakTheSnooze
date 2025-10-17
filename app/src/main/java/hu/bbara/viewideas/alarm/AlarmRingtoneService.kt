@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class AlarmRingtoneService : Service() {
 
@@ -89,20 +90,22 @@ class AlarmRingtoneService : Service() {
             startForeground(AlarmNotifications.notificationId(alarmId), notification)
             Log.d(TAG, "Foreground notification started for alarmId=$alarmId")
             launchRingingActivity(alarmId)
-            val isWearConnected = withContext(Dispatchers.IO) {
-                runCatching {
-                    WearAlarmMessenger.hasConnectedWearDevice(applicationContext)
-                }.onFailure { error ->
-                    if (error is CancellationException) throw error
-                    Log.w(TAG, "Failed to determine wear connection state", error)
-                }.getOrDefault(false)
-            }
-            notifyWearDevice(alarmId)
+            val isWearConnected = withTimeoutOrNull(WEAR_HANDSHAKE_TIMEOUT_MS) {
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        WearAlarmMessenger.hasConnectedWearDevice(applicationContext)
+                    }.onFailure { error ->
+                        if (error is CancellationException) throw error
+                        Log.w(TAG, "Failed to determine wear connection state", error)
+                    }.getOrDefault(false)
+                }
+            } ?: false
             if (isWearConnected) {
                 Log.i(TAG, "Skipping phone ringtone because a wear device is connected")
             } else {
                 startPlayback(alarm.soundUri)
             }
+            notifyWearDevice(alarmId)
         }
     }
 
@@ -214,5 +217,6 @@ class AlarmRingtoneService : Service() {
 
     companion object {
         private const val TAG = "AlarmRingtoneService"
+        private const val WEAR_HANDSHAKE_TIMEOUT_MS = 2_000L
     }
 }

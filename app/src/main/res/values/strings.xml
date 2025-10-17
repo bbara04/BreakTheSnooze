@@ -73,6 +73,9 @@
     <string name="alarm_breakdown_monthly">Monthly</string>
     <string name="alarm_breakdown_empty_title">No wake-ups yet</string>
     <string name="alarm_breakdown_empty_subtitle">Dismiss an alarm to start tracking your progress.</string>
+    <string name="alarm_breakdown_empty_day">No wake-ups on this day.</string>
+    <string name="alarm_breakdown_previous_month">Previous month</string>
+    <string name="alarm_breakdown_next_month">Next month</string>
     <string name="alarm_tab_alarms">Alarms</string>
     <string name="alarm_tab_breakdown">Breakdown</string>
 </resources>

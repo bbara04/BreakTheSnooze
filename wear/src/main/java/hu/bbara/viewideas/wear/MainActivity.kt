@@ -11,10 +11,9 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
@@ -65,18 +63,20 @@ class MainActivity : ComponentActivity() {
         overlayVisible = shouldShowOverlay(intent)
         alarmId = intent?.getIntExtra(EXTRA_ALARM_ID, -1) ?: -1
         Log.d(TAG, "onCreate overlayVisible=$overlayVisible action=${intent?.action} alarmId=$alarmId")
+        if (!overlayVisible) {
+            finish()
+            return
+        }
+
         cancelOverlayNotification()
         updateVibrationState()
 
         setContent {
             MaterialTheme {
-                Scaffold {
-                    if (overlayVisible) {
-                        OverlayScreen(alarmId = alarmId, onDismiss = ::dismissOverlay)
-                    } else {
-                        IdleScreen()
-                    }
-                }
+                OverlayScreen(
+                    isStopEnabled = alarmId >= 0,
+                    onStop = ::dismissOverlay
+                )
             }
         }
     }
@@ -98,6 +98,10 @@ class MainActivity : ComponentActivity() {
         overlayVisible = shouldShowOverlay(intent)
         alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
         Log.d(TAG, "onNewIntent overlayVisible=$overlayVisible action=${intent.action} alarmId=$alarmId")
+        if (!overlayVisible) {
+            finish()
+            return
+        }
         cancelOverlayNotification()
         updateVibrationState()
     }
@@ -182,59 +186,28 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun OverlayScreen(alarmId: Int, onDismiss: () -> Unit) {
+private fun OverlayScreen(
+    isStopEnabled: Boolean,
+    onStop: () -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF1C1C1C)),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(12.dp)
+        Button(
+            onClick = onStop,
+            enabled = isStopEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.overlay_title),
+                text = stringResource(id = R.string.overlay_stop),
                 style = MaterialTheme.typography.title3,
                 textAlign = TextAlign.Center
             )
-            Text(
-                text = stringResource(id = R.string.overlay_message),
-                style = MaterialTheme.typography.body2,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            if (alarmId >= 0) {
-                Text(
-                    text = stringResource(id = R.string.overlay_alarm_id, alarmId),
-                    style = MaterialTheme.typography.caption1,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-            Button(
-                modifier = Modifier.padding(top = 16.dp),
-                onClick = onDismiss
-            ) {
-                Text(text = stringResource(id = R.string.overlay_dismiss))
-            }
         }
-    }
-}
-
-@Composable
-private fun IdleScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = stringResource(id = R.string.idle_message),
-            style = MaterialTheme.typography.body2,
-            textAlign = TextAlign.Center
-        )
     }
 }

@@ -10,11 +10,14 @@ import android.media.RingtoneManager
 import android.os.IBinder
 import android.util.Log
 import hu.bbara.viewideas.data.alarm.AlarmRepositoryProvider
+import hu.bbara.viewideas.ui.alarm.AlarmUiModel
 import hu.bbara.viewideas.wear.WearAlarmMessenger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -27,6 +30,7 @@ class AlarmRingtoneService : Service() {
     private var playbackJob: kotlinx.coroutines.Job? = null
     private var isPaused: Boolean = false
     private var wearNotificationSentForId: Int? = null
+    private var wearFallbackJob: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -44,6 +48,10 @@ class AlarmRingtoneService : Service() {
                 Log.d(TAG, "Received stop command for alarmId=$alarmId")
                 stopAlarm(alarmId)
                 return START_NOT_STICKY
+            }
+            AlarmIntents.ACTION_WEAR_ACK -> {
+                Log.d(TAG, "Received wear acknowledgement for alarmId=$alarmId")
+                acknowledgeWear(alarmId)
             }
 
             AlarmIntents.ACTION_PAUSE_ALARM -> {
@@ -74,6 +82,8 @@ class AlarmRingtoneService : Service() {
         isPaused = false
 
         playbackJob?.cancel()
+        wearFallbackJob?.cancel()
+        wearFallbackJob = null
         playbackJob = serviceScope.launch {
             val repository = AlarmRepositoryProvider.getRepository(applicationContext)
             val alarm = repository.getAlarmById(alarmId)
@@ -101,7 +111,8 @@ class AlarmRingtoneService : Service() {
                 }
             } ?: false
             if (isWearConnected) {
-                Log.i(TAG, "Skipping phone ringtone because a wear device is connected")
+                Log.i(TAG, "Wear device connected; deferring phone ringtone for grace period")
+                scheduleWearFallback(alarm)
             } else {
                 startPlayback(alarm.soundUri)
             }
@@ -149,6 +160,8 @@ class AlarmRingtoneService : Service() {
         stopPlayback()
         playbackJob?.cancel()
         playbackJob = null
+        wearFallbackJob?.cancel()
+        wearFallbackJob = null
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         currentAlarmId = null
         wearNotificationSentForId = null
@@ -197,6 +210,8 @@ class AlarmRingtoneService : Service() {
         stopPlayback()
         playbackJob?.cancel()
         playbackJob = null
+        wearFallbackJob?.cancel()
+        wearFallbackJob = null
         super.onDestroy()
         Log.d(TAG, "Service destroyed")
     }
@@ -215,8 +230,35 @@ class AlarmRingtoneService : Service() {
         }
     }
 
+    private fun scheduleWearFallback(alarm: AlarmUiModel) {
+        wearFallbackJob?.cancel()
+        wearFallbackJob = serviceScope.launch {
+            delay(WEAR_GRACE_PERIOD_MS)
+            if (currentAlarmId == alarm.id && mediaPlayer?.isPlaying != true && !isPaused) {
+                Log.i(TAG, "Wear device did not stop alarm within grace period; starting phone ringtone for alarmId=${alarm.id}")
+                startPlayback(alarm.soundUri)
+            }
+            wearFallbackJob = null
+        }
+    }
+
+    private fun acknowledgeWear(alarmId: Int) {
+        if (currentAlarmId != alarmId) {
+            Log.d(TAG, "Ignoring wear acknowledgement for stale alarmId=$alarmId current=$currentAlarmId")
+            return
+        }
+        if (wearFallbackJob == null) {
+            Log.d(TAG, "Wear acknowledgement received but no fallback pending for alarmId=$alarmId")
+        } else {
+            wearFallbackJob?.cancel()
+            wearFallbackJob = null
+            Log.i(TAG, "Wear acknowledgement received; keeping phone silent for alarmId=$alarmId")
+        }
+    }
+
     companion object {
         private const val TAG = "AlarmRingtoneService"
         private const val WEAR_HANDSHAKE_TIMEOUT_MS = 2_000L
+        private const val WEAR_GRACE_PERIOD_MS = 15_000L
     }
 }

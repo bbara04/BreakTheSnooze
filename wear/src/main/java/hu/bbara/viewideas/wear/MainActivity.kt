@@ -29,8 +29,12 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlin.text.Charsets
 
 class MainActivity : ComponentActivity() {
 
@@ -75,7 +79,7 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 OverlayScreen(
                     isStopEnabled = alarmId >= 0,
-                    onStop = ::dismissOverlay
+                    onStop = ::stopAlarmFromWear
                 )
             }
         }
@@ -104,6 +108,36 @@ class MainActivity : ComponentActivity() {
         }
         cancelOverlayNotification()
         updateVibrationState()
+    }
+
+    private fun stopAlarmFromWear() {
+        lifecycleScope.launch {
+            overlayVisible = false
+            updateVibrationState()
+
+            val payload = alarmId.takeIf { it >= 0 }
+                ?.toString()
+                ?.toByteArray(Charsets.UTF_8)
+                ?: ByteArray(0)
+
+            val nodes = runCatching {
+                Wearable.getNodeClient(this@MainActivity).connectedNodes.await()
+            }.onFailure { error ->
+                Log.w(TAG, "Failed to resolve connected nodes for watch stop acknowledgement", error)
+            }.getOrNull().orEmpty()
+
+            nodes.forEach { node ->
+                runCatching {
+                    messageClient.sendMessage(node.id, ACK_MESSAGE_PATH, payload).await()
+                }.onSuccess {
+                    Log.i(TAG, "Sent watch stop acknowledgement to node=${node.displayName}")
+                }.onFailure { error ->
+                    Log.w(TAG, "Failed to send watch stop acknowledgement to node=${node.displayName}", error)
+                }
+            }
+
+            dismissOverlay()
+        }
     }
 
     private fun dismissOverlay() {
@@ -182,6 +216,7 @@ class MainActivity : ComponentActivity() {
         const val EXTRA_ALARM_ID = "hu.bbara.viewideas.wear.extra.ALARM_ID"
         private const val TAG = "WearMainActivity"
         private val VIBRATION_PATTERN = longArrayOf(0, 600, 400)
+        private const val ACK_MESSAGE_PATH = "/viewideas/alarm-ack"
     }
 }
 

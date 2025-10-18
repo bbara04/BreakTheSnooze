@@ -27,6 +27,7 @@ class AlarmRingtoneService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmId: Int? = null
+    private var currentAlarm: AlarmUiModel? = null
     private var playbackJob: kotlinx.coroutines.Job? = null
     private var isPaused: Boolean = false
     private var wearNotificationSentForId: Int? = null
@@ -90,10 +91,12 @@ class AlarmRingtoneService : Service() {
 
             if (alarm == null) {
                 Log.w(TAG, "No alarm found for alarmId=$alarmId, stopping service")
+                currentAlarm = null
                 stopSelf()
                 return@launch
             }
 
+            currentAlarm = alarm
             val notification = withContext(Dispatchers.Default) {
                 AlarmNotifications.buildNotification(applicationContext, alarm)
             }
@@ -112,7 +115,7 @@ class AlarmRingtoneService : Service() {
             } ?: false
             if (isWearConnected) {
                 Log.i(TAG, "Wear device connected; deferring phone ringtone for grace period")
-                scheduleWearFallback(alarm)
+                scheduleWearFallback(WEAR_GRACE_PERIOD_MS, "initial wear grace period")
             } else {
                 startPlayback(alarm.soundUri)
             }
@@ -168,6 +171,7 @@ class AlarmRingtoneService : Service() {
         wearFallbackJob = null
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         currentAlarmId = null
+        currentAlarm = null
         wearNotificationSentForId = null
         val notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -216,6 +220,7 @@ class AlarmRingtoneService : Service() {
         playbackJob = null
         wearFallbackJob?.cancel()
         wearFallbackJob = null
+        currentAlarm = null
         super.onDestroy()
         Log.d(TAG, "Service destroyed")
     }
@@ -234,13 +239,23 @@ class AlarmRingtoneService : Service() {
         }
     }
 
-    private fun scheduleWearFallback(alarm: AlarmUiModel) {
+    private fun scheduleWearFallback(delayMs: Long, description: String) {
+        val alarmId = currentAlarmId
+        if (alarmId == null) {
+            Log.d(TAG, "Skipping wear fallback scheduling ($description); no active alarm id")
+            return
+        }
+        val alarmSoundUri = currentAlarm?.soundUri
         wearFallbackJob?.cancel()
         wearFallbackJob = serviceScope.launch {
-            delay(WEAR_GRACE_PERIOD_MS)
-            if (currentAlarmId == alarm.id && mediaPlayer?.isPlaying != true && !isPaused) {
-                Log.i(TAG, "Wear device did not stop alarm within grace period; starting phone ringtone for alarmId=${alarm.id}")
-                startPlayback(alarm.soundUri)
+            Log.d(TAG, "Wear fallback ($description) scheduled in ${delayMs}ms for alarmId=$alarmId")
+            delay(delayMs)
+            if (currentAlarmId == alarmId && mediaPlayer?.isPlaying != true && !isPaused) {
+                Log.i(TAG, "Wear fallback ($description) fired; starting phone ringtone for alarmId=$alarmId")
+                val soundUri = currentAlarm?.soundUri ?: alarmSoundUri
+                startPlayback(soundUri)
+            } else {
+                Log.d(TAG, "Wear fallback ($description) skipped; state changed for alarmId=$alarmId")
             }
             wearFallbackJob = null
         }
@@ -254,15 +269,19 @@ class AlarmRingtoneService : Service() {
         if (wearFallbackJob == null) {
             Log.d(TAG, "Wear acknowledgement received but no fallback pending for alarmId=$alarmId")
         } else {
-            wearFallbackJob?.cancel()
-            wearFallbackJob = null
-            Log.i(TAG, "Wear acknowledgement received; keeping phone silent for alarmId=$alarmId")
+            Log.d(TAG, "Wear acknowledgement received; replacing pending fallback for alarmId=$alarmId")
         }
+        Log.i(
+            TAG,
+            "Wear acknowledgement received; scheduling phone ringtone after ${WEAR_POST_STOP_DELAY_MS / 1000} seconds for alarmId=$alarmId"
+        )
+        scheduleWearFallback(WEAR_POST_STOP_DELAY_MS, "post-watch-stop")
     }
 
     companion object {
         private const val TAG = "AlarmRingtoneService"
         private const val WEAR_HANDSHAKE_TIMEOUT_MS = 2_000L
         private const val WEAR_GRACE_PERIOD_MS = 15_000L
+        private const val WEAR_POST_STOP_DELAY_MS = 60_000L
     }
 }

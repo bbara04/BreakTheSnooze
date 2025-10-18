@@ -8,6 +8,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -51,7 +52,7 @@ class MainActivity : ComponentActivity() {
                 overlayVisible = true
                 alarmId = receivedId
                 Log.d(TAG, "Overlay made visible from activity listener")
-                updateVibrationState()
+                updateWakeState()
             }
         }
     }
@@ -61,6 +62,7 @@ class MainActivity : ComponentActivity() {
 
         setShowWhenLocked(true)
         setTurnScreenOn(true)
+        OnBodyStatusMonitor.ensureInitialized(applicationContext)
 
         messageClient = Wearable.getMessageClient(this)
 
@@ -73,7 +75,7 @@ class MainActivity : ComponentActivity() {
         }
 
         cancelOverlayNotification()
-        updateVibrationState()
+        updateWakeState()
 
         setContent {
             MaterialTheme {
@@ -107,13 +109,13 @@ class MainActivity : ComponentActivity() {
             return
         }
         cancelOverlayNotification()
-        updateVibrationState()
+        updateWakeState()
     }
 
     private fun stopAlarmFromWear() {
         lifecycleScope.launch {
             overlayVisible = false
-            updateVibrationState()
+            updateWakeState()
 
             val payload = alarmId.takeIf { it >= 0 }
                 ?.toString()
@@ -142,7 +144,7 @@ class MainActivity : ComponentActivity() {
 
     private fun dismissOverlay() {
         overlayVisible = false
-        updateVibrationState()
+        updateWakeState()
         finish()
         Log.d(TAG, "dismissOverlay invoked")
         cancelOverlayNotification()
@@ -157,14 +159,18 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         stopVibration()
         super.onDestroy()
     }
 
-    private fun updateVibrationState() {
+    private fun updateWakeState() {
         if (overlayVisible) {
+            setTurnScreenOn(true)
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             startVibration()
         } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             stopVibration()
         }
     }

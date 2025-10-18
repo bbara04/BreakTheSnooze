@@ -1,11 +1,14 @@
 package hu.bbara.viewideas.wear
 
+import android.app.KeyguardManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
+import android.os.BatteryManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -17,6 +20,7 @@ class PhoneMessageListenerService : WearableListenerService() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "Service created")
+        OnBodyStatusMonitor.ensureInitialized(applicationContext)
         createNotificationChannel()
     }
 
@@ -24,10 +28,46 @@ class PhoneMessageListenerService : WearableListenerService() {
         Log.d(TAG, "onMessageReceived path=${messageEvent.path} size=${messageEvent.data?.size ?: 0}")
         if (messageEvent.path == MESSAGE_PATH) {
             val alarmId = messageEvent.data?.decodeToString()?.toIntOrNull() ?: -1
-            showOverlay(alarmId)
+            if (shouldHandleAlarmOnWatch()) {
+                showOverlay(alarmId)
+            } else {
+                Log.i(TAG, "Skipping watch alarm presentation; watch not detected as being worn")
+            }
         } else {
             Log.w(TAG, "Ignoring message for unexpected path=${messageEvent.path}")
         }
+    }
+
+    private fun shouldHandleAlarmOnWatch(): Boolean {
+        val cachedState = OnBodyStatusMonitor.getOnBodyState()
+        if (cachedState == false) {
+            Log.d(TAG, "On-body monitor reports device is off wrist (cached)")
+            return false
+        }
+        if (cachedState == null) {
+            val immediateState = OnBodyStatusMonitor.tryReadImmediateState(applicationContext)
+            if (immediateState == false) {
+                Log.d(TAG, "Immediate on-body reading reports device off wrist")
+                return false
+            } else if (immediateState == null) {
+                Log.d(TAG, "Immediate on-body reading unavailable; falling back to heuristics")
+            }
+        }
+
+        val keyguardManager = getSystemService(KeyguardManager::class.java)
+        if (keyguardManager?.isDeviceLocked == true || keyguardManager?.isKeyguardLocked == true) {
+            Log.d(TAG, "Watch is locked; treating as not worn")
+            return false
+        }
+
+        val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val isCharging = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)?.let { it != 0 } ?: false
+        if (isCharging) {
+            Log.d(TAG, "Watch is charging; treating as not worn")
+            return false
+        }
+
+        return true
     }
 
     private fun showOverlay(alarmId: Int) {

@@ -77,7 +77,6 @@ object AlarmNotifications {
             .setAutoCancel(false)
             .setFullScreenIntent(fullScreenIntent, true)
             .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.alarm_ringing_message)))
-            .addAction(smallIcon, context.getString(R.string.alarm_stop), stopIntent)
             .setDeleteIntent(stopIntent)
             .build()
     }

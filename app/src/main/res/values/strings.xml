@@ -1,8 +1,7 @@
 <resources>
     <string name="app_name">BreakTheSnooze</string>
     <string name="alarm_notification_title">Alarm</string>
-    <string name="alarm_notification_content">Tap to stop the alarm.</string>
-    <string name="alarm_stop">Stop</string>
+    <string name="alarm_notification_content">Alarm is ringing.</string>
     <string name="alarm_label_default">Alarm</string>
     <string name="alarm_ringing_message">Alarm is ringing</string>
     <string name="alarm_scan_object">Scan toothbrush</string>

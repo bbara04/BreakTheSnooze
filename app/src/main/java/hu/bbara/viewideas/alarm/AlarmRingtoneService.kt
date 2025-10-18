@@ -113,10 +113,34 @@ class AlarmRingtoneService : Service() {
                     }.getOrDefault(false)
                 }
             } ?: false
-            if (isWearConnected) {
-                Log.i(TAG, "Wear device connected; deferring phone ringtone for grace period")
+
+            val isWearOnBody = if (isWearConnected) {
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        WearAlarmMessenger.isWearDeviceOnBody(applicationContext)
+                    }.onFailure { error ->
+                        if (error is CancellationException) throw error
+                        Log.w(TAG, "Failed to resolve wear on-body state", error)
+                    }.getOrNull()
+                }
+            } else {
+                null
+            }
+
+            if (isWearConnected && isWearOnBody == true) {
+                Log.i(TAG, "Wear device connected and on wrist; deferring phone ringtone for grace period")
                 scheduleWearFallback(WEAR_GRACE_PERIOD_MS, "initial wear grace period")
             } else {
+                if (isWearConnected) {
+                    val reason = when (isWearOnBody) {
+                        false -> "detected off wrist"
+                        null -> "on-body state unknown"
+                        else -> "state mismatch"
+                    }
+                    Log.i(TAG, "Wear device connected but $reason; starting phone ringtone immediately")
+                } else {
+                    Log.d(TAG, "No wear device connection; starting phone ringtone")
+                }
                 startPlayback(alarm.soundUri)
             }
             notifyWearDevice(alarmId)

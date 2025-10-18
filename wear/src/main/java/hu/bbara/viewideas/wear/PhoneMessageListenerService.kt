@@ -12,8 +12,10 @@ import android.os.BatteryManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
+import kotlin.text.Charsets
 
 class PhoneMessageListenerService : WearableListenerService() {
 
@@ -26,16 +28,35 @@ class PhoneMessageListenerService : WearableListenerService() {
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
         Log.d(TAG, "onMessageReceived path=${messageEvent.path} size=${messageEvent.data?.size ?: 0}")
-        if (messageEvent.path == MESSAGE_PATH) {
-            val alarmId = messageEvent.data?.decodeToString()?.toIntOrNull() ?: -1
-            if (shouldHandleAlarmOnWatch()) {
-                showOverlay(alarmId)
-            } else {
-                Log.i(TAG, "Skipping watch alarm presentation; watch not detected as being worn")
+        when (messageEvent.path) {
+            MESSAGE_PATH -> {
+                val alarmId = messageEvent.data?.decodeToString()?.toIntOrNull() ?: -1
+                if (shouldHandleAlarmOnWatch()) {
+                    showOverlay(alarmId)
+                } else {
+                    Log.i(TAG, "Skipping watch alarm presentation; watch not detected as being worn")
+                }
             }
-        } else {
-            Log.w(TAG, "Ignoring message for unexpected path=${messageEvent.path}")
+            ON_BODY_QUERY_PATH -> respondOnBodyStatus(messageEvent)
+            else -> Log.w(TAG, "Ignoring message for unexpected path=${messageEvent.path}")
         }
+    }
+
+    private fun respondOnBodyStatus(messageEvent: MessageEvent) {
+        OnBodyStatusMonitor.ensureInitialized(applicationContext)
+        val cachedState = OnBodyStatusMonitor.getOnBodyState()
+        val state = cachedState ?: OnBodyStatusMonitor.tryReadImmediateState(applicationContext)
+        val payload = when (state) {
+            true -> "1"
+            false -> "0"
+            null -> "-1"
+        }.toByteArray(Charsets.UTF_8)
+        Wearable.getMessageClient(this)
+            .sendMessage(messageEvent.sourceNodeId, ON_BODY_RESPONSE_PATH, payload)
+            .addOnSuccessListener { Log.d(TAG, "Sent on-body response state=$state") }
+            .addOnFailureListener { error ->
+                Log.w(TAG, "Failed to send on-body response", error)
+            }
     }
 
     private fun shouldHandleAlarmOnWatch(): Boolean {
@@ -125,6 +146,8 @@ class PhoneMessageListenerService : WearableListenerService() {
 
     companion object {
         const val MESSAGE_PATH = "/viewideas/alarm-started"
+        const val ON_BODY_QUERY_PATH = "/viewideas/onbody-query"
+        const val ON_BODY_RESPONSE_PATH = "/viewideas/onbody-response"
         private const val TAG = "WearPhoneListener"
         const val CHANNEL_ID = "wear_overlay_channel"
         const val NOTIFICATION_ID = 101

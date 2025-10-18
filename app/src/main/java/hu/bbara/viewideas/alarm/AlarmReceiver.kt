@@ -51,8 +51,10 @@ class AlarmReceiver : BroadcastReceiver() {
                 }
 
                 ContextCompat.startForegroundService(context, serviceIntent)
-                withContext(Dispatchers.Main) {
-                    context.startActivity(AlarmRingingActivity.createIntent(context, alarmId))
+                if (shouldLaunchAlarmScreen(context)) {
+                    withContext(Dispatchers.Main) {
+                        context.startActivity(AlarmRingingActivity.createIntent(context, alarmId))
+                    }
                 }
             } finally {
                 pendingResult.finish()

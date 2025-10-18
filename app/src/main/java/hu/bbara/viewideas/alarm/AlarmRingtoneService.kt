@@ -121,6 +121,10 @@ class AlarmRingtoneService : Service() {
     }
 
     private fun launchRingingActivity(alarmId: Int) {
+        if (!shouldLaunchAlarmScreen(applicationContext)) {
+            Log.d(TAG, "Skipping AlarmRingingActivity launch; screen is interactive")
+            return
+        }
         val intent = hu.bbara.viewideas.ui.alarm.AlarmRingingActivity.createIntent(
             applicationContext,
             alarmId

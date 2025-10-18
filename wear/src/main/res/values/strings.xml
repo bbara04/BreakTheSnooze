@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ViewIdeas Wear</string>
+    <string name="app_name">BreakTheSnooze</string>
     <string name="overlay_title">Phone alarm triggered</string>
     <string name="overlay_message">Tap to stop the alarm.</string>
     <string name="overlay_stop">Stop</string>

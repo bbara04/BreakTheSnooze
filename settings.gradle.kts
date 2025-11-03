@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ViewIdeas"
+rootProject.name = "BreakTheSnooze"
 include(":app")
 include(":wear")
  

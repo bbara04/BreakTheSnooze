@@ -41,7 +41,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
-                <action android:name="hu.bbara.viewideas.wear.action.SHOW_OVERLAY" />
+                <action android:name="hu.bbara.breakthesnooze.wear.action.SHOW_OVERLAY" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>

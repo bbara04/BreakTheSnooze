@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "hu.bbara.viewideas.wear"
+    namespace = "hu.bbara.breakthesnooze.wear"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "hu.bbara.viewideas"
+        applicationId = "hu.bbara.breakthesnooze"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

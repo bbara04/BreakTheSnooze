@@ -27,15 +27,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.text.Charsets
 
 class MainActivity : ComponentActivity() {
 
@@ -74,7 +73,6 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        cancelOverlayNotification()
         updateWakeState()
 
         setContent {
@@ -108,7 +106,6 @@ class MainActivity : ComponentActivity() {
             finish()
             return
         }
-        cancelOverlayNotification()
         updateWakeState()
     }
 

@@ -7,15 +7,16 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.os.BatteryManager
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.google.android.gms.wearable.Wearable
+import androidx.wear.ongoing.OngoingActivity
+import androidx.wear.ongoing.Status
 import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
-import kotlin.text.Charsets
 
 class PhoneMessageListenerService : WearableListenerService() {
 
@@ -105,18 +106,29 @@ class PhoneMessageListenerService : WearableListenerService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(getString(R.string.overlay_title))
             .setContentText(getString(R.string.overlay_message))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(pendingIntent, true)
-            .setAutoCancel(true)
+            .setAutoCancel(false)
             .setOngoing(true)
-            .build()
+            .setContentIntent(pendingIntent)
 
-        NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, notification)
+        val ongoingStatus = Status.forPart(Status.TextPart(getString(R.string.overlay_message)))
+
+        OngoingActivity.Builder(this, NOTIFICATION_ID, notificationBuilder)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setStatus(ongoingStatus)
+            .setStaticIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setTouchIntent(pendingIntent)
+            .build()
+            .apply(this)
+
+        NotificationManagerCompat.from(this)
+            .notify(NOTIFICATION_ID, notificationBuilder.build())
 
         kotlin.runCatching { startActivity(overlayIntent) }
             .onSuccess { Log.d(TAG, "Started MainActivity from message") }

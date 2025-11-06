@@ -20,18 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import hu.bbara.breakthesnooze.R
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
-import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.settings.SettingsRoute
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
@@ -43,14 +39,7 @@ fun AlarmScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val repository = remember(context) { AlarmRepositoryProvider.getRepository(context) }
-    val scheduler = remember(context) { AlarmSchedulerProvider.getScheduler(context) }
-    val settingsRepository = remember(context) { SettingsRepositoryProvider.getRepository(context) }
-    val alarmViewModel: AlarmViewModel = viewModel(
-        factory = remember(repository, scheduler, settingsRepository) {
-            AlarmViewModelFactory(repository, scheduler, settingsRepository)
-        }
-    )
+    val alarmViewModel: AlarmViewModel = hiltViewModel()
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val permissionLauncher = rememberLauncherForActivityResult(

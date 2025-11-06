@@ -23,7 +23,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/app_logo"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BreakTheSnooze">
+        android:theme="@style/Theme.BreakTheSnooze"
+        android:name=".BreakTheSnoozeApp">
         <meta-data
             android:name="com.google.android.wearable.beta.app"
             android:resource="@xml/wearable_app_desc"

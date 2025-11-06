@@ -26,7 +26,9 @@ import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
 import hu.bbara.breakthesnooze.ui.alarm.AlarmScreen
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val permissionsLauncher =

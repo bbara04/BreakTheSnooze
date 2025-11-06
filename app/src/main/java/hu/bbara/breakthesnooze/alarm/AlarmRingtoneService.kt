@@ -9,7 +9,8 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
 import android.util.Log
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
+import dagger.hilt.android.AndroidEntryPoint
+import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.wear.WearAlarmMessenger
 import kotlinx.coroutines.CancellationException
@@ -21,7 +22,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlarmRingtoneService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -32,6 +35,7 @@ class AlarmRingtoneService : Service() {
     private var isPaused: Boolean = false
     private var wearNotificationSentForId: Int? = null
     private var wearFallbackJob: Job? = null
+    @Inject lateinit var alarmRepository: AlarmRepository
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -86,8 +90,7 @@ class AlarmRingtoneService : Service() {
         wearFallbackJob?.cancel()
         wearFallbackJob = null
         playbackJob = serviceScope.launch {
-            val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            val alarm = repository.getAlarmById(alarmId)
+            val alarm = alarmRepository.getAlarmById(alarmId)
 
             if (alarm == null) {
                 Log.w(TAG, "No alarm found for alarmId=$alarmId, stopping service")

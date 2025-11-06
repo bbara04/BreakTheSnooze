@@ -37,11 +37,12 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.alarm.AlarmIntents
 import hu.bbara.breakthesnooze.alarm.AlarmRingtoneService
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
+import hu.bbara.breakthesnooze.data.settings.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
@@ -49,7 +50,9 @@ import hu.bbara.breakthesnooze.ui.alarm.dismiss.createTask
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.launch
 import java.time.Instant
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlarmRingingActivity : ComponentActivity() {
 
     private var alarmId: Int = -1
@@ -61,6 +64,8 @@ class AlarmRingingActivity : ComponentActivity() {
     private val activeTaskType: MutableState<AlarmDismissTaskType?> = mutableStateOf(null)
     private var taskCompleted = false
     private val debugModeEnabled = mutableStateOf(false)
+    @Inject lateinit var alarmRepository: AlarmRepository
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,8 +120,7 @@ class AlarmRingingActivity : ComponentActivity() {
 
     private fun observeAlarm() {
         lifecycleScope.launch {
-            val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            val alarm = repository.getAlarmById(alarmId)
+            val alarm = alarmRepository.getAlarmById(alarmId)
             alarmState.value = alarm
             updateTasksForAlarm(alarm)
         }
@@ -124,7 +128,6 @@ class AlarmRingingActivity : ComponentActivity() {
 
     private fun observeSettings() {
         lifecycleScope.launch {
-            val settingsRepository = SettingsRepositoryProvider.getRepository(applicationContext)
             settingsRepository.settings.collect { settings ->
                 debugModeEnabled.value = settings.debugModeEnabled
                 updateTasksForAlarm(alarmState.value)
@@ -205,8 +208,7 @@ class AlarmRingingActivity : ComponentActivity() {
         val alarm = alarmState.value ?: return
         lifecycleScope.launch {
             val taskType = activeTaskType.value ?: alarm.dismissTask
-            val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            repository.addWakeEvent(
+            alarmRepository.addWakeEvent(
                 alarmId = alarm.id,
                 alarmLabel = alarm.label,
                 dismissTask = taskType,

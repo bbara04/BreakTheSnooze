@@ -4,16 +4,22 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
+import dagger.hilt.android.AndroidEntryPoint
+import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlarmReceiver : BroadcastReceiver() {
+
+    @Inject lateinit var alarmRepository: AlarmRepository
+    @Inject lateinit var alarmScheduler: AlarmScheduler
 
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != AlarmIntents.ACTION_ALARM_FIRED) {
@@ -28,21 +34,19 @@ class AlarmReceiver : BroadcastReceiver() {
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         scope.launch {
             try {
-                val repository = AlarmRepositoryProvider.getRepository(context.applicationContext)
-                val scheduler = AlarmSchedulerProvider.getScheduler(context.applicationContext)
-                val alarm = repository.getAlarmById(alarmId)
+                val alarm = alarmRepository.getAlarmById(alarmId)
 
                 if (alarm == null) {
-                    scheduler.cancel(alarmId)
+                    alarmScheduler.cancel(alarmId)
                     pendingResult.finish()
                     return@launch
                 }
 
                 if (alarm.repeatDays.isEmpty()) {
-                    repository.updateAlarmActive(alarmId, false)
-                    scheduler.cancel(alarmId)
+                    alarmRepository.updateAlarmActive(alarmId, false)
+                    alarmScheduler.cancel(alarmId)
                 } else {
-                    scheduler.schedule(alarm)
+                    alarmScheduler.schedule(alarm)
                 }
 
                 val serviceIntent = Intent(context, AlarmRingtoneService::class.java).apply {

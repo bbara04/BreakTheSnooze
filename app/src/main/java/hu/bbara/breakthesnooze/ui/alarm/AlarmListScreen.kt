@@ -2,6 +2,7 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -210,7 +211,7 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
 
 private const val TAG_ALARM_ROW = "AlarmRow"
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun AlarmRow(
     alarm: AlarmUiModel,

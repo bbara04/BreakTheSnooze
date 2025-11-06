@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wearable-app xmlns:android="http://schemas.android.com/apk/res/android"
+    package="hu.bbara.breakthesnooze">
+    <uses-feature
+        android:name="android.hardware.type.watch"
+        android:required="true" />
+    <application
+        android:icon="@mipmap/app_logo"
+        android:label="@string/app_name">
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="true" />
+    </application>
+    <versionCode>4</versionCode>
+    <versionName>1.0.1.4</versionName>
+    <minSdkVersion>26</minSdkVersion>
+    <targetSdkVersion>36</targetSdkVersion>
+    <rawPathResId>@raw/android_wear_micro_apk</rawPathResId>
+</wearable-app>

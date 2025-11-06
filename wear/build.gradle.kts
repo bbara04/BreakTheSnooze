@@ -12,8 +12,8 @@ android {
         applicationId = "hu.bbara.breakthesnooze"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.1.1"
+        versionCode = 1000002
+        versionName = "1"
     }
 
     buildTypes {

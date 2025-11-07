@@ -77,3 +77,7 @@ dependencies {
     kapt(libs.androidx.room.compiler)
     wearApp(project(":wear"))
 }
+
+kapt {
+    correctErrorTypes = true
+}

@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -418,5 +419,13 @@ private fun DebugCancelButton(
             .height(44.dp)
     ) {
         Text(text = "Cancel")
+    }
+}
+
+@Preview
+@Composable
+private fun DebugCancelButtonPreview() {
+    BreakTheSnoozeTheme {
+        DebugCancelButton(onClick = {})
     }
 }

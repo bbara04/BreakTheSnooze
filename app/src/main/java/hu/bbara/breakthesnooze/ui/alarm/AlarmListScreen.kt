@@ -40,6 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
+import java.time.Duration
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,6 +169,18 @@ private fun SelectionTopBar(
     )
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun SelectionTopBarPreview() {
+    BreakTheSnoozeTheme {
+        SelectionTopBar(
+            count = 3,
+            onClearSelection = {},
+            onDeleteSelection = {}
+        )
+    }
+}
+
 @Composable
 private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) {
     Card(
@@ -206,6 +222,24 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun UpcomingAlarmCardPreview() {
+    val sampleAlarm = sampleAlarms().firstOrNull()
+    BreakTheSnoozeTheme {
+        UpcomingAlarmCard(
+            upcomingAlarm = sampleAlarm?.let {
+                UpcomingAlarm(
+                    alarm = it,
+                    triggerAt = LocalDateTime.now().plusHours(1),
+                    remaining = Duration.ofHours(1)
+                )
+            },
+            is24Hour = true
+        )
     }
 }
 
@@ -309,6 +343,23 @@ private fun AlarmRow(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun AlarmRowPreview() {
+    BreakTheSnoozeTheme {
+        AlarmRow(
+            alarm = sampleAlarms().first(),
+            onToggle = {},
+            onEdit = {},
+            onEnterSelection = {},
+            onToggleSelection = {},
+            is24Hour = true,
+            selectionActive = false,
+            isSelected = false
+        )
+    }
+}
+
 @Composable
 private fun EmptyState() {
     Surface(
@@ -330,5 +381,13 @@ private fun EmptyState() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EmptyStatePreview() {
+    BreakTheSnoozeTheme {
+        EmptyState()
     }
 }

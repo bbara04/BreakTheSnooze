@@ -39,9 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.settings.SettingsState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -245,6 +247,16 @@ private fun SettingsSection(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun SettingsSectionPreview() {
+    BreakTheSnoozeTheme {
+        SettingsSection(title = "Default settings") {
+            Text(text = "Preview content")
+        }
+    }
+}
+
 @Composable
 private fun DefaultTaskOption(
     option: AlarmDismissTaskType,
@@ -280,6 +292,18 @@ private fun DefaultTaskOption(
                 style = MaterialTheme.typography.bodyLarge
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DefaultTaskOptionPreview() {
+    BreakTheSnoozeTheme {
+        DefaultTaskOption(
+            option = AlarmDismissTaskType.MATH_CHALLENGE,
+            selected = true,
+            onSelect = {}
+        )
     }
 }
 

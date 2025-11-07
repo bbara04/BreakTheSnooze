@@ -30,7 +30,7 @@ jobs:
         - name: Sign Release
           uses: r0adkll/sign-android-release@v1
           with:
-            releaseDirectory: './app/build/outputs/bundle/release'
+            releaseDirectory: 'app/build/outputs/bundle/release'
             signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
             keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
             alias: ${{ secrets.ANDROID_DEVS_ALIAS }}
@@ -41,6 +41,6 @@ jobs:
           with:
             serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
             packageName: 'hu.bbara.breakthesnooze'
-            releaseFiles: './app/build/outputs/bundle/release/app-release.aab'
+            releaseFiles: 'app/build/outputs/bundle/release/app-release.aab'
             track: 'internal'
             status: 'draft'

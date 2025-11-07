@@ -10,6 +10,7 @@ import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
@@ -136,13 +138,20 @@ internal fun AlarmCreateRoute(
         topBar = {
             CenterAlignedTopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = onCancel) {
+                    IconButton(
+                        onClick = onCancel,
+                        modifier = Modifier.testTag(AlarmCreateTestTags.BACK_BUTTON)
+                    ) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 title = { Text(text = if (isEditing) "Edit alarm" else "New alarm") },
                 actions = {
-                    TextButton(onClick = onSave, enabled = canSave) {
+                    TextButton(
+                        onClick = onSave,
+                        enabled = canSave,
+                        modifier = Modifier.testTag(AlarmCreateTestTags.SAVE_BUTTON)
+                    ) {
                         Text(text = if (isEditing) "Update" else "Save")
                     }
                 }
@@ -190,7 +199,9 @@ internal fun AlarmCreateRoute(
                 TextField(
                     value = draft.label,
                     onValueChange = { onUpdateDraft(draft.copy(label = it)) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(AlarmCreateTestTags.LABEL_FIELD),
                     placeholder = { Text(text = "Alarm label") }
                 )
             }
@@ -740,4 +751,11 @@ private fun taskIconFor(type: AlarmDismissTaskType): ImageVector = when (type) {
     AlarmDismissTaskType.QR_BARCODE_SCAN -> Icons.Filled.QrCode2
     AlarmDismissTaskType.FOCUS_TIMER -> Icons.Filled.Timer
     AlarmDismissTaskType.MEMORY -> Icons.Filled.Grid3x3
+}
+
+@VisibleForTesting
+internal object AlarmCreateTestTags {
+    const val LABEL_FIELD = "alarm_label_field"
+    const val BACK_BUTTON = "alarm_back_button"
+    const val SAVE_BUTTON = "alarm_save_button"
 }

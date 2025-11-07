@@ -7,6 +7,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
@@ -208,7 +210,8 @@ internal fun SettingsRoute(
                     }
                     Switch(
                         checked = settings.debugModeEnabled,
-                        onCheckedChange = onDebugModeToggled
+                        onCheckedChange = onDebugModeToggled,
+                        modifier = Modifier.testTag(SettingsTestTags.DEBUG_SWITCH)
                     )
                 }
             }
@@ -332,4 +335,9 @@ private fun resolveRingtoneTitle(context: android.content.Context, ringtoneUri: 
         val ringtone = RingtoneManager.getRingtone(context, uri)
         ringtone?.getTitle(context)
     }.getOrNull()
+}
+
+@VisibleForTesting
+internal object SettingsTestTags {
+    const val DEBUG_SWITCH = "settings_debug_switch"
 }

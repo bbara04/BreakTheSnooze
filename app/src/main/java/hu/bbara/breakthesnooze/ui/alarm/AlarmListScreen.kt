@@ -145,6 +145,26 @@ internal fun AlarmListRoute(
     }
 }
 
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun AlarmListRoutePreview() {
+    BreakTheSnoozeTheme {
+        AlarmListRoute(
+            alarms = sampleAlarms(),
+            onToggle = { _, _ -> },
+            onEdit = {},
+            selectedIds = emptySet(),
+            onEnterSelection = {},
+            onToggleSelection = {},
+            onClearSelection = {},
+            onDeleteSelection = {},
+            onCreate = {},
+            onOpenSettings = {},
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SelectionTopBar(

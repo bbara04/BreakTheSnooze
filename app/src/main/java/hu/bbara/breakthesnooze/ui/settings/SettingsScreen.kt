@@ -216,6 +216,24 @@ internal fun SettingsRoute(
     }
 }
 
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun SettingsRoutePreview() {
+    BreakTheSnoozeTheme {
+        SettingsRoute(
+            settings = SettingsState(
+                defaultDismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
+                defaultRingtoneUri = "content://media/internal/audio/media/50",
+                debugModeEnabled = true
+            ),
+            onDefaultTaskSelected = {},
+            onDefaultRingtoneSelected = {},
+            onDebugModeToggled = {},
+            onBack = {}
+        )
+    }
+}
+
 @Composable
 private fun SettingsSection(
     title: String,

@@ -28,8 +28,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
+import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -286,3 +288,18 @@ class MemoryDismissTask(
 private data class FeedbackHighlight(val index: Int, val type: FeedbackType)
 
 private enum class FeedbackType { Correct, Incorrect }
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun MemoryDismissTaskPreview() {
+    BreakTheSnoozeTheme {
+        MemoryDismissTask(
+            targetLength = 3,
+            gridDimension = 3
+        ).Content(
+            modifier = Modifier.fillMaxSize(),
+            onCompleted = {},
+            onCancelled = {}
+        )
+    }
+}

@@ -46,6 +46,7 @@ import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
+import hu.bbara.breakthesnooze.ui.alarm.dismiss.MathChallengeDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.createTask
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.launch
@@ -405,6 +406,29 @@ private fun AlarmRingingScreen(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun AlarmRingingScreenPreview() {
+    val sampleAlarm = sampleAlarms().firstOrNull()
+    val tasks = listOf(
+        MathChallengeDismissTask(),
+        FocusTimerDismissTask()
+    )
+    BreakTheSnoozeTheme {
+        AlarmRingingScreen(
+            alarm = sampleAlarm,
+            onStop = {},
+            tasks = tasks,
+            activeTask = null,
+            onTaskSelected = {},
+            onTaskCompleted = {},
+            onTaskCancelled = {},
+            showDebugCancel = true,
+            onDebugCancel = {}
+        )
     }
 }
 

@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -66,6 +67,7 @@ import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.BarcodeScannerContent
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.PermissionDeniedContent
+import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import java.time.DayOfWeek
 import java.time.LocalTime
 
@@ -608,6 +610,58 @@ private fun QrBarcodeSettings(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun AlarmCreateRoutePreview() {
+    BreakTheSnoozeTheme {
+        AlarmCreateRoute(
+            draft = sampleDraft(useCurrentTime = false),
+            isEditing = false,
+            onUpdateDraft = {},
+            onTimeSelected = {},
+            onToggleDay = {},
+            onSoundSelected = {},
+            onDismissTaskSelected = {},
+            onQrBarcodeValueChange = {},
+            onQrScanModeChange = {},
+            onQrUniqueCountChange = {},
+            onSave = {},
+            onCancel = {},
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun QrBarcodeSettingsSpecificPreview() {
+    BreakTheSnoozeTheme {
+        QrBarcodeSettings(
+            draft = sampleDraft(useCurrentTime = false),
+            qrMode = QrScanMode.SpecificCode,
+            onQrScanModeChange = {},
+            onQrBarcodeValueChange = {},
+            onQrUniqueCountChange = {},
+            onShowQrScanner = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun QrBarcodeSettingsUniquePreview() {
+    BreakTheSnoozeTheme {
+        QrBarcodeSettings(
+            draft = sampleDraft(useCurrentTime = false).copy(qrRequiredUniqueCount = DEFAULT_QR_UNIQUE_COUNT),
+            qrMode = QrScanMode.UniqueCodes,
+            onQrScanModeChange = {},
+            onQrBarcodeValueChange = {},
+            onQrUniqueCountChange = {},
+            onShowQrScanner = {}
+        )
     }
 }
 

@@ -39,9 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.settings.SettingsState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -214,6 +216,24 @@ internal fun SettingsRoute(
     }
 }
 
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun SettingsRoutePreview() {
+    BreakTheSnoozeTheme {
+        SettingsRoute(
+            settings = SettingsState(
+                defaultDismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
+                defaultRingtoneUri = "content://media/internal/audio/media/50",
+                debugModeEnabled = true
+            ),
+            onDefaultTaskSelected = {},
+            onDefaultRingtoneSelected = {},
+            onDebugModeToggled = {},
+            onBack = {}
+        )
+    }
+}
+
 @Composable
 private fun SettingsSection(
     title: String,
@@ -241,6 +261,16 @@ private fun SettingsSection(
             ) {
                 content()
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SettingsSectionPreview() {
+    BreakTheSnoozeTheme {
+        SettingsSection(title = "Default settings") {
+            Text(text = "Preview content")
         }
     }
 }
@@ -280,6 +310,18 @@ private fun DefaultTaskOption(
                 style = MaterialTheme.typography.bodyLarge
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DefaultTaskOptionPreview() {
+    BreakTheSnoozeTheme {
+        DefaultTaskOption(
+            option = AlarmDismissTaskType.MATH_CHALLENGE,
+            selected = true,
+            onSelect = {}
+        )
     }
 }
 

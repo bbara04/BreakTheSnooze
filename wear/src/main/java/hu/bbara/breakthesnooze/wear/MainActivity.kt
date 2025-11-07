@@ -31,6 +31,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
+import androidx.compose.ui.tooling.preview.Preview
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.launch
@@ -247,5 +248,16 @@ private fun OverlayScreen(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun OverlayScreenPreview() {
+    MaterialTheme {
+        OverlayScreen(
+            isStopEnabled = true,
+            onStop = {}
+        )
     }
 }

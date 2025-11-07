@@ -9,7 +9,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
+import androidx.camera.core.Preview as CameraPreview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.border
@@ -41,11 +41,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.alarm.rememberCameraPermissionState
+import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import java.util.concurrent.Executors
 
 class QrBarcodeScanDismissTask(
@@ -200,7 +202,7 @@ internal fun BarcodeScannerContent(
                 cameraProviderFuture.addListener({
                     val cameraProvider = cameraProviderFuture.get()
 
-                    val preview = Preview.Builder()
+                    val preview = CameraPreview.Builder()
                         .build()
                         .also {
                             it.setSurfaceProvider(previewView.surfaceProvider)
@@ -420,5 +422,19 @@ internal fun PermissionDeniedContent(
                 Text(text = stringResource(id = R.string.qr_barcode_cancel))
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PermissionDeniedContentPreview() {
+    BreakTheSnoozeTheme {
+        PermissionDeniedContent(
+            modifier = Modifier.fillMaxSize(),
+            isPermanent = false,
+            onRequest = {},
+            onOpenSettings = {},
+            onCancel = {}
+        )
     }
 }

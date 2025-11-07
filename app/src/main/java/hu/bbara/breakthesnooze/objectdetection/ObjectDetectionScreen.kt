@@ -266,6 +266,19 @@ private fun DeniedContent(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun DeniedContentPreview() {
+    MaterialTheme {
+        DeniedContent(
+            modifier = Modifier.fillMaxSize(),
+            onRequest = {},
+            onCancel = {},
+            autoRequestPermission = true
+        )
+    }
+}
+
 @Composable
 private fun PermanentlyDeniedContent(
     modifier: Modifier = Modifier,
@@ -304,6 +317,19 @@ private fun PermanentlyDeniedContent(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun PermanentlyDeniedContentPreview() {
+    MaterialTheme {
+        PermanentlyDeniedContent(
+            modifier = Modifier.fillMaxSize(),
+            onOpenSettings = {},
+            onCancel = {},
+            autoRequestPermission = true
+        )
+    }
+}
+
 @Composable
 private fun ResolutionBadge(text: String, modifier: Modifier = Modifier) {
     Surface(
@@ -317,5 +343,13 @@ private fun ResolutionBadge(text: String, modifier: Modifier = Modifier) {
             color = Color.White,
             style = MaterialTheme.typography.bodySmall
         )
+    }
+}
+
+@Preview
+@Composable
+private fun ResolutionBadgePreview() {
+    MaterialTheme {
+        ResolutionBadge(text = "Resolution: 720x720")
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -45,6 +46,7 @@ import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
+import hu.bbara.breakthesnooze.ui.alarm.dismiss.MathChallengeDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.createTask
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.launch
@@ -407,6 +409,29 @@ private fun AlarmRingingScreen(
     }
 }
 
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun AlarmRingingScreenPreview() {
+    val sampleAlarm = sampleAlarms().firstOrNull()
+    val tasks = listOf(
+        MathChallengeDismissTask(),
+        FocusTimerDismissTask()
+    )
+    BreakTheSnoozeTheme {
+        AlarmRingingScreen(
+            alarm = sampleAlarm,
+            onStop = {},
+            tasks = tasks,
+            activeTask = null,
+            onTaskSelected = {},
+            onTaskCompleted = {},
+            onTaskCancelled = {},
+            showDebugCancel = true,
+            onDebugCancel = {}
+        )
+    }
+}
+
 @Composable
 private fun DebugCancelButton(
     onClick: () -> Unit,
@@ -418,5 +443,13 @@ private fun DebugCancelButton(
             .height(44.dp)
     ) {
         Text(text = "Cancel")
+    }
+}
+
+@Preview
+@Composable
+private fun DebugCancelButtonPreview() {
+    BreakTheSnoozeTheme {
+        DebugCancelButton(onClick = {})
     }
 }

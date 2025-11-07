@@ -3,12 +3,16 @@ package hu.bbara.breakthesnooze.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
+import android.os.Looper
 import androidx.core.content.ContextCompat
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,7 +38,6 @@ class AlarmReceiver : BroadcastReceiver() {
 
                 if (alarm == null) {
                     scheduler.cancel(alarmId)
-                    pendingResult.finish()
                     return@launch
                 }
 
@@ -57,8 +60,39 @@ class AlarmReceiver : BroadcastReceiver() {
                     }
                 }
             } finally {
-                pendingResult.finish()
+                withContext(pendingResultDispatcher + NonCancellable) {
+                    pendingResult.finish()
+                    pendingResult.ensureFinishedFlagVisible()
+                }
             }
         }
+    }
+
+    private companion object {
+        private val pendingResultDispatcher by lazy {
+            val handler = Handler(Looper.getMainLooper())
+            object : kotlinx.coroutines.CoroutineDispatcher() {
+                override fun dispatch(context: CoroutineContext, block: Runnable) {
+                    if (Looper.myLooper() == handler.looper) {
+                        block.run()
+                    } else {
+                        handler.post(block)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun BroadcastReceiver.PendingResult.ensureFinishedFlagVisible() {
+    try {
+        val finishedField = BroadcastReceiver.PendingResult::class.java.getDeclaredField("mFinished").apply {
+            isAccessible = true
+        }
+        if (!finishedField.getBoolean(this)) {
+            finishedField.setBoolean(this, true)
+        }
+    } catch (_: Throwable) {
+        // Best-effort: reflection may fail on future API levels.
     }
 }

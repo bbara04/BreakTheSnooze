@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -184,6 +185,68 @@ private fun AlarmScreenContent(
             modifier = modifier
         )
     }
+}
+
+@VisibleForTesting
+@Composable
+internal fun AlarmScreenContentForTest(
+    uiState: AlarmUiState,
+    onToggle: (Int, Boolean) -> Unit,
+    onDelete: (Int) -> Unit,
+    onEdit: (Int) -> Unit,
+    onStartCreate: () -> Unit,
+    onUpdateDraft: (AlarmCreationState) -> Unit,
+    onTimeSelected: (LocalTime) -> Unit,
+    onToggleDay: (DayOfWeek) -> Unit,
+    onSoundSelected: (String?) -> Unit,
+    onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
+    onQrBarcodeValueChange: (String?) -> Unit,
+    onQrScanModeChange: (QrScanMode) -> Unit,
+    onQrUniqueCountChange: (Int) -> Unit,
+    onSaveDraft: () -> Unit,
+    onCancel: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onCloseSettings: () -> Unit,
+    onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
+    onDefaultRingtoneSelected: (String?) -> Unit,
+    onDebugModeToggled: (Boolean) -> Unit,
+    onEnterSelection: (Int) -> Unit,
+    onToggleSelection: (Int) -> Unit,
+    onClearSelection: () -> Unit,
+    onDeleteSelection: () -> Unit,
+    onSelectHomeTab: (AlarmHomeTab) -> Unit,
+    onBreakdownPeriodSelected: (BreakdownPeriod) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AlarmScreenContent(
+        uiState = uiState,
+        onToggle = onToggle,
+        onDelete = onDelete,
+        onEdit = onEdit,
+        onStartCreate = onStartCreate,
+        onUpdateDraft = onUpdateDraft,
+        onTimeSelected = onTimeSelected,
+        onToggleDay = onToggleDay,
+        onSoundSelected = onSoundSelected,
+        onDismissTaskSelected = onDismissTaskSelected,
+        onQrBarcodeValueChange = onQrBarcodeValueChange,
+        onQrScanModeChange = onQrScanModeChange,
+        onQrUniqueCountChange = onQrUniqueCountChange,
+        onSaveDraft = onSaveDraft,
+        onCancel = onCancel,
+        onOpenSettings = onOpenSettings,
+        onCloseSettings = onCloseSettings,
+        onDefaultTaskSelected = onDefaultTaskSelected,
+        onDefaultRingtoneSelected = onDefaultRingtoneSelected,
+        onDebugModeToggled = onDebugModeToggled,
+        onEnterSelection = onEnterSelection,
+        onToggleSelection = onToggleSelection,
+        onClearSelection = onClearSelection,
+        onDeleteSelection = onDeleteSelection,
+        onSelectHomeTab = onSelectHomeTab,
+        onBreakdownPeriodSelected = onBreakdownPeriodSelected,
+        modifier = modifier
+    )
 }
 
 @Composable

@@ -70,6 +70,88 @@ class AlarmViewModelTest {
     }
 
     @Test
+    fun `saveDraft with valid time upserts alarm schedules it and resets state`() = runTest {
+        val settingsRepository = createSettingsRepository()
+        val repository = FakeAlarmRepository()
+        val scheduler = FakeAlarmScheduler()
+        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        advanceUntilIdle()
+
+        viewModel.startCreating()
+        advanceUntilIdle()
+
+        val pendingDraft = viewModel.uiState.value.draft.copy(
+            time = LocalTime.of(6, 15),
+            label = "Workout",
+            dismissTask = AlarmDismissTaskType.MEMORY
+        )
+        viewModel.updateDraft(pendingDraft)
+        viewModel.saveDraft()
+        repository.awaitUpsertCount(1)
+        scheduler.awaitScheduleCount(1)
+        advanceUntilIdle()
+
+        val saved = repository.upsertedAlarms.single()
+        assertEquals("Workout", saved.label)
+        assertEquals(AlarmDismissTaskType.MEMORY, saved.dismissTask)
+
+        val state = viewModel.uiState.value
+        assertNull(state.editingAlarm)
+        assertEquals(emptySet<Int>(), state.selectedAlarmIds)
+        assertTrue(state.draft.time != null)
+        assertTrue(scheduler.scheduled.contains(saved))
+    }
+
+    @Test
+    fun `saveDraft without time is ignored`() = runTest {
+        val settingsRepository = createSettingsRepository()
+        val repository = FakeAlarmRepository()
+        val scheduler = FakeAlarmScheduler()
+        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        advanceUntilIdle()
+
+        viewModel.startCreating()
+        advanceUntilIdle()
+
+        val clearedDraft = viewModel.uiState.value.draft.copy(time = null)
+        viewModel.updateDraft(clearedDraft)
+        viewModel.saveDraft()
+        advanceUntilIdle()
+
+        assertTrue(repository.upsertedAlarms.isEmpty())
+        assertTrue(scheduler.scheduled.isEmpty())
+        assertEquals(AlarmDestination.Create, viewModel.uiState.value.destination)
+    }
+
+    @Test
+    fun `startEditing loads draft and cancelCreation returns to list`() = runTest {
+        val settingsRepository = createSettingsRepository()
+        val alarm = sampleAlarm(id = 3, isActive = true).copy(label = "Lunch")
+        val repository = FakeAlarmRepository(listOf(alarm))
+        val scheduler = FakeAlarmScheduler()
+        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        advanceUntilIdle()
+        waitUntil { viewModel.uiState.value.alarms.isNotEmpty() }
+
+        viewModel.startEditing(3)
+        advanceUntilIdle()
+        waitUntil { viewModel.uiState.value.editingAlarm?.id == 3 }
+
+        val editState = viewModel.uiState.value
+        assertEquals(alarm.toCreationState(), editState.draft)
+        assertEquals(alarm, editState.editingAlarm)
+        assertEquals(AlarmDestination.Create, editState.destination)
+
+        viewModel.cancelCreation()
+        advanceUntilIdle()
+
+        val cancelled = viewModel.uiState.value
+        assertEquals(AlarmDestination.List, cancelled.destination)
+        assertNull(cancelled.editingAlarm)
+        assertEquals(emptySet<Int>(), cancelled.selectedAlarmIds)
+    }
+
+    @Test
     fun `onToggleAlarm updates state and cancels when disabling`() = runTest {
         val settingsRepository = createSettingsRepository()
         val alarm = sampleAlarm(id = 1, isActive = true)

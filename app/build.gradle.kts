@@ -38,6 +38,9 @@ android {
     buildFeatures {
         compose = true
     }
+    adbOptions {
+        installOptions("-d")
+    }
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
@@ -72,11 +75,13 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("io.mockk:mockk:1.13.12")
     testImplementation("com.google.truth:truth:1.4.2")
+    testImplementation("app.cash.turbine:turbine:1.1.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
+    androidTestImplementation("com.google.truth:truth:1.4.2")
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     kapt(libs.androidx.room.compiler)

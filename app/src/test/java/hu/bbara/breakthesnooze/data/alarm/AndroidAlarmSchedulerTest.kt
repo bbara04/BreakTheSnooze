@@ -4,13 +4,13 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.test.core.app.ApplicationProvider
 import hu.bbara.breakthesnooze.alarm.AlarmIntents
 import hu.bbara.breakthesnooze.alarm.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import java.time.Clock
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -19,19 +19,19 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.LooperMode
 import org.robolectric.shadows.ShadowLog
 import org.robolectric.shadows.ShadowAlarmManager
-import org.robolectric.shadows.ShadowSystemClock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.util.TimeZone
-import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.S])
+@LooperMode(LooperMode.Mode.LEGACY)
 class AndroidAlarmSchedulerTest {
 
     /*
@@ -46,6 +46,7 @@ class AndroidAlarmSchedulerTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private lateinit var scheduler: AndroidAlarmScheduler
+    private lateinit var clock: Clock
     private lateinit var alarmManager: AlarmManager
     private var originalTimeZone: TimeZone? = null
 
@@ -54,10 +55,9 @@ class AndroidAlarmSchedulerTest {
         originalTimeZone = TimeZone.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
         ShadowLog.reset()
-        scheduler = AndroidAlarmScheduler(context)
+        updateClock(Instant.parse("2024-05-06T05:00:00Z"))
         alarmManager = context.getSystemService(AlarmManager::class.java)
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
-        setCurrentTimeMillis(Instant.parse("2024-05-06T05:00:00Z").toEpochMilli())
     }
 
     @After
@@ -76,10 +76,7 @@ class AndroidAlarmSchedulerTest {
         assertNotNull("Expected alarm clock info to be scheduled", alarmClock)
         val expectedMillis = calculateNextTriggerMillis(
             alarm,
-            LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(ShadowSystemClock.currentTimeMillis()),
-                ZoneId.systemDefault()
-            )
+            LocalDateTime.now(clock)
         )
         assertEquals(expectedMillis, alarmClock!!.triggerTime)
 
@@ -182,7 +179,7 @@ class AndroidAlarmSchedulerTest {
         alarmManager.nextAlarmClock?.let { info ->
             assertTrue(
                 "The next alarm clock should be scheduled in the future",
-                info.triggerTime >= ShadowSystemClock.currentTimeMillis()
+                info.triggerTime >= clock.millis()
             )
         }
     }
@@ -190,11 +187,10 @@ class AndroidAlarmSchedulerTest {
     @Test
     fun `AndroidAlarmSchedulerSchedulesAcrossDSTForward_withoutSkippingDay`() {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
-        setCurrentTimeMillis(
+        updateClock(
             LocalDateTime.of(2024, 3, 9, 23, 0)
                 .atZone(ZoneId.systemDefault())
                 .toInstant()
-                .toEpochMilli()
         )
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
         val alarm = createAlarm(
@@ -209,10 +205,7 @@ class AndroidAlarmSchedulerTest {
         assertNotNull(alarmClock)
         val expectedMillis = calculateNextTriggerMillis(
             alarm,
-            LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(ShadowSystemClock.currentTimeMillis()),
-                ZoneId.systemDefault()
-            )
+            LocalDateTime.now(clock)
         )
         assertEquals("Trigger should land on the first valid post-DST time", expectedMillis, alarmClock!!.triggerTime)
     }
@@ -240,7 +233,8 @@ class AndroidAlarmSchedulerTest {
         putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
     }
 
-    private fun setCurrentTimeMillis(millis: Long) {
-        ShadowSystemClock.setNanoTime(TimeUnit.MILLISECONDS.toNanos(millis))
+    private fun updateClock(instant: Instant) {
+        clock = Clock.fixed(instant, ZoneId.systemDefault())
+        scheduler = AndroidAlarmScheduler(context, clock)
     }
 }

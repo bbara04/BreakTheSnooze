@@ -12,9 +12,12 @@ import hu.bbara.breakthesnooze.alarm.AlarmIntents
 import hu.bbara.breakthesnooze.alarm.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import java.time.Clock
+import java.time.LocalDateTime
 
 class AndroidAlarmScheduler(
-    private val context: Context
+    private val context: Context,
+    private val clock: Clock = Clock.systemDefaultZone()
 ) : AlarmScheduler {
 
     private val alarmManager: AlarmManager? = ContextCompat.getSystemService(context, AlarmManager::class.java)
@@ -27,7 +30,7 @@ class AndroidAlarmScheduler(
             return
         }
         Log.d(TAG, "schedule called for id=${alarm.id}")
-        val triggerAtMillis = calculateNextTriggerMillis(alarm) ?: return
+        val triggerAtMillis = calculateNextTriggerMillis(alarm, LocalDateTime.now(clock)) ?: return
         val alarmIntent = createAlarmPendingIntent(alarm.id, PendingIntent.FLAG_UPDATE_CURRENT) ?: return
         val showIntent = createShowIntent(alarm.id)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

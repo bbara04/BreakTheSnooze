@@ -34,7 +34,7 @@ jobs:
             signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
             keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
             alias: ${{ secrets.ANDROID_DEVS_ALIAS }}
-            keyPassword: ${{ secrets.ANDROID_DEVS_ALIAS }}
+            keyPassword: ${{ secrets.ANDROID_DEVS_ALIAS_PASSWORD }}
 
         - name: Deploy bundle to Google Play
           uses: r0adkll/upload-google-play@v1.1.3

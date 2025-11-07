@@ -31,10 +31,10 @@ jobs:
           uses: r0adkll/sign-android-release@v1
           with:
             releaseDirectory: app/build/outputs/bundle/release
-            signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
+            signingKeyBase64: ${{ secrets.SIGNING_KEY }}
             keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
             alias: ${{ secrets.ANDROID_DEVS_ALIAS }}
-            keyPassword: ${{ secrets.ANDROID_DEVS_ALIAS }}
+            keyPassword: ${{ secrets.ANDROID_DEVS_ALIAS_PASSWORD }}
 
         - name: Deploy bundle to Google Play
           uses: r0adkll/upload-google-play@v1.1.3

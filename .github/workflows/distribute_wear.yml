@@ -43,7 +43,7 @@ jobs:
           cache: 'gradle'
 
       - name: Extract version code
-        run: echo "VERSION_CODE=$((10000000 + ${{ github.run_number }}))" >> $GITHUB_ENV
+        run: echo "VERSION_CODE=$((1000000 + ${{ github.run_number }}))" >> $GITHUB_ENV
 
       - name: Extract version name
         run: echo "VERSION_NAME=$(echo '${{ github.ref_name }}' | sed 's/^Wear-v\([0-9.]*\).*/\1/')" >> $GITHUB_ENV

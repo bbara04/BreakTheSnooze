@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -32,6 +33,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmSchedulerProvider
 import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.settings.SettingsRoute
@@ -46,10 +49,18 @@ fun AlarmScreen(
     val context = LocalContext.current
     val repository = remember(context) { AlarmRepositoryProvider.getRepository(context) }
     val scheduler = remember(context) { AlarmSchedulerProvider.getScheduler(context) }
+    val durationRepository = remember(context) { DurationAlarmRepositoryProvider.getRepository(context) }
+    val durationScheduler = remember(context) { DurationAlarmSchedulerProvider.getScheduler(context) }
     val settingsRepository = remember(context) { SettingsRepositoryProvider.getRepository(context) }
     val alarmViewModel: AlarmViewModel = viewModel(
         factory = remember(repository, scheduler, settingsRepository) {
-            AlarmViewModelFactory(repository, scheduler, settingsRepository)
+            AlarmViewModelFactory(
+                repository,
+                scheduler,
+                settingsRepository,
+                durationRepository,
+                durationScheduler
+            )
         }
     )
 
@@ -110,6 +121,19 @@ fun AlarmScreen(
         onDeleteSelection = alarmViewModel::deleteSelected,
         onSelectHomeTab = alarmViewModel::selectHomeTab,
         onBreakdownPeriodSelected = alarmViewModel::setBreakdownPeriod,
+        durationAlarms = uiState.durationAlarms,
+        onCancelDurationAlarm = alarmViewModel::deleteDurationAlarm,
+        durationDraft = uiState.durationDraft,
+        onDurationLabelChange = alarmViewModel::setDurationLabel,
+        onDurationHoursChange = alarmViewModel::setDurationHours,
+        onDurationMinutesChange = alarmViewModel::setDurationMinutes,
+        onDurationSoundSelected = alarmViewModel::setDurationSound,
+        onDurationDismissTaskSelected = alarmViewModel::setDurationDismissTask,
+        onDurationQrBarcodeValueChange = alarmViewModel::setDurationQrBarcodeValue,
+        onDurationQrScanModeChange = alarmViewModel::setDurationQrScanMode,
+        onDurationQrUniqueCountChange = alarmViewModel::setDurationQrUniqueCount,
+        onCreateDurationAlarm = alarmViewModel::saveDurationDraft,
+        isSavingDuration = uiState.isSavingDuration,
         modifier = modifier
     )
 }
@@ -142,6 +166,19 @@ private fun AlarmScreenContent(
     onDeleteSelection: () -> Unit,
     onSelectHomeTab: (AlarmHomeTab) -> Unit,
     onBreakdownPeriodSelected: (BreakdownPeriod) -> Unit,
+    durationAlarms: List<DurationAlarmUiModel>,
+    onCancelDurationAlarm: (Int) -> Unit,
+    durationDraft: DurationAlarmCreationState,
+    onDurationLabelChange: (String) -> Unit,
+    onDurationHoursChange: (Int) -> Unit,
+    onDurationMinutesChange: (Int) -> Unit,
+    onDurationSoundSelected: (String?) -> Unit,
+    onDurationDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
+    onDurationQrBarcodeValueChange: (String?) -> Unit,
+    onDurationQrScanModeChange: (QrScanMode) -> Unit,
+    onDurationQrUniqueCountChange: (Int) -> Unit,
+    onCreateDurationAlarm: () -> Unit,
+    isSavingDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
     when (uiState.destination) {
@@ -157,6 +194,19 @@ private fun AlarmScreenContent(
             onOpenSettings = onOpenSettings,
             onSelectHomeTab = onSelectHomeTab,
             onBreakdownPeriodSelected = onBreakdownPeriodSelected,
+            durationAlarms = durationAlarms,
+            onCancelDurationAlarm = onCancelDurationAlarm,
+            durationDraft = durationDraft,
+            onDurationLabelChange = onDurationLabelChange,
+            onDurationHoursChange = onDurationHoursChange,
+            onDurationMinutesChange = onDurationMinutesChange,
+            onDurationSoundSelected = onDurationSoundSelected,
+            onDurationDismissTaskSelected = onDurationDismissTaskSelected,
+            onDurationQrBarcodeValueChange = onDurationQrBarcodeValueChange,
+            onDurationQrScanModeChange = onDurationQrScanModeChange,
+            onDurationQrUniqueCountChange = onDurationQrUniqueCountChange,
+            onCreateDurationAlarm = onCreateDurationAlarm,
+            isSavingDuration = isSavingDuration,
             modifier = modifier
         )
 
@@ -216,6 +266,22 @@ internal fun AlarmScreenContentForTest(
     onDeleteSelection: () -> Unit,
     onSelectHomeTab: (AlarmHomeTab) -> Unit,
     onBreakdownPeriodSelected: (BreakdownPeriod) -> Unit,
+    durationAlarms: List<DurationAlarmUiModel> = emptyList(),
+    onCancelDurationAlarm: (Int) -> Unit = {},
+    durationDraft: DurationAlarmCreationState = sampleDurationDraft(
+        defaultTask = AlarmDismissTaskType.DEFAULT,
+        defaultSound = null
+    ),
+    onDurationLabelChange: (String) -> Unit = {},
+    onDurationHoursChange: (Int) -> Unit = {},
+    onDurationMinutesChange: (Int) -> Unit = {},
+    onDurationSoundSelected: (String?) -> Unit = {},
+    onDurationDismissTaskSelected: (AlarmDismissTaskType) -> Unit = {},
+    onDurationQrBarcodeValueChange: (String?) -> Unit = {},
+    onDurationQrScanModeChange: (QrScanMode) -> Unit = {},
+    onDurationQrUniqueCountChange: (Int) -> Unit = {},
+    onCreateDurationAlarm: () -> Unit = {},
+    isSavingDuration: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     AlarmScreenContent(
@@ -245,6 +311,19 @@ internal fun AlarmScreenContentForTest(
         onDeleteSelection = onDeleteSelection,
         onSelectHomeTab = onSelectHomeTab,
         onBreakdownPeriodSelected = onBreakdownPeriodSelected,
+        durationAlarms = durationAlarms,
+        onCancelDurationAlarm = onCancelDurationAlarm,
+        durationDraft = durationDraft,
+        onDurationLabelChange = onDurationLabelChange,
+        onDurationHoursChange = onDurationHoursChange,
+        onDurationMinutesChange = onDurationMinutesChange,
+        onDurationSoundSelected = onDurationSoundSelected,
+        onDurationDismissTaskSelected = onDurationDismissTaskSelected,
+        onDurationQrBarcodeValueChange = onDurationQrBarcodeValueChange,
+        onDurationQrScanModeChange = onDurationQrScanModeChange,
+        onDurationQrUniqueCountChange = onDurationQrUniqueCountChange,
+        onCreateDurationAlarm = onCreateDurationAlarm,
+        isSavingDuration = isSavingDuration,
         modifier = modifier
     )
 }
@@ -262,6 +341,19 @@ private fun AlarmHomeRoute(
     onOpenSettings: () -> Unit,
     onSelectHomeTab: (AlarmHomeTab) -> Unit,
     onBreakdownPeriodSelected: (BreakdownPeriod) -> Unit,
+    durationAlarms: List<DurationAlarmUiModel>,
+    onCancelDurationAlarm: (Int) -> Unit,
+    durationDraft: DurationAlarmCreationState,
+    onDurationLabelChange: (String) -> Unit,
+    onDurationHoursChange: (Int) -> Unit,
+    onDurationMinutesChange: (Int) -> Unit,
+    onDurationSoundSelected: (String?) -> Unit,
+    onDurationDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
+    onDurationQrBarcodeValueChange: (String?) -> Unit,
+    onDurationQrScanModeChange: (QrScanMode) -> Unit,
+    onDurationQrUniqueCountChange: (Int) -> Unit,
+    onCreateDurationAlarm: () -> Unit,
+    isSavingDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -273,6 +365,12 @@ private fun AlarmHomeRoute(
                     onClick = { onSelectHomeTab(AlarmHomeTab.Alarms) },
                     icon = { Icon(imageVector = Icons.Default.Alarm, contentDescription = null) },
                     label = { Text(text = stringResource(id = R.string.alarm_tab_alarms)) }
+                )
+                NavigationBarItem(
+                    selected = uiState.homeTab == AlarmHomeTab.Duration,
+                    onClick = { onSelectHomeTab(AlarmHomeTab.Duration) },
+                    icon = { Icon(imageVector = Icons.Default.Timer, contentDescription = null) },
+                    label = { Text(text = stringResource(id = R.string.alarm_tab_duration)) }
                 )
                 NavigationBarItem(
                     selected = uiState.homeTab == AlarmHomeTab.Breakdown,
@@ -292,6 +390,8 @@ private fun AlarmHomeRoute(
         when (uiState.homeTab) {
             AlarmHomeTab.Alarms -> AlarmListRoute(
                 alarms = uiState.alarms,
+                durationAlarms = durationAlarms,
+                onCancelDurationAlarm = onCancelDurationAlarm,
                 onToggle = onToggle,
                 onEdit = onEdit,
                 selectedIds = uiState.selectedAlarmIds,
@@ -301,6 +401,22 @@ private fun AlarmHomeRoute(
                 onDeleteSelection = onDeleteSelection,
                 onCreate = onCreate,
                 onOpenSettings = onOpenSettings,
+                modifier = Modifier.padding(innerPadding)
+            )
+
+            AlarmHomeTab.Duration -> DurationAlarmRoute(
+                draft = durationDraft,
+                onLabelChange = onDurationLabelChange,
+                onHoursChange = onDurationHoursChange,
+                onMinutesChange = onDurationMinutesChange,
+                onSoundSelected = onDurationSoundSelected,
+                onDismissTaskSelected = onDurationDismissTaskSelected,
+                onQrBarcodeValueChange = onDurationQrBarcodeValueChange,
+                onQrScanModeChange = onDurationQrScanModeChange,
+                onQrUniqueCountChange = onDurationQrUniqueCountChange,
+                onCreate = onCreateDurationAlarm,
+                isSaving = isSavingDuration,
+                onBack = { onSelectHomeTab(AlarmHomeTab.Alarms) },
                 modifier = Modifier.padding(innerPadding)
             )
 
@@ -348,8 +464,24 @@ private fun AlarmScreenPreview() {
             onToggleSelection = {},
             onClearSelection = {},
             onDeleteSelection = {},
-            onSelectHomeTab = {},
-            onBreakdownPeriodSelected = {}
+                onSelectHomeTab = {},
+            onBreakdownPeriodSelected = {},
+            durationAlarms = emptyList(),
+            onCancelDurationAlarm = {},
+            durationDraft = sampleDurationDraft(
+                defaultTask = AlarmDismissTaskType.DEFAULT,
+                defaultSound = null
+            ),
+            onDurationLabelChange = {},
+            onDurationHoursChange = {},
+            onDurationMinutesChange = {},
+            onDurationSoundSelected = {},
+            onDurationDismissTaskSelected = {},
+            onDurationQrBarcodeValueChange = {},
+            onDurationQrScanModeChange = {},
+            onDurationQrUniqueCountChange = {},
+            onCreateDurationAlarm = {},
+            isSavingDuration = false
         )
     }
 }

@@ -76,5 +76,21 @@
     <string name="alarm_breakdown_previous_month">Previous month</string>
     <string name="alarm_breakdown_next_month">Next month</string>
     <string name="alarm_tab_alarms">Alarms</string>
+    <string name="alarm_tab_duration">Timer</string>
     <string name="alarm_tab_breakdown">Breakdown</string>
+    <string name="duration_alarm_section_title">Countdown alarms</string>
+    <string name="duration_alarm_cancel">Cancel</string>
+    <string name="duration_alarm_title">Countdown alarm</string>
+    <string name="duration_alarm_duration_title">Duration</string>
+    <string name="duration_alarm_hours_label">Hours</string>
+    <string name="duration_alarm_minutes_label">Minutes</string>
+    <string name="duration_alarm_label_title">Label</string>
+    <string name="duration_alarm_label_hint">Nap, workout, study…</string>
+    <string name="duration_alarm_sound_title">Sound</string>
+    <string name="duration_alarm_sound_default">Default alarm</string>
+    <string name="duration_alarm_sound_subtitle">Tap to choose a ringtone</string>
+    <string name="duration_alarm_sound_reset">Use default</string>
+    <string name="duration_alarm_task_title">Dismiss task</string>
+    <string name="duration_alarm_dialog_done">Done</string>
+    <string name="duration_alarm_start_button">Add</string>
 </resources>

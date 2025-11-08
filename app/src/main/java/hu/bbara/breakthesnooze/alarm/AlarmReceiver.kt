@@ -6,8 +6,13 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.ContextCompat
+import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.alarm.detectAlarmKind
+import hu.bbara.breakthesnooze.data.alarm.rawAlarmIdFromUnique
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -23,15 +28,22 @@ class AlarmReceiver : BroadcastReceiver() {
         if (intent?.action != AlarmIntents.ACTION_ALARM_FIRED) {
             return
         }
-        val alarmId = intent.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1)
-        if (alarmId == -1) {
+        val uniqueAlarmId = intent.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1)
+        if (uniqueAlarmId == -1) {
             return
         }
+        val alarmKind = detectAlarmKind(uniqueAlarmId)
 
         val pendingResult = goAsync()
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         scope.launch {
             try {
+                if (alarmKind == AlarmKind.Duration) {
+                    handleDurationAlarm(context, uniqueAlarmId)
+                    return@launch
+                }
+
+                val alarmId = uniqueAlarmId
                 val repository = AlarmRepositoryProvider.getRepository(context.applicationContext)
                 val scheduler = AlarmSchedulerProvider.getScheduler(context.applicationContext)
                 val alarm = repository.getAlarmById(alarmId)
@@ -53,10 +65,12 @@ class AlarmReceiver : BroadcastReceiver() {
                     putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
                 }
 
-                ContextCompat.startForegroundService(context, serviceIntent)
+                ContextCompat.startForegroundService(context, serviceIntent.apply {
+                    putExtra(AlarmIntents.EXTRA_ALARM_ID, uniqueAlarmId)
+                })
                 if (shouldLaunchAlarmScreen(context)) {
                     withContext(Dispatchers.Main) {
-                        context.startActivity(AlarmRingingActivity.createIntent(context, alarmId))
+                        context.startActivity(AlarmRingingActivity.createIntent(context, uniqueAlarmId))
                     }
                 }
             } finally {
@@ -64,6 +78,28 @@ class AlarmReceiver : BroadcastReceiver() {
                     pendingResult.finish()
                     pendingResult.ensureFinishedFlagVisible()
                 }
+            }
+        }
+    }
+
+    private suspend fun handleDurationAlarm(context: Context, uniqueAlarmId: Int) {
+        val rawId = rawAlarmIdFromUnique(uniqueAlarmId)
+        val repository = DurationAlarmRepositoryProvider.getRepository(context.applicationContext)
+        val scheduler = DurationAlarmSchedulerProvider.getScheduler(context.applicationContext)
+        val alarm = repository.getById(rawId)
+        if (alarm == null) {
+            scheduler.cancel(rawId)
+            return
+        }
+        scheduler.cancel(rawId)
+        val serviceIntent = Intent(context, AlarmRingtoneService::class.java).apply {
+            action = AlarmIntents.ACTION_ALARM_FIRED
+            putExtra(AlarmIntents.EXTRA_ALARM_ID, uniqueAlarmId)
+        }
+        ContextCompat.startForegroundService(context, serviceIntent)
+        if (shouldLaunchAlarmScreen(context)) {
+            withContext(Dispatchers.Main) {
+                context.startActivity(AlarmRingingActivity.createIntent(context, uniqueAlarmId))
             }
         }
     }

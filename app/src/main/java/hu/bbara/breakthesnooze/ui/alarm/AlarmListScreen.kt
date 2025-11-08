@@ -32,22 +32,34 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
+import kotlinx.coroutines.delay
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmListRoute(
+    durationAlarms: List<DurationAlarmUiModel>,
+    onCancelDurationAlarm: (Int) -> Unit,
     alarms: List<AlarmUiModel>,
     onToggle: (id: Int, isActive: Boolean) -> Unit,
     onEdit: (id: Int) -> Unit,
@@ -125,6 +137,19 @@ internal fun AlarmListRoute(
                 UpcomingAlarmCard(upcomingAlarm, is24Hour)
             }
 
+            if (durationAlarms.isNotEmpty()) {
+                item {
+                    DurationAlarmSectionHeader()
+                }
+                items(durationAlarms, key = { "duration_${it.id}" }) { alarm ->
+                    DurationAlarmRow(
+                        alarm = alarm,
+                        is24Hour = is24Hour,
+                        onCancel = { onCancelDurationAlarm(alarm.id) }
+                    )
+                }
+            }
+
             if (orderedAlarms.isEmpty()) {
                 item { EmptyState() }
             } else {
@@ -150,6 +175,8 @@ internal fun AlarmListRoute(
 private fun AlarmListRoutePreview() {
     BreakTheSnoozeTheme {
         AlarmListRoute(
+            durationAlarms = emptyList(),
+            onCancelDurationAlarm = {},
             alarms = sampleAlarms(),
             onToggle = { _, _ -> },
             onEdit = {},
@@ -198,6 +225,76 @@ private fun SelectionTopBarPreview() {
             onClearSelection = {},
             onDeleteSelection = {}
         )
+    }
+}
+
+@Composable
+private fun DurationAlarmSectionHeader() {
+    Text(
+        text = stringResource(id = R.string.duration_alarm_section_title),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun DurationAlarmRow(
+    alarm: DurationAlarmUiModel,
+    is24Hour: Boolean,
+    onCancel: () -> Unit
+) {
+    val triggerTime = remember(alarm.triggerAt, is24Hour) {
+        val time = alarm.triggerAt.atZone(ZoneId.systemDefault()).toLocalTime()
+        time.formatForDisplay(is24Hour)
+    }
+    var remaining by remember(alarm.triggerAt) {
+        mutableStateOf(Duration.between(Instant.now(), alarm.triggerAt))
+    }
+    LaunchedEffect(alarm.triggerAt) {
+        while (true) {
+            remaining = Duration.between(Instant.now(), alarm.triggerAt)
+            if (remaining.isNegative) break
+            delay(15_000)
+        }
+    }
+    Card(
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = alarm.label.ifBlank { stringResource(id = R.string.alarm_label_default) },
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = triggerTime,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            Text(
+                text = formatRemaining(remaining),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onCancel) {
+                    Text(text = stringResource(id = R.string.duration_alarm_cancel))
+                }
+            }
+        }
     }
 }
 

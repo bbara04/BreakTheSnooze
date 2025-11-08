@@ -1,9 +1,13 @@
 package hu.bbara.breakthesnooze.ui.alarm
 
+import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
+import hu.bbara.breakthesnooze.data.alarm.uniqueAlarmId
+import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 
 data class DurationAlarmUiModel(
     val id: Int,
@@ -54,5 +58,20 @@ fun sampleDurationDraft(
         dismissTask = defaultTask,
         qrBarcodeValue = null,
         qrRequiredUniqueCount = 0
+    )
+}
+
+internal fun DurationAlarmUiModel.toAlarmUiModel(): AlarmUiModel {
+    val localTime = triggerAt.atZone(ZoneId.systemDefault()).toLocalTime()
+    return AlarmUiModel(
+        id = uniqueAlarmId(AlarmKind.Duration, id),
+        time = localTime,
+        label = label,
+        isActive = true,
+        repeatDays = emptySet(),
+        soundUri = soundUri,
+        dismissTask = dismissTask,
+        qrBarcodeValue = qrBarcodeValue,
+        qrRequiredUniqueCount = qrRequiredUniqueCount
     )
 }

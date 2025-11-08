@@ -74,7 +74,7 @@ internal fun AlarmListRoute(
 ) {
     val context = LocalContext.current
     val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
-    val upcomingAlarm = remember(alarms) { resolveNextAlarm(alarms) }
+    val upcomingAlarm = remember(alarms, durationAlarms) { resolveNextAlarm(alarms, durationAlarms) }
     val (activeAlarms, inactiveAlarms) = remember(alarms) {
         val active = alarms.filter { it.isActive }
         val inactive = alarms.filterNot { it.isActive }

@@ -40,7 +40,7 @@ jobs:
           id: upload_internal
           uses: KevinRohn/github-action-upload-play-store@v1.0.2
           with:
-            service_account_json: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+            service_account_json: ${{ secrets.PLAY_AUTH_JSON }}
             package_name: "hu.bbara.breakthesnooze"
             aab_file_path: "./build/outputs/bundle/release/app-release.aab"
             track: "internal"

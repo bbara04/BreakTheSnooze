@@ -42,6 +42,6 @@ jobs:
           with:
             service_account_json: ${{ secrets.PLAY_AUTH_JSON }}
             package_name: "hu.bbara.breakthesnooze"
-            aab_file_path: "./build/outputs/bundle/release/app-release.aab"
+            aab_file_path: "app/build/outputs/bundle/release/app-release.aab"
             track: "internal"
             release_status: "draft"

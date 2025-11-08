@@ -49,6 +49,18 @@ class AlarmRingtoneService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        val requiresActiveAlarm = when (action) {
+            AlarmIntents.ACTION_STOP_ALARM,
+            AlarmIntents.ACTION_WEAR_ACK,
+            AlarmIntents.ACTION_PAUSE_ALARM,
+            AlarmIntents.ACTION_RESUME_ALARM -> true
+            else -> false
+        }
+        if (requiresActiveAlarm && currentAlarmId == null) {
+            Log.d(TAG, "Ignoring $action for alarmId=$alarmId; no active foreground alarm")
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         when (action) {
             AlarmIntents.ACTION_STOP_ALARM -> {

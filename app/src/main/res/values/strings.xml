@@ -95,4 +95,5 @@
     <string name="duration_alarm_task_title">Dismiss task</string>
     <string name="duration_alarm_dialog_done">Done</string>
     <string name="duration_alarm_start_button">Add</string>
+    <string name="duration_alarm_summary">Will ring at %1$s</string>
 </resources>

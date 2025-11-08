@@ -4,27 +4,32 @@ import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
+import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,12 +40,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -50,6 +58,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import java.util.Date
+import kotlin.math.abs
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -294,6 +306,18 @@ private fun DurationPicker(
     onHoursChange: (Int) -> Unit,
     onMinutesChange: (Int) -> Unit
 ) {
+    val context = LocalContext.current
+    val hourValues = remember { (0..99).toList() }
+    val minuteValues = remember { (0..59).toList() }
+    val clampedHours = hours.coerceIn(hourValues.first(), hourValues.last())
+    val clampedMinutes = minutes.coerceIn(minuteValues.first(), minuteValues.last())
+    val timeFormatter = remember(context) { DateFormat.getTimeFormat(context) }
+    val summaryTime = remember(clampedHours, clampedMinutes, timeFormatter) {
+        val totalMinutes = clampedHours * 60L + clampedMinutes
+        val futureMillis = System.currentTimeMillis() + totalMinutes * 60_000L
+        timeFormatter.format(Date(futureMillis))
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = stringResource(id = R.string.duration_alarm_duration_title),
@@ -301,58 +325,140 @@ private fun DurationPicker(
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            DurationValueCard(
+            DurationRollerColumn(
                 label = stringResource(id = R.string.duration_alarm_hours_label),
-                value = hours,
-                onIncrement = { onHoursChange((hours + 1).coerceAtMost(99)) },
-                onDecrement = { onHoursChange((hours - 1).coerceAtLeast(0)) },
+                values = hourValues,
+                selectedValue = clampedHours,
+                onValueSelected = onHoursChange,
                 modifier = Modifier.weight(1f)
             )
-            DurationValueCard(
+            DurationRollerColumn(
                 label = stringResource(id = R.string.duration_alarm_minutes_label),
-                value = minutes.coerceIn(0, 59),
-                onIncrement = { onMinutesChange((minutes + 1).coerceAtMost(59)) },
-                onDecrement = { onMinutesChange((minutes - 1).coerceAtLeast(0)) },
+                values = minuteValues,
+                selectedValue = clampedMinutes,
+                onValueSelected = onMinutesChange,
                 modifier = Modifier.weight(1f)
             )
         }
+        Text(
+            text = stringResource(id = R.string.duration_alarm_summary, summaryTime),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DurationValueCard(
+private fun DurationRollerColumn(
     label: String,
-    value: Int,
-    onIncrement: () -> Unit,
-    onDecrement: () -> Unit,
+    values: List<Int>,
+    selectedValue: Int,
+    onValueSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    if (values.isEmpty()) return
+    val itemHeight = 48.dp
+    val visibleItems = 5
+    val paddingItems = (visibleItems - 1) / 2
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = values.indexOf(selectedValue).coerceIn(0, values.lastIndex)
+    )
+    val flingBehavior = rememberSnapFlingBehavior(listState)
+
+    LaunchedEffect(selectedValue) {
+        val targetIndex = values.indexOf(selectedValue).coerceIn(0, values.lastIndex)
+        if (listState.layoutInfo.visibleItemsInfo.isEmpty()) {
+            listState.scrollToItem(targetIndex)
+        } else {
+            val centeredIndex = calculateCenteredIndex(listState)
+            if (centeredIndex != targetIndex && !listState.isScrollInProgress) {
+                listState.animateScrollToItem(targetIndex)
+            }
+        }
+    }
+
+    LaunchedEffect(listState) {
+        snapshotFlow { calculateCenteredIndex(listState) }
+            .filterNotNull()
+            .distinctUntilChanged()
+            .collect { index ->
+                val value = values.getOrNull(index) ?: return@collect
+                if (value != selectedValue) {
+                    onValueSelected(value)
+                }
+            }
+    }
+
+    Column(
         modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Column(
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .height(itemHeight * visibleItems)
         ) {
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-            Text(text = value.toString().padStart(2, '0'), style = MaterialTheme.typography.displaySmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconButton(onClick = onDecrement) {
-                    Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
-                }
-                IconButton(onClick = onIncrement) {
-                    Icon(imageVector = Icons.Filled.Add, contentDescription = null)
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp),
+                tonalElevation = 6.dp,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .height(itemHeight)
+            ) {}
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = itemHeight * paddingItems),
+                flingBehavior = flingBehavior,
+                userScrollEnabled = true
+            ) {
+                items(count = values.size) { index ->
+                    val value = values[index]
+                    val isSelected = value == selectedValue
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(itemHeight),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = value.toString().padStart(2, '0'),
+                            style = if (isSelected) MaterialTheme.typography.displayMedium else MaterialTheme.typography.headlineMedium,
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            }
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun calculateCenteredIndex(state: LazyListState): Int? {
+    val layoutInfo = state.layoutInfo
+    if (layoutInfo.visibleItemsInfo.isEmpty() || layoutInfo.viewportSize.height == 0) return null
+    val viewportCenter = layoutInfo.viewportStartOffset + layoutInfo.viewportSize.height / 2
+    return layoutInfo.visibleItemsInfo.minByOrNull { item ->
+        val itemCenter = item.offset + item.size / 2
+        abs(itemCenter - viewportCenter)
+    }?.index
 }
 
 @Composable

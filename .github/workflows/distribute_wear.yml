@@ -49,7 +49,7 @@ jobs:
         uses: chkfung/android-version-actions@v1.2.2
         with:
           gradlePath: wear/build.gradle.kts
-          versionCode: ${{github.run_number + 10000000}}
+          versionCode: ${{ github.run_number + 10000000 }}
           versionName: ${{ env.VERSION_NAME }}
 
       - name: Grant execute permission for gradlew

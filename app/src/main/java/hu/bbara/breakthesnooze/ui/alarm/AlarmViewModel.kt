@@ -497,6 +497,9 @@ class AlarmViewModel(
                     }
                 }
                 resetDurationDraft()
+                _uiState.update { state ->
+                    state.copy(homeTab = AlarmHomeTab.Alarms)
+                }
             }
         }
     }

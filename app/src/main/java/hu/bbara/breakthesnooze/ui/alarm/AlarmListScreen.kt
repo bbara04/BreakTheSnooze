@@ -81,6 +81,7 @@ internal fun AlarmListRoute(
         active to inactive
     }
     val orderedAlarms = remember(activeAlarms, inactiveAlarms) { activeAlarms + inactiveAlarms }
+    val hasAnyAlarms = durationAlarms.isNotEmpty() || orderedAlarms.isNotEmpty()
 
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
@@ -137,10 +138,12 @@ internal fun AlarmListRoute(
                 UpcomingAlarmCard(upcomingAlarm, is24Hour)
             }
 
+            if (!hasAnyAlarms) {
+                item { EmptyState() }
+            }
+
             if (durationAlarms.isNotEmpty()) {
-                item {
-                    DurationAlarmSectionHeader()
-                }
+                item { DurationAlarmSectionHeader() }
                 items(durationAlarms, key = { "duration_${it.id}" }) { alarm ->
                     DurationAlarmRow(
                         alarm = alarm,
@@ -150,10 +153,25 @@ internal fun AlarmListRoute(
                 }
             }
 
-            if (orderedAlarms.isEmpty()) {
-                item { EmptyState() }
-            } else {
-                items(orderedAlarms, key = { it.id }) { alarm ->
+            if (activeAlarms.isNotEmpty()) {
+                item { AlarmSectionHeader(text = stringResource(id = R.string.alarm_section_enabled)) }
+                items(activeAlarms, key = { it.id }) { alarm ->
+                    AlarmRow(
+                        alarm = alarm,
+                        onToggle = { onToggle(alarm.id, it) },
+                        onEdit = { onEdit(alarm.id) },
+                        onEnterSelection = { onEnterSelection(alarm.id) },
+                        onToggleSelection = { onToggleSelection(alarm.id) },
+                        is24Hour = is24Hour,
+                        selectionActive = selectionActive,
+                        isSelected = selectedIds.contains(alarm.id)
+                    )
+                }
+            }
+
+            if (inactiveAlarms.isNotEmpty()) {
+                item { AlarmSectionHeader(text = stringResource(id = R.string.alarm_section_disabled)) }
+                items(inactiveAlarms, key = { it.id }) { alarm ->
                     AlarmRow(
                         alarm = alarm,
                         onToggle = { onToggle(alarm.id, it) },
@@ -232,6 +250,15 @@ private fun SelectionTopBarPreview() {
 private fun DurationAlarmSectionHeader() {
     Text(
         text = stringResource(id = R.string.duration_alarm_section_title),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun AlarmSectionHeader(text: String) {
+    Text(
+        text = text,
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
     )

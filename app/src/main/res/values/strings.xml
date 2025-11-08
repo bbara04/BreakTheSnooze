@@ -80,6 +80,8 @@
     <string name="alarm_tab_breakdown">Breakdown</string>
     <string name="duration_alarm_section_title">Countdown alarms</string>
     <string name="duration_alarm_cancel">Cancel</string>
+    <string name="alarm_section_enabled">Enabled alarms</string>
+    <string name="alarm_section_disabled">Disabled alarms</string>
     <string name="duration_alarm_title">Countdown alarm</string>
     <string name="duration_alarm_duration_title">Duration</string>
     <string name="duration_alarm_hours_label">Hours</string>

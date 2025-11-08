@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'Wear-v*'
+    branches-ignore:
+      - '**'
 
 jobs:
   test:
@@ -47,6 +49,7 @@ jobs:
         with:
           gradlePath: wear/build.gradle.kts
           versionCode: ${{github.run_number}}
+          versionName: ${{ github.ref_name | sed 's/^Wear-v\([0-9.]*\).*/\1/' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew

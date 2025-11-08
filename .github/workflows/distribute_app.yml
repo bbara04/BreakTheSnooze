@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'App-v*'
+    branches-ignore:
+      - '**'
 
 jobs:
   test:
@@ -47,6 +49,7 @@ jobs:
         with:
           gradlePath: app/build.gradle.kts
           versionCode: ${{github.run_number + 1000000}}
+          versionName: ${{ github.ref_name | sed 's/^App-v\([0-9.]*\).*/\1/' }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew

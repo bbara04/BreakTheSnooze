@@ -34,9 +34,14 @@ class PhoneMessageListenerService : WearableListenerService() {
         Log.d(TAG, "onMessageReceived path=${messageEvent.path} size=${messageEvent.data?.size ?: 0}")
         when (messageEvent.path) {
             MESSAGE_PATH -> {
-                val alarmId = messageEvent.data?.decodeToString()?.toIntOrNull() ?: -1
+                val payload = WearAlarmPayload.fromBytes(messageEvent.data)
+                val alarmId = payload?.alarmId ?: -1
+                if (alarmId == -1) {
+                    Log.w(TAG, "Received alarm start message without valid payload")
+                    return
+                }
                 if (shouldHandleAlarmOnWatch()) {
-                    showOverlay(alarmId)
+                    showOverlay(alarmId, payload?.label)
                 } else {
                     Log.i(TAG, "Skipping watch alarm presentation; watch not detected as being worn")
                 }
@@ -95,10 +100,11 @@ class PhoneMessageListenerService : WearableListenerService() {
         return true
     }
 
-    private fun showOverlay(alarmId: Int) {
+    private fun showOverlay(alarmId: Int, label: String?) {
         val overlayIntent = Intent(this, MainActivity::class.java).apply {
             action = MainActivity.ACTION_SHOW_OVERLAY
             putExtra(MainActivity.EXTRA_ALARM_ID, alarmId)
+            putExtra(MainActivity.EXTRA_ALARM_LABEL, label)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
 
@@ -109,10 +115,13 @@ class PhoneMessageListenerService : WearableListenerService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val notificationText = label?.takeIf { it.isNotBlank() }
+            ?: getString(R.string.overlay_message)
+
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(getString(R.string.overlay_title))
-            .setContentText(getString(R.string.overlay_message))
+            .setContentText(notificationText)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(pendingIntent, true)
@@ -120,7 +129,7 @@ class PhoneMessageListenerService : WearableListenerService() {
             .setOngoing(true)
             .setContentIntent(pendingIntent)
 
-        val ongoingStatus = Status.forPart(Status.TextPart(getString(R.string.overlay_message)))
+        val ongoingStatus = Status.forPart(Status.TextPart(notificationText))
 
         OngoingActivity.Builder(this, NOTIFICATION_ID, notificationBuilder)
             .setCategory(NotificationCompat.CATEGORY_ALARM)

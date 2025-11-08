@@ -3,4 +3,5 @@
     <string name="overlay_title">Phone alarm triggered</string>
     <string name="overlay_message">Tap to stop the alarm.</string>
     <string name="overlay_stop">Stop</string>
+    <string name="overlay_alarm_default_label">Alarm</string>
 </resources>

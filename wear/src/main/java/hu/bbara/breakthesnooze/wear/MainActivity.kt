@@ -12,17 +12,25 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +40,9 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.compose.ui.tooling.preview.Preview
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.delay
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.launch
@@ -41,16 +52,23 @@ class MainActivity : ComponentActivity() {
 
     private var overlayVisible by mutableStateOf(false)
     private var alarmId: Int = -1
+    private var alarmLabel by mutableStateOf<String?>(null)
     private lateinit var messageClient: MessageClient
     private var isVibrating = false
     private val vibrator: Vibrator? by lazy { resolveVibrator() }
     private val messageListener = MessageClient.OnMessageReceivedListener { event ->
         Log.d(TAG, "Activity listener received path=${event.path}")
         if (event.path == PhoneMessageListenerService.MESSAGE_PATH) {
-            val receivedId = event.data?.decodeToString()?.toIntOrNull() ?: -1
+            val payload = WearAlarmPayload.fromBytes(event.data)
+            val receivedId = payload?.alarmId ?: -1
+            if (receivedId == -1) {
+                Log.w(TAG, "Activity listener received invalid payload")
+                return@OnMessageReceivedListener
+            }
             runOnUiThread {
                 overlayVisible = true
                 alarmId = receivedId
+                alarmLabel = payload?.label
                 Log.d(TAG, "Overlay made visible from activity listener")
                 updateWakeState()
             }
@@ -68,8 +86,10 @@ class MainActivity : ComponentActivity() {
 
         overlayVisible = shouldShowOverlay(intent)
         alarmId = intent?.getIntExtra(EXTRA_ALARM_ID, -1) ?: -1
-        Log.d(TAG, "onCreate overlayVisible=$overlayVisible action=${intent?.action} alarmId=$alarmId")
+        alarmLabel = intent?.getStringExtra(EXTRA_ALARM_LABEL)
+        Log.d(TAG, "onCreate overlayVisible=$overlayVisible action=${intent?.action} alarmId=$alarmId label=$alarmLabel")
         if (!overlayVisible) {
+            alarmLabel = null
             finish()
             return
         }
@@ -80,6 +100,7 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 OverlayScreen(
                     isStopEnabled = alarmId >= 0,
+                    alarmLabel = alarmLabel,
                     onStop = ::stopAlarmFromWear
                 )
             }
@@ -102,8 +123,10 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         overlayVisible = shouldShowOverlay(intent)
         alarmId = intent.getIntExtra(EXTRA_ALARM_ID, -1)
-        Log.d(TAG, "onNewIntent overlayVisible=$overlayVisible action=${intent.action} alarmId=$alarmId")
+        alarmLabel = intent.getStringExtra(EXTRA_ALARM_LABEL)
+        Log.d(TAG, "onNewIntent overlayVisible=$overlayVisible action=${intent.action} alarmId=$alarmId label=$alarmLabel")
         if (!overlayVisible) {
+            alarmLabel = null
             finish()
             return
         }
@@ -142,6 +165,7 @@ class MainActivity : ComponentActivity() {
 
     private fun dismissOverlay() {
         overlayVisible = false
+        alarmLabel = null
         updateWakeState()
         finish()
         Log.d(TAG, "dismissOverlay invoked")
@@ -218,6 +242,7 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val ACTION_SHOW_OVERLAY = "hu.bbara.breakthesnooze.wear.action.SHOW_OVERLAY"
         const val EXTRA_ALARM_ID = "hu.bbara.breakthesnooze.wear.extra.ALARM_ID"
+        const val EXTRA_ALARM_LABEL = "hu.bbara.breakthesnooze.wear.extra.ALARM_LABEL"
         private const val TAG = "WearMainActivity"
         private val VIBRATION_PATTERN = longArrayOf(0, 600, 400)
         private const val ACK_MESSAGE_PATH = "/breakthesnooze/alarm-ack"
@@ -227,28 +252,71 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun OverlayScreen(
     isStopEnabled: Boolean,
+    alarmLabel: String?,
     onStop: () -> Unit
 ) {
+    val displayLabel = alarmLabel?.takeIf { it.isNotBlank() }
+        ?: stringResource(id = R.string.overlay_alarm_default_label)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF1C1C1C)),
         contentAlignment = Alignment.Center
     ) {
-        Button(
-            onClick = onStop,
-            enabled = isStopEnabled,
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            CurrentTimeText()
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(id = R.string.overlay_stop),
-                style = MaterialTheme.typography.title3,
-                textAlign = TextAlign.Center
+                text = displayLabel,
+                style = MaterialTheme.typography.title2,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = onStop,
+                enabled = isStopEnabled,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.overlay_stop),
+                    style = MaterialTheme.typography.title3,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun CurrentTimeText(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val is24HourFormat = remember(context) { DateFormat.is24HourFormat(context) }
+    val timeFormatter = remember(is24HourFormat) {
+        DateTimeFormatter.ofPattern(if (is24HourFormat) "HH:mm" else "h:mm a")
+    }
+    var currentTime by remember { mutableStateOf(LocalTime.now()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentTime = LocalTime.now()
+            delay(1_000L)
+        }
+    }
+
+    Text(
+        text = currentTime.format(timeFormatter),
+        style = MaterialTheme.typography.display1,
+        textAlign = TextAlign.Center,
+        modifier = modifier.fillMaxWidth()
+    )
 }
 
 @Preview(showBackground = true)
@@ -257,6 +325,7 @@ private fun OverlayScreenPreview() {
     MaterialTheme {
         OverlayScreen(
             isStopEnabled = true,
+            alarmLabel = "Morning alarm",
             onStop = {}
         )
     }

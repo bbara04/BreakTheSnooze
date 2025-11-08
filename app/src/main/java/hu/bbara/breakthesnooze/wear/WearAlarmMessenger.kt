@@ -11,6 +11,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
+import org.json.JSONObject
 
 object WearAlarmMessenger {
 
@@ -21,7 +22,7 @@ object WearAlarmMessenger {
     private const val ATTRIBUTION_TAG = "wear_alarm_bridge"
     private const val ON_BODY_RESPONSE_TIMEOUT_MS = 10_000L
 
-    suspend fun notifyAlarmStarted(context: Context, alarmId: Int) {
+    suspend fun notifyAlarmStarted(context: Context, alarmId: Int, label: String?) {
         val appContext = prepareContext(context)
         Log.d(TAG, "notifyAlarmStarted for alarmId=$alarmId")
         val nodes = getConnectedNodes(appContext) ?: run {
@@ -34,7 +35,7 @@ object WearAlarmMessenger {
         }
         Log.d(TAG, "Found ${nodes.size} connected node(s) for alarmId=$alarmId")
 
-        val payload = alarmId.toString().toByteArray(Charsets.UTF_8)
+        val payload = buildPayload(alarmId, label)
         val messageClient = Wearable.getMessageClient(appContext)
         for (node in nodes) {
             Log.d(TAG, "Sending message to node=${node.displayName} (${node.id})")
@@ -152,5 +153,21 @@ object WearAlarmMessenger {
             }
         }
         return context.applicationContext ?: context
+    }
+
+    private fun buildPayload(alarmId: Int, label: String?): ByteArray {
+        val sanitizedLabel = label?.takeIf { it.isNotBlank() }
+        val payload = runCatching {
+            JSONObject().apply {
+                put("id", alarmId)
+                if (sanitizedLabel != null) {
+                    put("label", sanitizedLabel)
+                }
+            }.toString()
+        }.getOrElse {
+            Log.w(TAG, "Failed to encode wear alarm payload; falling back to id only", it)
+            alarmId.toString()
+        }
+        return payload.toByteArray(Charsets.UTF_8)
     }
 }

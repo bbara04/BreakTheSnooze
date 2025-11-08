@@ -25,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,22 +33,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
+import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.delay
 import java.time.Duration
@@ -238,6 +238,7 @@ private fun DurationAlarmSectionHeader() {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun DurationAlarmRow(
     alarm: DurationAlarmUiModel,
     is24Hour: Boolean,
@@ -257,44 +258,66 @@ private fun DurationAlarmRow(
             delay(15_000)
         }
     }
+    val containerColor = MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.12f)
     Card(
-        shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { clip = true },
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = alarm.label.ifBlank { stringResource(id = R.string.alarm_label_default) },
-                    style = MaterialTheme.typography.titleMedium
-                )
                 Text(
                     text = triggerTime,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                val displayLabel = alarm.label.ifBlank { stringResource(id = R.string.alarm_label_default) }
+                Text(
+                    text = displayLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatRemaining(remaining),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-            Text(
-                text = formatRemaining(remaining),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
-                TextButton(onClick = onCancel) {
-                    Text(text = stringResource(id = R.string.duration_alarm_cancel))
-                }
+            FilledIconButton(onClick = onCancel) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(id = R.string.duration_alarm_cancel)
+                )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DurationAlarmRowPreview() {
+    BreakTheSnoozeTheme {
+        DurationAlarmRow(
+            alarm = DurationAlarmUiModel(
+                id = 1,
+                label = "Power nap",
+                triggerAt = Instant.now().plus(Duration.ofMinutes(45)),
+                duration = Duration.ofMinutes(45),
+                soundUri = null,
+                dismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
+                qrBarcodeValue = null,
+                qrRequiredUniqueCount = 0
+            ),
+            is24Hour = true,
+            onCancel = {}
+        )
     }
 }
 

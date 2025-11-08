@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'App-v*'
-    branches-ignore:
-      - '**'
 
 jobs:
   test:
@@ -44,12 +42,15 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
+      - name: Extract version code
+        run: echo "VERSION_NAME=$(echo '${{ github.ref_name }}' | sed 's/^App-v\([0-9.]*\).*/\1/')" >> $GITHUB_ENV
+
       - name: Bump version
         uses: chkfung/android-version-actions@v1.2.2
         with:
           gradlePath: app/build.gradle.kts
           versionCode: ${{github.run_number + 1000000}}
-          versionName: ${{ github.ref_name | sed 's/^App-v\([0-9.]*\).*/\1/' }}
+          versionName: ${{ env.VERSION_NAME }}
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew

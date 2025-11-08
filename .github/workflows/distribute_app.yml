@@ -42,7 +42,7 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
-      - name: Extract version code
+      - name: Extract version name
         run: echo "VERSION_NAME=$(echo '${{ github.ref_name }}' | sed 's/^App-v\([0-9.]*\).*/\1/')" >> $GITHUB_ENV
 
       - name: Bump version

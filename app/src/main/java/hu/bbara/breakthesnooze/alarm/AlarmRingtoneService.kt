@@ -143,7 +143,7 @@ class AlarmRingtoneService : Service() {
                 }
                 startPlayback(alarm.soundUri)
             }
-            notifyWearDevice(alarmId)
+            notifyWearDevice(alarm)
         }
     }
 
@@ -249,11 +249,16 @@ class AlarmRingtoneService : Service() {
         Log.d(TAG, "Service destroyed")
     }
 
-    private suspend fun notifyWearDevice(alarmId: Int) {
+    private suspend fun notifyWearDevice(alarm: AlarmUiModel) {
+        val alarmId = alarm.id
         if (wearNotificationSentForId == alarmId) return
         Log.d(TAG, "notifyWearDevice invoked for alarmId=$alarmId")
         runCatching {
-            WearAlarmMessenger.notifyAlarmStarted(this@AlarmRingtoneService, alarmId)
+            WearAlarmMessenger.notifyAlarmStarted(
+                context = this@AlarmRingtoneService,
+                alarmId = alarmId,
+                label = alarm.label
+            )
         }.onSuccess {
             wearNotificationSentForId = alarmId
             Log.i(TAG, "Wear notification sent for alarmId=$alarmId")

@@ -43,19 +43,10 @@ jobs:
           cache: 'gradle'
 
       - name: Extract version code
-        run: echo "VERSION_CODE=$((1000000 + ${{ github.run_number }}))" >> $GITHUB_ENV
+        run: echo "VERSION_CODE=$((10000000 + ${{ github.run_number }}))" >> $GITHUB_ENV
 
       - name: Extract version name
         run: echo "VERSION_NAME=$(echo '${{ github.ref_name }}' | sed 's/^Wear-v\([0-9.]*\).*/\1/')" >> $GITHUB_ENV
-
-      - name: Extract mobile version code to retain
-        run: |
-          MOBILE_VERSION_CODE=$(sed -n 's/^\s*versionCode\s*=\s*\([0-9]\+\)/\1/p' app/build.gradle.kts | head -n 1)
-          if [ -z "$MOBILE_VERSION_CODE" ]; then
-            echo "Unable to determine mobile version code" >&2
-            exit 1
-          fi
-          echo "MOBILE_VERSION_CODE=$MOBILE_VERSION_CODE" >> $GITHUB_ENV
 
       - name: Bump version
         uses: chkfung/android-version-actions@v1.2.2
@@ -87,4 +78,3 @@ jobs:
           releaseFiles: wear/build/outputs/bundle/release/wear-release.aab
           track: 'internal'
           status: 'completed'
-          versionCodesToRetain: ${{ env.MOBILE_VERSION_CODE }}

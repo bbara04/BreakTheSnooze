@@ -36,12 +36,9 @@ jobs:
             alias: ${{ secrets.ALIAS }}
             keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-        - name: Upload .aab to Internal Track
-          id: upload_internal
-          uses: KevinRohn/github-action-upload-play-store@v1.0.2
+        - name: Upload AAB
+          uses: italankin/google-play-aab-uploader@1.3
           with:
-            service_account_json: ${{ secrets.PLAY_AUTH_JSON }}
-            package_name: "hu.bbara.breakthesnooze"
-            aab_file_path: "app/build/outputs/bundle/release/app-release.aab"
-            track: "internal"
-            release_status: "draft"
+            package-name: 'hu.bbara.breakthesnooze'
+            aab-path: 'app/build/outputs/bundle/release/app-release.aab'
+            key-json: '${{ secrets.PLAY_AUTH_JSON }}'

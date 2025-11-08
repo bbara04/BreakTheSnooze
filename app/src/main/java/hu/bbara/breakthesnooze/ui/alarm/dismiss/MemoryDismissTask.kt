@@ -127,11 +127,7 @@ class MemoryDismissTask(
         }
 
         Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 6.dp,
+            modifier = modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.surface
         ) {
             Column(

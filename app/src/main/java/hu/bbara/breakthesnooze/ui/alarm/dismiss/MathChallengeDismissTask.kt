@@ -60,11 +60,7 @@ class MathChallengeDismissTask(
         val questionLabel = "${current.first} × ${current.second}" // e.g., 6 × 7
 
         Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 6.dp,
+            modifier = modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.surface
         ) {
             Column(

@@ -24,11 +24,6 @@
         android:roundIcon="@mipmap/app_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.BreakTheSnooze">
-        <meta-data
-            android:name="com.google.android.wearable.beta.app"
-            android:resource="@xml/wearable_app_desc"
-            tools:replace="android:resource" />
-
         <activity
             android:name=".MainActivity"
             android:exported="true"

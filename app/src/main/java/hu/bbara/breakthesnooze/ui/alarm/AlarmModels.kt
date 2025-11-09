@@ -2,6 +2,7 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import hu.bbara.breakthesnooze.data.alarm.calculateNextTrigger
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import java.time.ZoneId
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDateTime
@@ -133,9 +134,12 @@ internal fun sampleDraft(
     qrRequiredUniqueCount = 0
 )
 
-internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {
+internal fun resolveNextAlarm(
+    alarms: List<AlarmUiModel>,
+    durationAlarms: List<DurationAlarmUiModel> = emptyList()
+): UpcomingAlarm? {
     val now = LocalDateTime.now()
-    return alarms
+    val standardUpcoming = alarms
         .filter { it.isActive }
         .mapNotNull { alarm ->
             calculateNextTrigger(alarm, now)?.let { trigger ->
@@ -146,6 +150,19 @@ internal fun resolveNextAlarm(alarms: List<AlarmUiModel>): UpcomingAlarm? {
                 )
             }
         }
+    val durationUpcoming = durationAlarms.mapNotNull { alarm ->
+        val trigger = LocalDateTime.ofInstant(alarm.triggerAt, ZoneId.systemDefault())
+        if (trigger.isBefore(now)) {
+            null
+        } else {
+            UpcomingAlarm(
+                alarm = alarm.toAlarmUiModel(),
+                triggerAt = trigger,
+                remaining = Duration.between(now, trigger)
+            )
+        }
+    }
+    return (standardUpcoming + durationUpcoming)
         .minByOrNull { it.remaining.toMinutes().coerceAtLeast(0) }
 }
 

@@ -25,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,20 +35,31 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import hu.bbara.breakthesnooze.R
+import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
+import kotlinx.coroutines.delay
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AlarmListRoute(
+    durationAlarms: List<DurationAlarmUiModel>,
+    onCancelDurationAlarm: (Int) -> Unit,
     alarms: List<AlarmUiModel>,
     onToggle: (id: Int, isActive: Boolean) -> Unit,
     onEdit: (id: Int) -> Unit,
@@ -62,13 +74,14 @@ internal fun AlarmListRoute(
 ) {
     val context = LocalContext.current
     val is24Hour = remember(context) { DateFormat.is24HourFormat(context) }
-    val upcomingAlarm = remember(alarms) { resolveNextAlarm(alarms) }
+    val upcomingAlarm = remember(alarms, durationAlarms) { resolveNextAlarm(alarms, durationAlarms) }
     val (activeAlarms, inactiveAlarms) = remember(alarms) {
         val active = alarms.filter { it.isActive }
         val inactive = alarms.filterNot { it.isActive }
         active to inactive
     }
     val orderedAlarms = remember(activeAlarms, inactiveAlarms) { activeAlarms + inactiveAlarms }
+    val hasAnyAlarms = durationAlarms.isNotEmpty() || orderedAlarms.isNotEmpty()
 
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
@@ -125,10 +138,40 @@ internal fun AlarmListRoute(
                 UpcomingAlarmCard(upcomingAlarm, is24Hour)
             }
 
-            if (orderedAlarms.isEmpty()) {
+            if (!hasAnyAlarms) {
                 item { EmptyState() }
-            } else {
-                items(orderedAlarms, key = { it.id }) { alarm ->
+            }
+
+            if (durationAlarms.isNotEmpty()) {
+                item { DurationAlarmSectionHeader() }
+                items(durationAlarms, key = { "duration_${it.id}" }) { alarm ->
+                    DurationAlarmRow(
+                        alarm = alarm,
+                        is24Hour = is24Hour,
+                        onCancel = { onCancelDurationAlarm(alarm.id) }
+                    )
+                }
+            }
+
+            if (activeAlarms.isNotEmpty()) {
+                item { AlarmSectionHeader(text = stringResource(id = R.string.alarm_section_enabled)) }
+                items(activeAlarms, key = { it.id }) { alarm ->
+                    AlarmRow(
+                        alarm = alarm,
+                        onToggle = { onToggle(alarm.id, it) },
+                        onEdit = { onEdit(alarm.id) },
+                        onEnterSelection = { onEnterSelection(alarm.id) },
+                        onToggleSelection = { onToggleSelection(alarm.id) },
+                        is24Hour = is24Hour,
+                        selectionActive = selectionActive,
+                        isSelected = selectedIds.contains(alarm.id)
+                    )
+                }
+            }
+
+            if (inactiveAlarms.isNotEmpty()) {
+                item { AlarmSectionHeader(text = stringResource(id = R.string.alarm_section_disabled)) }
+                items(inactiveAlarms, key = { it.id }) { alarm ->
                     AlarmRow(
                         alarm = alarm,
                         onToggle = { onToggle(alarm.id, it) },
@@ -150,6 +193,8 @@ internal fun AlarmListRoute(
 private fun AlarmListRoutePreview() {
     BreakTheSnoozeTheme {
         AlarmListRoute(
+            durationAlarms = emptyList(),
+            onCancelDurationAlarm = {},
             alarms = sampleAlarms(),
             onToggle = { _, _ -> },
             onEdit = {},
@@ -197,6 +242,108 @@ private fun SelectionTopBarPreview() {
             count = 3,
             onClearSelection = {},
             onDeleteSelection = {}
+        )
+    }
+}
+
+@Composable
+private fun DurationAlarmSectionHeader() {
+    Text(
+        text = stringResource(id = R.string.duration_alarm_section_title),
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun AlarmSectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DurationAlarmRow(
+    alarm: DurationAlarmUiModel,
+    is24Hour: Boolean,
+    onCancel: () -> Unit
+) {
+    val triggerTime = remember(alarm.triggerAt, is24Hour) {
+        val time = alarm.triggerAt.atZone(ZoneId.systemDefault()).toLocalTime()
+        time.formatForDisplay(is24Hour)
+    }
+    var remaining by remember(alarm.triggerAt) {
+        mutableStateOf(Duration.between(Instant.now(), alarm.triggerAt))
+    }
+    LaunchedEffect(alarm.triggerAt) {
+        while (true) {
+            remaining = Duration.between(Instant.now(), alarm.triggerAt)
+            if (remaining.isNegative) break
+            delay(15_000)
+        }
+    }
+    val containerColor = MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.12f)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { clip = true },
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = triggerTime,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                val displayLabel = alarm.label.ifBlank { stringResource(id = R.string.alarm_label_default) }
+                Text(
+                    text = displayLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatRemaining(remaining),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            FilledIconButton(onClick = onCancel) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = stringResource(id = R.string.duration_alarm_cancel)
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DurationAlarmRowPreview() {
+    BreakTheSnoozeTheme {
+        DurationAlarmRow(
+            alarm = DurationAlarmUiModel(
+                id = 1,
+                label = "Power nap",
+                triggerAt = Instant.now().plus(Duration.ofMinutes(45)),
+                duration = Duration.ofMinutes(45),
+                soundUri = null,
+                dismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
+                qrBarcodeValue = null,
+                qrRequiredUniqueCount = 0
+            ),
+            is24Hour = true,
+            onCancel = {}
         )
     }
 }

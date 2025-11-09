@@ -9,7 +9,13 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
 import android.util.Log
+import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.detectAlarmKind
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmPlaybackStore
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.duration.toAlarmUiModel
+import hu.bbara.breakthesnooze.data.alarm.rawAlarmIdFromUnique
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.wear.WearAlarmMessenger
 import kotlinx.coroutines.CancellationException
@@ -40,6 +46,18 @@ class AlarmRingtoneService : Service() {
         val alarmId = intent?.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1) ?: -1
         if (alarmId == -1) {
             Log.w(TAG, "onStartCommand without valid alarmId, stopping service")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        val requiresActiveAlarm = when (action) {
+            AlarmIntents.ACTION_STOP_ALARM,
+            AlarmIntents.ACTION_WEAR_ACK,
+            AlarmIntents.ACTION_PAUSE_ALARM,
+            AlarmIntents.ACTION_RESUME_ALARM -> true
+            else -> false
+        }
+        if (requiresActiveAlarm && currentAlarmId == null) {
+            Log.d(TAG, "Ignoring $action for alarmId=$alarmId; no active foreground alarm")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -86,8 +104,7 @@ class AlarmRingtoneService : Service() {
         wearFallbackJob?.cancel()
         wearFallbackJob = null
         playbackJob = serviceScope.launch {
-            val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            val alarm = repository.getAlarmById(alarmId)
+            val alarm = resolveAlarm(alarmId)
 
             if (alarm == null) {
                 Log.w(TAG, "No alarm found for alarmId=$alarmId, stopping service")
@@ -100,9 +117,9 @@ class AlarmRingtoneService : Service() {
             val notification = withContext(Dispatchers.Default) {
                 AlarmNotifications.buildNotification(applicationContext, alarm)
             }
-            startForeground(AlarmNotifications.notificationId(alarmId), notification)
-            Log.d(TAG, "Foreground notification started for alarmId=$alarmId")
-            launchRingingActivity(alarmId)
+            startForeground(AlarmNotifications.notificationId(alarm.id), notification)
+            Log.d(TAG, "Foreground notification started for alarmId=${alarm.id}")
+            launchRingingActivity(alarm.id)
             val isWearConnected = withTimeoutOrNull(WEAR_HANDSHAKE_TIMEOUT_MS) {
                 withContext(Dispatchers.IO) {
                     runCatching {
@@ -196,6 +213,7 @@ class AlarmRingtoneService : Service() {
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
         currentAlarmId = null
         currentAlarm = null
+        DurationAlarmPlaybackStore.remove(alarmId)
         wearNotificationSentForId = null
         val notificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -305,6 +323,26 @@ class AlarmRingtoneService : Service() {
             "Wear acknowledgement received; scheduling phone ringtone after ${WEAR_POST_STOP_DELAY_MS / 1000} seconds for alarmId=$alarmId"
         )
         scheduleWearFallback(WEAR_POST_STOP_DELAY_MS, "post-watch-stop")
+    }
+
+    private suspend fun resolveAlarm(uniqueAlarmId: Int): AlarmUiModel? {
+        return when (detectAlarmKind(uniqueAlarmId)) {
+            AlarmKind.Standard -> {
+                val repository = AlarmRepositoryProvider.getRepository(applicationContext)
+                DurationAlarmPlaybackStore.remove(uniqueAlarmId)
+                repository.getAlarmById(uniqueAlarmId)
+            }
+
+            AlarmKind.Duration -> {
+                val repository = DurationAlarmRepositoryProvider.getRepository(applicationContext)
+                val rawId = rawAlarmIdFromUnique(uniqueAlarmId)
+                val alarm = repository.getById(rawId) ?: return null
+                repository.delete(rawId)
+                return alarm.toAlarmUiModel().also {
+                    DurationAlarmPlaybackStore.put(it.id, it)
+                }
+            }
+        }
     }
 
     companion object {

@@ -41,7 +41,13 @@ import androidx.lifecycle.lifecycleScope
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.alarm.AlarmIntents
 import hu.bbara.breakthesnooze.alarm.AlarmRingtoneService
+import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.detectAlarmKind
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmPlaybackStore
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.duration.toAlarmUiModel
+import hu.bbara.breakthesnooze.data.alarm.rawAlarmIdFromUnique
 import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
@@ -55,6 +61,7 @@ import java.time.Instant
 class AlarmRingingActivity : ComponentActivity() {
 
     private var alarmId: Int = -1
+    private var alarmKind: AlarmKind = AlarmKind.Standard
     private val alarmState: MutableState<AlarmUiModel?> = mutableStateOf(null)
     private var dismissalReceiver: BroadcastReceiver? = null
     private val availableTasks: MutableState<List<AlarmDismissTask>> = mutableStateOf(emptyList())
@@ -71,6 +78,7 @@ class AlarmRingingActivity : ComponentActivity() {
             finish()
             return
         }
+        alarmKind = detectAlarmKind(alarmId)
 
         configureWindow()
         wakeScreen()
@@ -117,8 +125,19 @@ class AlarmRingingActivity : ComponentActivity() {
 
     private fun observeAlarm() {
         lifecycleScope.launch {
-            val repository = AlarmRepositoryProvider.getRepository(applicationContext)
-            val alarm = repository.getAlarmById(alarmId)
+            val alarm = when (alarmKind) {
+                AlarmKind.Standard -> {
+                    val repository = AlarmRepositoryProvider.getRepository(applicationContext)
+                    repository.getAlarmById(alarmId)
+                }
+
+                AlarmKind.Duration -> {
+                    val repository = DurationAlarmRepositoryProvider.getRepository(applicationContext)
+                    val rawId = rawAlarmIdFromUnique(alarmId)
+                    val resolved = repository.getById(rawId)?.toAlarmUiModel()
+                    resolved ?: DurationAlarmPlaybackStore.get(alarmId)
+                }
+            }
             alarmState.value = alarm
             updateTasksForAlarm(alarm)
         }

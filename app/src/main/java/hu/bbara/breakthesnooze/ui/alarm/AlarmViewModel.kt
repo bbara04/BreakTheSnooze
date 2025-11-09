@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
 import hu.bbara.breakthesnooze.data.alarm.WakeEvent
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.alarm.toUiModelWithId
 import hu.bbara.breakthesnooze.data.settings.SettingsRepository
 import hu.bbara.breakthesnooze.data.settings.SettingsState
@@ -25,12 +28,15 @@ import java.time.LocalTime
 class AlarmViewModel(
     private val repository: AlarmRepository,
     private val scheduler: AlarmScheduler,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val durationRepository: DurationAlarmRepository,
+    private val durationScheduler: DurationAlarmScheduler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AlarmUiState())
     val uiState: StateFlow<AlarmUiState> = _uiState.asStateFlow()
     private var synchronizeJob: Job? = null
+    private var durationSynchronizeJob: Job? = null
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -52,6 +58,15 @@ class AlarmViewModel(
                     Log.d(TAG, "collect size=${alarms.size}")
                 }
                 synchronizeAlarms(alarms)
+            }
+        }
+
+        viewModelScope.launch {
+            durationRepository.alarms.collect { durationAlarms ->
+                _uiState.update { state ->
+                    state.copy(durationAlarms = durationAlarms.map { it.toUiModel() })
+                }
+                synchronizeDurationAlarms(durationAlarms)
             }
         }
 
@@ -139,6 +154,23 @@ class AlarmViewModel(
         }
     }
 
+    fun deleteDurationAlarm(id: Int) {
+        viewModelScope.launch {
+            val deleted = withContext(Dispatchers.IO) {
+                logDuration(TAG, "delete_duration_$id") {
+                    runCatching { durationRepository.delete(id) }.isSuccess
+                }
+            }
+            if (deleted) {
+                withContext(Dispatchers.IO) {
+                    logDuration(TAG, "cancel_duration_$id") {
+                        durationScheduler.cancel(id)
+                    }
+                }
+            }
+        }
+    }
+
     fun startCreating() {
         logDuration(TAG, "startCreating") {}
         _uiState.update { state ->
@@ -169,7 +201,15 @@ class AlarmViewModel(
     }
 
     fun selectHomeTab(tab: AlarmHomeTab) {
-        _uiState.update { state -> state.copy(homeTab = tab) }
+        _uiState.update { state ->
+            if (state.homeTab == tab) return@update state
+            val updatedDraft = if (tab == AlarmHomeTab.Duration) {
+                state.durationDraft.withDurationMinutes(state.settings.defaultCountdownDurationMinutes)
+            } else {
+                state.durationDraft
+            }
+            state.copy(homeTab = tab, durationDraft = updatedDraft)
+        }
     }
 
     fun setBreakdownPeriod(period: BreakdownPeriod) {
@@ -263,6 +303,101 @@ class AlarmViewModel(
         }
     }
 
+    fun setDurationLabel(label: String) {
+        _uiState.update { state ->
+            state.copy(durationDraft = state.durationDraft.copy(label = label))
+        }
+    }
+
+    fun setDurationHours(hours: Int) {
+        _uiState.update { state ->
+            val sanitized = hours.coerceIn(0, MAX_DURATION_HOURS)
+            state.copy(durationDraft = state.durationDraft.copy(hours = sanitized))
+        }
+    }
+
+    fun setDurationMinutes(minutes: Int) {
+        _uiState.update { state ->
+            val sanitized = minutes.coerceIn(0, 59)
+            state.copy(durationDraft = state.durationDraft.copy(minutes = sanitized))
+        }
+    }
+
+    fun saveDefaultDuration() {
+        val totalMinutes = _uiState.value.durationDraft.totalMinutes
+        if (totalMinutes <= 0) return
+        viewModelScope.launch {
+            settingsRepository.setDefaultCountdownDuration(totalMinutes)
+        }
+    }
+
+    fun setDurationSound(uri: String?) {
+        _uiState.update { state ->
+            state.copy(durationDraft = state.durationDraft.copy(soundUri = uri))
+        }
+    }
+
+    fun setDurationDismissTask(task: AlarmDismissTaskType) {
+        _uiState.update { state ->
+            val updatedDraft = if (task == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                state.durationDraft.copy(dismissTask = task)
+            } else {
+                state.durationDraft.copy(
+                    dismissTask = task,
+                    qrBarcodeValue = null,
+                    qrRequiredUniqueCount = 0
+                )
+            }
+            state.copy(durationDraft = updatedDraft)
+        }
+    }
+
+    fun setDurationQrBarcodeValue(value: String?) {
+        _uiState.update { state ->
+            state.copy(
+                durationDraft = state.durationDraft.copy(
+                    qrBarcodeValue = value,
+                    qrRequiredUniqueCount = if (value.isNullOrBlank()) {
+                        state.durationDraft.qrRequiredUniqueCount
+                    } else {
+                        0
+                    }
+                )
+            )
+        }
+    }
+
+    fun setDurationQrScanMode(mode: QrScanMode) {
+        _uiState.update { state ->
+            if (state.durationDraft.dismissTask != AlarmDismissTaskType.QR_BARCODE_SCAN) return@update state
+            val updated = when (mode) {
+                QrScanMode.SpecificCode -> state.durationDraft.copy(qrRequiredUniqueCount = 0)
+                QrScanMode.UniqueCodes -> state.durationDraft.copy(
+                    qrBarcodeValue = null,
+                    qrRequiredUniqueCount = if (state.durationDraft.qrRequiredUniqueCount >= MIN_QR_UNIQUE_COUNT) {
+                        state.durationDraft.qrRequiredUniqueCount
+                    } else {
+                        DEFAULT_QR_UNIQUE_COUNT
+                    }
+                )
+            }
+            state.copy(durationDraft = updated)
+        }
+    }
+
+    fun setDurationQrUniqueCount(count: Int) {
+        _uiState.update { state ->
+            if (state.durationDraft.dismissTask != AlarmDismissTaskType.QR_BARCODE_SCAN) return@update state
+            val clamped = count.coerceIn(MIN_QR_UNIQUE_COUNT, MAX_QR_UNIQUE_COUNT)
+            state.copy(
+                durationDraft = state.durationDraft.copy(
+                    qrRequiredUniqueCount = clamped,
+                    qrBarcodeValue = null
+                )
+            )
+        }
+    }
+
     fun setDefaultDismissTask(task: AlarmDismissTaskType) {
         viewModelScope.launch {
             settingsRepository.setDefaultDismissTask(task)
@@ -339,6 +474,61 @@ class AlarmViewModel(
                     )
                 }
             }
+        }
+    }
+
+    fun saveDurationDraft() {
+        val draftSnapshot = _uiState.value.durationDraft
+        val totalMinutes = draftSnapshot.totalMinutes
+        if (totalMinutes <= 0 || _uiState.value.isSavingDuration) {
+            return
+        }
+        _uiState.update { state -> state.copy(isSavingDuration = true) }
+        viewModelScope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                logDuration(TAG, "create_duration") {
+                    durationRepository.create(
+                        durationMinutes = totalMinutes,
+                        label = draftSnapshot.label.ifBlank { "Alarm" },
+                        soundUri = draftSnapshot.soundUri,
+                        dismissTask = draftSnapshot.dismissTask,
+                        qrBarcodeValue = if (draftSnapshot.dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                            draftSnapshot.qrBarcodeValue
+                        } else {
+                            null
+                        },
+                        qrRequiredUniqueCount = if (draftSnapshot.dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) {
+                            draftSnapshot.qrRequiredUniqueCount
+                        } else {
+                            0
+                        }
+                    )
+                }
+            }
+            _uiState.update { state -> state.copy(isSavingDuration = false) }
+            saved?.let { alarm ->
+                withContext(Dispatchers.IO) {
+                    logDuration(TAG, "schedule_duration_${alarm.id}") {
+                        durationScheduler.schedule(alarm)
+                    }
+                }
+                resetDurationDraft()
+                _uiState.update { state ->
+                    state.copy(homeTab = AlarmHomeTab.Alarms)
+                }
+            }
+        }
+    }
+
+    fun resetDurationDraft() {
+        _uiState.update { state ->
+            state.copy(
+                durationDraft = sampleDurationDraft(
+                    defaultTask = state.settings.defaultDismissTask,
+                    defaultSound = state.settings.defaultRingtoneUri,
+                    defaultDurationMinutes = state.settings.defaultCountdownDurationMinutes
+                )
+            )
         }
     }
 
@@ -427,8 +617,25 @@ class AlarmViewModel(
         }
     }
 
+    private fun synchronizeDurationAlarms(alarms: List<DurationAlarm>) {
+        durationSynchronizeJob?.cancel()
+        durationSynchronizeJob = viewModelScope.launch(Dispatchers.IO) {
+            logDuration(TAG, "synchronize_duration_${alarms.size}") {
+                durationScheduler.synchronize(alarms)
+            }
+        }
+    }
+
+    private fun DurationAlarmCreationState.withDurationMinutes(totalMinutes: Int): DurationAlarmCreationState {
+        val clamped = totalMinutes.coerceIn(0, MAX_DURATION_HOURS * 60)
+        val hours = clamped / 60
+        val minutes = clamped % 60
+        return copy(hours = hours, minutes = minutes)
+    }
+
     companion object {
         private const val TAG = "AlarmViewModel"
+        private const val MAX_DURATION_HOURS = 72
     }
 }
 
@@ -440,13 +647,20 @@ data class AlarmUiState(
         defaultTask = settings.defaultDismissTask,
         defaultSound = settings.defaultRingtoneUri
     ),
+    val durationAlarms: List<DurationAlarmUiModel> = emptyList(),
+    val durationDraft: DurationAlarmCreationState = sampleDurationDraft(
+        defaultTask = settings.defaultDismissTask,
+        defaultSound = settings.defaultRingtoneUri,
+        defaultDurationMinutes = settings.defaultCountdownDurationMinutes
+    ),
     val destination: AlarmDestination = AlarmDestination.List,
     val homeTab: AlarmHomeTab = AlarmHomeTab.Alarms,
     val breakdownPeriod: BreakdownPeriod = BreakdownPeriod.Weekly,
     val editingAlarm: AlarmUiModel? = null,
-    val selectedAlarmIds: Set<Int> = emptySet()
+    val selectedAlarmIds: Set<Int> = emptySet(),
+    val isSavingDuration: Boolean = false
 )
 
-enum class AlarmHomeTab { Alarms, Breakdown }
+enum class AlarmHomeTab { Alarms, Duration, Breakdown }
 
 enum class BreakdownPeriod { Weekly, Monthly }

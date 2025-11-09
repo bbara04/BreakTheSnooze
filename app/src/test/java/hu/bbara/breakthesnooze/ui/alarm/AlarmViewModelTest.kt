@@ -5,6 +5,9 @@ import hu.bbara.breakthesnooze.MainDispatcherRule
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
 import hu.bbara.breakthesnooze.data.alarm.WakeEvent
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.settings.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import kotlinx.coroutines.CoroutineScope
@@ -57,7 +60,7 @@ class AlarmViewModelTest {
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
 
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
         waitUntil { viewModel.uiState.value.settings.defaultDismissTask == AlarmDismissTaskType.MATH_CHALLENGE }
 
@@ -74,7 +77,7 @@ class AlarmViewModelTest {
         val settingsRepository = createSettingsRepository()
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
 
         viewModel.startCreating()
@@ -107,7 +110,7 @@ class AlarmViewModelTest {
         val settingsRepository = createSettingsRepository()
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
 
         viewModel.startCreating()
@@ -129,7 +132,7 @@ class AlarmViewModelTest {
         val alarm = sampleAlarm(id = 3, isActive = true).copy(label = "Lunch")
         val repository = FakeAlarmRepository(listOf(alarm))
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
         waitUntil { viewModel.uiState.value.alarms.isNotEmpty() }
 
@@ -157,7 +160,7 @@ class AlarmViewModelTest {
         val alarm = sampleAlarm(id = 1, isActive = true)
         val repository = FakeAlarmRepository(listOf(alarm))
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
         waitUntil { viewModel.uiState.value.alarms.isNotEmpty() }
 
@@ -333,7 +336,7 @@ class AlarmViewModelTest {
         )
         val repository = FakeAlarmRepository(listOf(alarm))
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
         waitUntil { viewModel.uiState.value.alarms.isNotEmpty() }
 
@@ -358,7 +361,7 @@ class AlarmViewModelTest {
             listOf(sampleAlarm(id = 1, isActive = true), sampleAlarm(id = 2, isActive = true))
         )
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
 
         viewModel.enterSelection(1)
@@ -379,7 +382,7 @@ class AlarmViewModelTest {
         val settingsRepository = createSettingsRepository()
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
 
         viewModel.startCreating()
@@ -416,7 +419,7 @@ class AlarmViewModelTest {
         val settingsRepository = createSettingsRepository()
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
 
         val initialDraft = viewModel.uiState.value.draft
@@ -429,7 +432,7 @@ class AlarmViewModelTest {
         val settingsRepository = createSettingsRepository()
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         advanceUntilIdle()
 
         viewModel.setDefaultDismissTask(AlarmDismissTaskType.FOCUS_TIMER)
@@ -452,7 +455,7 @@ class AlarmViewModelTest {
         )
         val repository = FakeAlarmRepository(initial)
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmViewModel(repository, scheduler, settingsRepository)
+        val viewModel = createAlarmViewModel(repository, scheduler, settingsRepository)
         scheduler.awaitSynchronizeCount(1)
 
         assertEquals(listOf(initial), scheduler.synchronizedBatches)
@@ -478,6 +481,22 @@ class AlarmViewModelTest {
         qrBarcodeValue = null,
         qrRequiredUniqueCount = 0
     )
+
+    private fun createAlarmViewModel(
+        repository: FakeAlarmRepository = FakeAlarmRepository(),
+        scheduler: FakeAlarmScheduler = FakeAlarmScheduler(),
+        settingsRepository: SettingsRepository = createSettingsRepository(),
+        durationRepository: FakeDurationAlarmRepository = FakeDurationAlarmRepository(),
+        durationScheduler: FakeDurationAlarmScheduler = FakeDurationAlarmScheduler()
+    ): AlarmViewModel {
+        return AlarmViewModel(
+            repository,
+            scheduler,
+            settingsRepository,
+            durationRepository,
+            durationScheduler
+        )
+    }
 
     private fun createSettingsRepository(): SettingsRepository {
         val dir = Files.createTempDirectory("alarm-vm-settings").toFile()
@@ -646,5 +665,66 @@ private class FakeAlarmScheduler : AlarmScheduler {
             synchronizeEvents.receive()
             remaining--
         }
+    }
+}
+
+private class FakeDurationAlarmRepository(
+    initialAlarms: List<DurationAlarm> = emptyList()
+) : DurationAlarmRepository {
+
+    private val alarmsFlow = MutableStateFlow(initialAlarms.sortedBy { it.id })
+    private var nextId = (alarmsFlow.value.maxOfOrNull { it.id } ?: 0) + 1
+
+    override val alarms: Flow<List<DurationAlarm>> = alarmsFlow
+
+    override suspend fun create(
+        durationMinutes: Int,
+        label: String,
+        soundUri: String?,
+        dismissTask: AlarmDismissTaskType,
+        qrBarcodeValue: String?,
+        qrRequiredUniqueCount: Int
+    ): DurationAlarm? {
+        if (durationMinutes <= 0) return null
+        val now = Instant.now()
+        val alarm = DurationAlarm(
+            id = nextId++,
+            label = label.ifBlank { "Alarm" },
+            durationMinutes = durationMinutes,
+            createdAt = now,
+            triggerAt = now.plusSeconds(durationMinutes.toLong() * 60),
+            soundUri = soundUri,
+            dismissTask = dismissTask,
+            qrBarcodeValue = qrBarcodeValue,
+            qrRequiredUniqueCount = qrRequiredUniqueCount
+        )
+        alarmsFlow.value = alarmsFlow.value + alarm
+        return alarm
+    }
+
+    override suspend fun delete(id: Int) {
+        alarmsFlow.value = alarmsFlow.value.filterNot { it.id == id }
+    }
+
+    override suspend fun getById(id: Int): DurationAlarm? {
+        return alarmsFlow.value.firstOrNull { it.id == id }
+    }
+}
+
+private class FakeDurationAlarmScheduler : DurationAlarmScheduler {
+    val scheduled = mutableListOf<DurationAlarm>()
+    val cancelledIds = mutableListOf<Int>()
+    val synchronizedBatches = mutableListOf<List<DurationAlarm>>()
+
+    override fun schedule(alarm: DurationAlarm) {
+        scheduled.add(alarm)
+    }
+
+    override fun cancel(alarmId: Int) {
+        cancelledIds.add(alarmId)
+    }
+
+    override fun synchronize(alarms: List<DurationAlarm>) {
+        synchronizedBatches.add(alarms)
     }
 }

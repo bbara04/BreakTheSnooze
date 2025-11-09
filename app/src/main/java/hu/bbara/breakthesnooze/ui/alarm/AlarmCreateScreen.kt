@@ -351,13 +351,14 @@ internal fun AlarmCreateRoute(
                                 }
                             }
                             if (draft.dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) {
-                                QrBarcodeSettings(
-                                    draft = draft,
-                                    qrMode = qrMode,
-                                    onQrScanModeChange = onQrScanModeChange,
-                                    onQrBarcodeValueChange = onQrBarcodeValueChange,
-                                    onQrUniqueCountChange = onQrUniqueCountChange,
-                                    onShowQrScanner = { showQrScanner = true }
+                                    QrBarcodeSettings(
+                                        qrBarcodeValue = draft.qrBarcodeValue,
+                                        qrRequiredUniqueCount = draft.qrRequiredUniqueCount,
+                                        qrMode = qrMode,
+                                        onQrScanModeChange = onQrScanModeChange,
+                                        onQrBarcodeValueChange = onQrBarcodeValueChange,
+                                        onQrUniqueCountChange = onQrUniqueCountChange,
+                                        onShowQrScanner = { showQrScanner = true }
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
@@ -464,8 +465,9 @@ internal fun AlarmCreateRoute(
 }
 
 @Composable
-private fun QrBarcodeSettings(
-    draft: AlarmCreationState,
+internal fun QrBarcodeSettings(
+    qrBarcodeValue: String?,
+    qrRequiredUniqueCount: Int,
     qrMode: QrScanMode,
     onQrScanModeChange: (QrScanMode) -> Unit,
     onQrBarcodeValueChange: (String?) -> Unit,
@@ -541,8 +543,7 @@ private fun QrBarcodeSettings(
                                 text = stringResource(id = R.string.alarm_qr_assignment_value_label),
                                 style = MaterialTheme.typography.titleMedium
                             )
-                            val assignedValue = draft.qrBarcodeValue
-                            if (assignedValue.isNullOrBlank()) {
+                            if (qrBarcodeValue.isNullOrBlank()) {
                                 Text(
                                     text = stringResource(id = R.string.alarm_qr_assignment_hint),
                                     style = MaterialTheme.typography.bodyMedium,
@@ -550,7 +551,7 @@ private fun QrBarcodeSettings(
                                 )
                             } else {
                                 Text(
-                                    text = assignedValue,
+                                    text = qrBarcodeValue,
                                     style = MaterialTheme.typography.bodyMedium,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
@@ -565,7 +566,7 @@ private fun QrBarcodeSettings(
                         TextButton(onClick = { onShowQrScanner() }) {
                             Text(text = stringResource(id = R.string.alarm_qr_assignment_scan))
                         }
-                        if (!draft.qrBarcodeValue.isNullOrBlank()) {
+                        if (!qrBarcodeValue.isNullOrBlank()) {
                             TextButton(onClick = { onQrBarcodeValueChange(null) }) {
                                 Text(text = stringResource(id = R.string.alarm_qr_assignment_clear))
                             }
@@ -594,7 +595,7 @@ private fun QrBarcodeSettings(
                             Text(
                                 text = stringResource(
                                     id = R.string.alarm_qr_unique_count_hint,
-                                    draft.qrRequiredUniqueCount
+                                    qrRequiredUniqueCount
                                 ),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -606,15 +607,21 @@ private fun QrBarcodeSettings(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { onQrUniqueCountChange(draft.qrRequiredUniqueCount - 1) }, enabled = draft.qrRequiredUniqueCount > MIN_QR_UNIQUE_COUNT) {
+                        IconButton(
+                            onClick = { onQrUniqueCountChange(qrRequiredUniqueCount - 1) },
+                            enabled = qrRequiredUniqueCount > MIN_QR_UNIQUE_COUNT
+                        ) {
                             Icon(imageVector = Icons.Filled.Remove, contentDescription = null)
                         }
                         Text(
-                            text = draft.qrRequiredUniqueCount.toString(),
+                            text = qrRequiredUniqueCount.toString(),
                             style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(horizontal = 12.dp)
                         )
-                        IconButton(onClick = { onQrUniqueCountChange(draft.qrRequiredUniqueCount + 1) }, enabled = draft.qrRequiredUniqueCount < MAX_QR_UNIQUE_COUNT) {
+                        IconButton(
+                            onClick = { onQrUniqueCountChange(qrRequiredUniqueCount + 1) },
+                            enabled = qrRequiredUniqueCount < MAX_QR_UNIQUE_COUNT
+                        ) {
                             Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                         }
                     }
@@ -651,7 +658,8 @@ private fun AlarmCreateRoutePreview() {
 private fun QrBarcodeSettingsSpecificPreview() {
     BreakTheSnoozeTheme {
         QrBarcodeSettings(
-            draft = sampleDraft(useCurrentTime = false),
+            qrBarcodeValue = "Sample barcode",
+            qrRequiredUniqueCount = 0,
             qrMode = QrScanMode.SpecificCode,
             onQrScanModeChange = {},
             onQrBarcodeValueChange = {},
@@ -666,7 +674,8 @@ private fun QrBarcodeSettingsSpecificPreview() {
 private fun QrBarcodeSettingsUniquePreview() {
     BreakTheSnoozeTheme {
         QrBarcodeSettings(
-            draft = sampleDraft(useCurrentTime = false).copy(qrRequiredUniqueCount = DEFAULT_QR_UNIQUE_COUNT),
+            qrBarcodeValue = null,
+            qrRequiredUniqueCount = DEFAULT_QR_UNIQUE_COUNT,
             qrMode = QrScanMode.UniqueCodes,
             onQrScanModeChange = {},
             onQrBarcodeValueChange = {},
@@ -678,7 +687,7 @@ private fun QrBarcodeSettingsUniquePreview() {
 
 
 @Composable
-private fun AssignQrBarcodeScreen(
+internal fun AssignQrBarcodeScreen(
     onDismiss: () -> Unit,
     onBarcodeCaptured: (String) -> Unit
 ) {
@@ -736,7 +745,7 @@ private fun AssignQrBarcodeScreen(
     }
 }
 
-private fun resolveRingtoneTitle(context: android.content.Context, soundUri: String?): String? {
+internal fun resolveRingtoneTitle(context: android.content.Context, soundUri: String?): String? {
     if (soundUri.isNullOrBlank()) return null
     return runCatching {
         val uri = Uri.parse(soundUri)
@@ -745,7 +754,7 @@ private fun resolveRingtoneTitle(context: android.content.Context, soundUri: Str
     }.getOrNull()
 }
 
-private fun taskIconFor(type: AlarmDismissTaskType): ImageVector = when (type) {
+internal fun taskIconFor(type: AlarmDismissTaskType): ImageVector = when (type) {
     AlarmDismissTaskType.OBJECT_DETECTION -> Icons.Filled.PhotoCamera
     AlarmDismissTaskType.MATH_CHALLENGE -> Icons.Filled.Calculate
     AlarmDismissTaskType.QR_BARCODE_SCAN -> Icons.Filled.QrCode2

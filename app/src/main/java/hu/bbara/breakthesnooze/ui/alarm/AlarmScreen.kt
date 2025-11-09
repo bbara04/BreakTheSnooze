@@ -133,6 +133,7 @@ fun AlarmScreen(
         onDurationQrScanModeChange = alarmViewModel::setDurationQrScanMode,
         onDurationQrUniqueCountChange = alarmViewModel::setDurationQrUniqueCount,
         onCreateDurationAlarm = alarmViewModel::saveDurationDraft,
+        onSaveDefaultDuration = alarmViewModel::saveDefaultDuration,
         isSavingDuration = uiState.isSavingDuration,
         modifier = modifier
     )
@@ -178,6 +179,7 @@ private fun AlarmScreenContent(
     onDurationQrScanModeChange: (QrScanMode) -> Unit,
     onDurationQrUniqueCountChange: (Int) -> Unit,
     onCreateDurationAlarm: () -> Unit,
+    onSaveDefaultDuration: () -> Unit,
     isSavingDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -206,6 +208,7 @@ private fun AlarmScreenContent(
             onDurationQrScanModeChange = onDurationQrScanModeChange,
             onDurationQrUniqueCountChange = onDurationQrUniqueCountChange,
             onCreateDurationAlarm = onCreateDurationAlarm,
+            onSaveDefaultDuration = onSaveDefaultDuration,
             isSavingDuration = isSavingDuration,
             modifier = modifier
         )
@@ -281,6 +284,7 @@ internal fun AlarmScreenContentForTest(
     onDurationQrScanModeChange: (QrScanMode) -> Unit = {},
     onDurationQrUniqueCountChange: (Int) -> Unit = {},
     onCreateDurationAlarm: () -> Unit = {},
+    onSaveDefaultDuration: () -> Unit = {},
     isSavingDuration: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -323,6 +327,7 @@ internal fun AlarmScreenContentForTest(
         onDurationQrScanModeChange = onDurationQrScanModeChange,
         onDurationQrUniqueCountChange = onDurationQrUniqueCountChange,
         onCreateDurationAlarm = onCreateDurationAlarm,
+        onSaveDefaultDuration = onSaveDefaultDuration,
         isSavingDuration = isSavingDuration,
         modifier = modifier
     )
@@ -353,6 +358,7 @@ private fun AlarmHomeRoute(
     onDurationQrScanModeChange: (QrScanMode) -> Unit,
     onDurationQrUniqueCountChange: (Int) -> Unit,
     onCreateDurationAlarm: () -> Unit,
+    onSaveDefaultDuration: () -> Unit,
     isSavingDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -409,6 +415,7 @@ private fun AlarmHomeRoute(
                 onLabelChange = onDurationLabelChange,
                 onHoursChange = onDurationHoursChange,
                 onMinutesChange = onDurationMinutesChange,
+                onSaveDefaultDuration = onSaveDefaultDuration,
                 onSoundSelected = onDurationSoundSelected,
                 onDismissTaskSelected = onDurationDismissTaskSelected,
                 onQrBarcodeValueChange = onDurationQrBarcodeValueChange,
@@ -435,12 +442,13 @@ private fun AlarmHomeRoute(
 @Composable
 private fun AlarmScreenPreview() {
     BreakTheSnoozeTheme {
+        val previewState = AlarmUiState(
+            alarms = sampleAlarms(),
+            draft = sampleDraft(useCurrentTime = false),
+            destination = AlarmDestination.List
+        )
         AlarmScreenContent(
-            uiState = AlarmUiState(
-                alarms = sampleAlarms(),
-                draft = sampleDraft(useCurrentTime = false),
-                destination = AlarmDestination.List
-            ),
+            uiState = previewState,
             onToggle = { _, _ -> },
             onDelete = {},
             onEdit = {},
@@ -481,6 +489,7 @@ private fun AlarmScreenPreview() {
             onDurationQrScanModeChange = {},
             onDurationQrUniqueCountChange = {},
             onCreateDurationAlarm = {},
+            onSaveDefaultDuration = {},
             isSavingDuration = false
         )
     }

@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
@@ -12,13 +13,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 private const val SETTINGS_STORE_NAME = "app_settings"
+const val DEFAULT_COUNTDOWN_DURATION_MINUTES: Int = 60
 
 val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = SETTINGS_STORE_NAME)
 
 data class SettingsState(
     val defaultDismissTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT,
     val defaultRingtoneUri: String? = null,
-    val debugModeEnabled: Boolean = false
+    val debugModeEnabled: Boolean = false,
+    val defaultCountdownDurationMinutes: Int = DEFAULT_COUNTDOWN_DURATION_MINUTES
 )
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -26,14 +29,17 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     private val defaultTaskKey = stringPreferencesKey("default_dismiss_task")
     private val defaultRingtoneKey = stringPreferencesKey("default_ringtone_uri")
     private val debugModeKey = booleanPreferencesKey("debug_mode_enabled")
+    private val defaultCountdownDurationKey = intPreferencesKey("default_countdown_duration_minutes")
 
     val settings: Flow<SettingsState> = dataStore.data.map { prefs ->
         val storedTask = prefs[defaultTaskKey]
         val storedRingtone = prefs[defaultRingtoneKey]
+        val storedDuration = prefs[defaultCountdownDurationKey] ?: DEFAULT_COUNTDOWN_DURATION_MINUTES
         SettingsState(
             defaultDismissTask = AlarmDismissTaskType.fromStorageKey(storedTask),
             defaultRingtoneUri = storedRingtone,
-            debugModeEnabled = prefs[debugModeKey] ?: false
+            debugModeEnabled = prefs[debugModeKey] ?: false,
+            defaultCountdownDurationMinutes = storedDuration.coerceAtLeast(0)
         )
     }
 
@@ -56,6 +62,13 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setDebugModeEnabled(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[debugModeKey] = enabled
+        }
+    }
+
+    suspend fun setDefaultCountdownDuration(minutes: Int) {
+        val sanitized = minutes.coerceAtLeast(0)
+        dataStore.edit { prefs ->
+            prefs[defaultCountdownDurationKey] = sanitized
         }
     }
 }

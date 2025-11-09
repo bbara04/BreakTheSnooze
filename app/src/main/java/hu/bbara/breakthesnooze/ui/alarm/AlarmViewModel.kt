@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
 import hu.bbara.breakthesnooze.data.alarm.WakeEvent
-import hu.bbara.breakthesnooze.data.alarm.toUiModelWithId
 import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
 import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmScheduler
+import hu.bbara.breakthesnooze.data.alarm.toUiModelWithId
 import hu.bbara.breakthesnooze.data.settings.SettingsRepository
 import hu.bbara.breakthesnooze.data.settings.SettingsState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
@@ -201,7 +201,15 @@ class AlarmViewModel(
     }
 
     fun selectHomeTab(tab: AlarmHomeTab) {
-        _uiState.update { state -> state.copy(homeTab = tab) }
+        _uiState.update { state ->
+            if (state.homeTab == tab) return@update state
+            val updatedDraft = if (tab == AlarmHomeTab.Duration) {
+                state.durationDraft.withDurationMinutes(state.settings.defaultCountdownDurationMinutes)
+            } else {
+                state.durationDraft
+            }
+            state.copy(homeTab = tab, durationDraft = updatedDraft)
+        }
     }
 
     fun setBreakdownPeriod(period: BreakdownPeriod) {
@@ -312,6 +320,14 @@ class AlarmViewModel(
         _uiState.update { state ->
             val sanitized = minutes.coerceIn(0, 59)
             state.copy(durationDraft = state.durationDraft.copy(minutes = sanitized))
+        }
+    }
+
+    fun saveDefaultDuration() {
+        val totalMinutes = _uiState.value.durationDraft.totalMinutes
+        if (totalMinutes <= 0) return
+        viewModelScope.launch {
+            settingsRepository.setDefaultCountdownDuration(totalMinutes)
         }
     }
 
@@ -509,7 +525,8 @@ class AlarmViewModel(
             state.copy(
                 durationDraft = sampleDurationDraft(
                     defaultTask = state.settings.defaultDismissTask,
-                    defaultSound = state.settings.defaultRingtoneUri
+                    defaultSound = state.settings.defaultRingtoneUri,
+                    defaultDurationMinutes = state.settings.defaultCountdownDurationMinutes
                 )
             )
         }
@@ -609,6 +626,13 @@ class AlarmViewModel(
         }
     }
 
+    private fun DurationAlarmCreationState.withDurationMinutes(totalMinutes: Int): DurationAlarmCreationState {
+        val clamped = totalMinutes.coerceIn(0, MAX_DURATION_HOURS * 60)
+        val hours = clamped / 60
+        val minutes = clamped % 60
+        return copy(hours = hours, minutes = minutes)
+    }
+
     companion object {
         private const val TAG = "AlarmViewModel"
         private const val MAX_DURATION_HOURS = 72
@@ -626,7 +650,8 @@ data class AlarmUiState(
     val durationAlarms: List<DurationAlarmUiModel> = emptyList(),
     val durationDraft: DurationAlarmCreationState = sampleDurationDraft(
         defaultTask = settings.defaultDismissTask,
-        defaultSound = settings.defaultRingtoneUri
+        defaultSound = settings.defaultRingtoneUri,
+        defaultDurationMinutes = settings.defaultCountdownDurationMinutes
     ),
     val destination: AlarmDestination = AlarmDestination.List,
     val homeTab: AlarmHomeTab = AlarmHomeTab.Alarms,

@@ -74,6 +74,7 @@ internal fun DurationAlarmRoute(
     onLabelChange: (String) -> Unit,
     onHoursChange: (Int) -> Unit,
     onMinutesChange: (Int) -> Unit,
+    onSaveDefaultDuration: () -> Unit,
     onSoundSelected: (String?) -> Unit,
     onDismissTaskSelected: (AlarmDismissTaskType) -> Unit,
     onQrBarcodeValueChange: (String?) -> Unit,
@@ -148,6 +149,10 @@ internal fun DurationAlarmRoute(
                 onHoursChange = onHoursChange,
                 onMinutesChange = onMinutesChange,
                 onInteractionChange = { isDurationPickerInteracting = it }
+            )
+            DurationDefaultActions(
+                currentMinutes = draft.totalMinutes,
+                onSaveDefault = onSaveDefaultDuration
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -368,6 +373,20 @@ private fun DurationPicker(
     }
 }
 
+@Composable
+private fun DurationDefaultActions(
+    currentMinutes: Int,
+    onSaveDefault: () -> Unit
+) {
+    TextButton(
+        onClick = onSaveDefault,
+        enabled = currentMinutes > 0,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(text = stringResource(id = R.string.duration_alarm_set_default_button))
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DurationRollerColumn(
@@ -394,7 +413,7 @@ private fun DurationRollerColumn(
         } else {
             val centeredIndex = calculateCenteredIndex(listState)
             if (centeredIndex != targetIndex && !listState.isScrollInProgress) {
-                listState.animateScrollToItem(targetIndex)
+                listState.scrollToItem(targetIndex)
             }
         }
     }

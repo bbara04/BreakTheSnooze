@@ -3,7 +3,7 @@ package hu.bbara.breakthesnooze.ui.alarm
 import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
 import hu.bbara.breakthesnooze.data.alarm.uniqueAlarmId
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.data.settings.DEFAULT_COUNTDOWN_DURATION_MINUTES
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.Duration
 import java.time.Instant
@@ -48,11 +48,15 @@ fun DurationAlarm.toUiModel(): DurationAlarmUiModel {
 
 fun sampleDurationDraft(
     defaultTask: AlarmDismissTaskType,
-    defaultSound: String?
+    defaultSound: String?,
+    defaultDurationMinutes: Int = DEFAULT_COUNTDOWN_DURATION_MINUTES
 ): DurationAlarmCreationState {
+    val sanitizedMinutes = defaultDurationMinutes.coerceIn(0, 99 * 60 + 59)
+    val hours = sanitizedMinutes / 60
+    val minutes = sanitizedMinutes % 60
     return DurationAlarmCreationState(
-        hours = 1,
-        minutes = 0,
+        hours = hours,
+        minutes = minutes,
         label = "Power nap",
         soundUri = defaultSound,
         dismissTask = defaultTask,

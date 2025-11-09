@@ -96,4 +96,5 @@
     <string name="duration_alarm_dialog_done">Done</string>
     <string name="duration_alarm_start_button">Add</string>
     <string name="duration_alarm_summary">Will ring at %1$s</string>
+    <string name="duration_alarm_set_default_button">Save current duration as default</string>
 </resources>

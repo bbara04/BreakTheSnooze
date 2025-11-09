@@ -46,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -382,13 +383,15 @@ private fun DurationRollerColumn(
         }
     }
 
+    val currentSelectedValue by rememberUpdatedState(selectedValue)
+
     LaunchedEffect(listState) {
         snapshotFlow { calculateCenteredIndex(listState) }
             .filterNotNull()
             .distinctUntilChanged()
             .collect { index ->
                 val value = values.getOrNull(index) ?: return@collect
-                if (value != selectedValue) {
+                if (value != currentSelectedValue) {
                     onValueSelected(value)
                 }
             }

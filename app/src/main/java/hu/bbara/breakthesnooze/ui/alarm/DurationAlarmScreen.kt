@@ -10,6 +10,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,7 +25,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -42,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,16 +55,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import java.util.Date
-import kotlin.math.abs
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import java.util.Date
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +89,7 @@ internal fun DurationAlarmRoute(
     val canSave = draft.totalMinutes > 0 && !isSaving
     var showTaskDialog by rememberSaveable { mutableStateOf(false) }
     var showQrScanner by rememberSaveable { mutableStateOf(false) }
+    var isDurationPickerInteracting by remember { mutableStateOf(false) }
     val qrMode = if (!draft.qrBarcodeValue.isNullOrBlank()) {
         QrScanMode.SpecificCode
     } else if (draft.qrRequiredUniqueCount >= MIN_QR_UNIQUE_COUNT) {
@@ -135,14 +139,15 @@ internal fun DurationAlarmRoute(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 24.dp, vertical = 16.dp)
-                .verticalScroll(scrollState),
+                .verticalScroll(scrollState, enabled = !isDurationPickerInteracting),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             DurationPicker(
                 hours = draft.hours,
                 minutes = draft.minutes,
                 onHoursChange = onHoursChange,
-                onMinutesChange = onMinutesChange
+                onMinutesChange = onMinutesChange,
+                onInteractionChange = { isDurationPickerInteracting = it }
             )
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -305,7 +310,8 @@ private fun DurationPicker(
     hours: Int,
     minutes: Int,
     onHoursChange: (Int) -> Unit,
-    onMinutesChange: (Int) -> Unit
+    onMinutesChange: (Int) -> Unit,
+    onInteractionChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val hourValues = remember { (0..99).toList() }
@@ -317,6 +323,13 @@ private fun DurationPicker(
         val totalMinutes = clampedHours * 60L + clampedMinutes
         val futureMillis = System.currentTimeMillis() + totalMinutes * 60_000L
         timeFormatter.format(Date(futureMillis))
+    }
+
+    var hoursInteracting by remember { mutableStateOf(false) }
+    var minutesInteracting by remember { mutableStateOf(false) }
+
+    LaunchedEffect(hoursInteracting, minutesInteracting) {
+        onInteractionChange(hoursInteracting || minutesInteracting)
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -333,6 +346,7 @@ private fun DurationPicker(
                 values = hourValues,
                 selectedValue = clampedHours,
                 onValueSelected = onHoursChange,
+                onInteractionChange = { hoursInteracting = it },
                 modifier = Modifier.weight(1f)
             )
             DurationRollerColumn(
@@ -340,6 +354,7 @@ private fun DurationPicker(
                 values = minuteValues,
                 selectedValue = clampedMinutes,
                 onValueSelected = onMinutesChange,
+                onInteractionChange = { minutesInteracting = it },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -360,6 +375,7 @@ private fun DurationRollerColumn(
     values: List<Int>,
     selectedValue: Int,
     onValueSelected: (Int) -> Unit,
+    onInteractionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (values.isEmpty()) return
@@ -384,6 +400,8 @@ private fun DurationRollerColumn(
     }
 
     val currentSelectedValue by rememberUpdatedState(selectedValue)
+    var pointerActive by remember { mutableStateOf(false) }
+    var scrollInProgress by remember { mutableStateOf(false) }
 
     LaunchedEffect(listState) {
         snapshotFlow { calculateCenteredIndex(listState) }
@@ -397,6 +415,16 @@ private fun DurationRollerColumn(
             }
     }
 
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }
+            .distinctUntilChanged()
+            .collect { inProgress -> scrollInProgress = inProgress }
+    }
+
+    LaunchedEffect(pointerActive, scrollInProgress) {
+        onInteractionChange(pointerActive || scrollInProgress)
+    }
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -407,10 +435,30 @@ private fun DurationRollerColumn(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        val interactionModifier = Modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                awaitFirstDown(requireUnconsumed = false)
+                pointerActive = true
+                try {
+                    do {
+                        val event = awaitPointerEvent()
+                        if (event.changes.none { it.pressed }) break
+                    } while (true)
+                } finally {
+                    pointerActive = false
+                }
+            }
+        }
+
+        DisposableEffect(Unit) {
+            onDispose { pointerActive = false }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(itemHeight * visibleItems)
+                .then(interactionModifier)
         ) {
             Surface(
                 shape = MaterialTheme.shapes.extraLarge,

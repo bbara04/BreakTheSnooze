@@ -56,11 +56,11 @@ object AlarmNotifications {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val stopIntent = PendingIntent.getService(
+        val dismissIntent = PendingIntent.getService(
             context,
             alarm.id,
             Intent(context, AlarmRingtoneService::class.java).apply {
-                action = AlarmIntents.ACTION_STOP_ALARM
+                action = AlarmIntents.ACTION_ALARM_DISMISSED
                 putExtra(AlarmIntents.EXTRA_ALARM_ID, alarm.id)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -77,7 +77,7 @@ object AlarmNotifications {
             .setAutoCancel(false)
             .setFullScreenIntent(fullScreenIntent, true)
             .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.alarm_ringing_message)))
-            .setDeleteIntent(stopIntent)
+            .setDeleteIntent(dismissIntent)
             .build()
     }
 }

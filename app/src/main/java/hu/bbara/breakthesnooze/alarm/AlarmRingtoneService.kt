@@ -53,7 +53,8 @@ class AlarmRingtoneService : Service() {
             AlarmIntents.ACTION_STOP_ALARM,
             AlarmIntents.ACTION_WEAR_ACK,
             AlarmIntents.ACTION_PAUSE_ALARM,
-            AlarmIntents.ACTION_RESUME_ALARM -> true
+            AlarmIntents.ACTION_RESUME_ALARM,
+            AlarmIntents.ACTION_ALARM_DISMISSED -> true
             else -> false
         }
         if (requiresActiveAlarm && currentAlarmId == null) {
@@ -81,6 +82,11 @@ class AlarmRingtoneService : Service() {
             AlarmIntents.ACTION_RESUME_ALARM -> {
                 Log.d(TAG, "Received resume command for alarmId=$alarmId")
                 resumeAlarm(alarmId)
+            }
+
+            AlarmIntents.ACTION_ALARM_DISMISSED -> {
+                Log.d(TAG, "Notification dismissed for alarmId=$alarmId; refreshing foreground notification")
+                refreshForegroundNotification(alarmId)
             }
 
             AlarmIntents.ACTION_ALARM_FIRED, null -> {
@@ -161,6 +167,24 @@ class AlarmRingtoneService : Service() {
                 startPlayback(alarm.soundUri)
             }
             notifyWearDevice(alarm)
+        }
+    }
+
+    private fun refreshForegroundNotification(alarmId: Int) {
+        val activeAlarm = currentAlarm ?: run {
+            Log.d(TAG, "refreshForegroundNotification ignored; no active alarm")
+            return
+        }
+        if (activeAlarm.id != alarmId) {
+            Log.d(TAG, "refreshForegroundNotification ignored; alarmId=$alarmId does not match active=${activeAlarm.id}")
+            return
+        }
+        serviceScope.launch {
+            val notification = withContext(Dispatchers.Default) {
+                AlarmNotifications.buildNotification(applicationContext, activeAlarm)
+            }
+            startForeground(AlarmNotifications.notificationId(alarmId), notification)
+            Log.d(TAG, "Foreground notification refreshed for alarmId=$alarmId")
         }
     }
 

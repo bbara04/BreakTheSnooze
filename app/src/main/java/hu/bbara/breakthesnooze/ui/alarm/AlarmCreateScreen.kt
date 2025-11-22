@@ -61,9 +61,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
@@ -203,6 +203,47 @@ internal fun AlarmCreateRoute(
                         .fillMaxWidth()
                         .testTag(AlarmCreateTestTags.LABEL_FIELD),
                     placeholder = { Text(text = "Alarm label") }
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(text = "Active on", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    dayOrder.forEach { day ->
+                        val selected = draft.repeatDays.contains(day)
+                        TextButton(
+                            onClick = { onToggleDay(day) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .defaultMinSize(minWidth = 0.dp),
+                            shape = MaterialTheme.shapes.large,
+                            contentPadding = PaddingValues(vertical = 8.dp),
+                            colors = if (selected) {
+                                ButtonDefaults.textButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                )
+                            },
+                        ) {
+                            Text(text = day.displayName())
+                        }
+                    }
+                }
+                Text(
+                    text = when {
+                        draft.repeatDays.isEmpty() -> "Occurs once"
+                        draft.repeatDays.size == 7 -> "Repeats every day"
+                        else -> "Repeats on ${formatDays(draft.repeatDays)}"
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -373,47 +414,6 @@ internal fun AlarmCreateRoute(
                         }
                     }
                 }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = "Active on", style = MaterialTheme.typography.titleMedium)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    dayOrder.forEach { day ->
-                        val selected = draft.repeatDays.contains(day)
-                        TextButton(
-                            onClick = { onToggleDay(day) },
-                            modifier = Modifier
-                                .weight(1f)
-                                .defaultMinSize(minWidth = 0.dp),
-                            shape = MaterialTheme.shapes.large,
-                            contentPadding = PaddingValues(vertical = 8.dp),
-                            colors = if (selected) {
-                                ButtonDefaults.textButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                )
-                            } else {
-                                ButtonDefaults.textButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                        ) {
-                            Text(text = day.displayName())
-                        }
-                    }
-                }
-                Text(
-                    text = when {
-                        draft.repeatDays.isEmpty() -> "Occurs once"
-                        draft.repeatDays.size == 7 -> "Repeats every day"
-                        else -> "Repeats on ${formatDays(draft.repeatDays)}"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
 
             Spacer(modifier = Modifier.height(48.dp))

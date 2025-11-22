@@ -416,6 +416,12 @@ class AlarmViewModel(
         }
     }
 
+    fun setTightGapWarningEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setTightGapWarningEnabled(enabled)
+        }
+    }
+
     fun toggleDraftDay(day: DayOfWeek) {
         _uiState.update { state ->
             val current = state.draft.repeatDays

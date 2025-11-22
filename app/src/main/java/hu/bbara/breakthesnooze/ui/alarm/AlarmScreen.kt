@@ -7,6 +7,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -115,6 +121,7 @@ fun AlarmScreen(
         onDefaultTaskSelected = alarmViewModel::setDefaultDismissTask,
         onDefaultRingtoneSelected = alarmViewModel::setDefaultRingtone,
         onDebugModeToggled = alarmViewModel::setDebugMode,
+        onTightGapWarningToggled = alarmViewModel::setTightGapWarningEnabled,
         onEnterSelection = alarmViewModel::enterSelection,
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
@@ -139,6 +146,20 @@ fun AlarmScreen(
     )
 }
 
+private fun <S> AnimatedContentTransitionScope<S>.slideLeft(): ContentTransform =
+    slideIntoContainer(
+        AnimatedContentTransitionScope.SlideDirection.Left
+    ) + fadeIn() togetherWith slideOutOfContainer(
+        AnimatedContentTransitionScope.SlideDirection.Left
+    ) + fadeOut()
+
+private fun <S> AnimatedContentTransitionScope<S>.slideRight(): ContentTransform =
+    slideIntoContainer(
+        AnimatedContentTransitionScope.SlideDirection.Right
+    ) + fadeIn() togetherWith slideOutOfContainer(
+        AnimatedContentTransitionScope.SlideDirection.Right
+    ) + fadeOut()
+
 @Composable
 private fun AlarmScreenContent(
     uiState: AlarmUiState,
@@ -161,6 +182,7 @@ private fun AlarmScreenContent(
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
     onDebugModeToggled: (Boolean) -> Unit,
+    onTightGapWarningToggled: (Boolean) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -183,60 +205,84 @@ private fun AlarmScreenContent(
     isSavingDuration: Boolean,
     modifier: Modifier = Modifier
 ) {
-    when (uiState.destination) {
-        AlarmDestination.List -> AlarmHomeRoute(
-            uiState = uiState,
-            onToggle = onToggle,
-            onEdit = onEdit,
-            onEnterSelection = onEnterSelection,
-            onToggleSelection = onToggleSelection,
-            onClearSelection = onClearSelection,
-            onDeleteSelection = onDeleteSelection,
-            onCreate = onStartCreate,
-            onOpenSettings = onOpenSettings,
-            onSelectHomeTab = onSelectHomeTab,
-            onBreakdownPeriodSelected = onBreakdownPeriodSelected,
-            durationAlarms = durationAlarms,
-            onCancelDurationAlarm = onCancelDurationAlarm,
-            durationDraft = durationDraft,
-            onDurationLabelChange = onDurationLabelChange,
-            onDurationHoursChange = onDurationHoursChange,
-            onDurationMinutesChange = onDurationMinutesChange,
-            onDurationSoundSelected = onDurationSoundSelected,
-            onDurationDismissTaskSelected = onDurationDismissTaskSelected,
-            onDurationQrBarcodeValueChange = onDurationQrBarcodeValueChange,
-            onDurationQrScanModeChange = onDurationQrScanModeChange,
-            onDurationQrUniqueCountChange = onDurationQrUniqueCountChange,
-            onCreateDurationAlarm = onCreateDurationAlarm,
-            onSaveDefaultDuration = onSaveDefaultDuration,
-            isSavingDuration = isSavingDuration,
-            modifier = modifier
-        )
+    AnimatedContent(
+        targetState = uiState.destination,
+        transitionSpec = {
+            when (initialState) {
+                AlarmDestination.List -> {
+                    if (targetState == AlarmDestination.Create) {
+                        slideLeft()
+                    } else {
+                        slideRight()
+                    }
+                }
+                AlarmDestination.Create -> {
+                    slideRight()
+                }
+                AlarmDestination.Settings -> {
+                    slideLeft()
+                }
+            }
+        },
+        label = "alarm_destination"
+    ) { destination ->
+        when (destination) {
+            AlarmDestination.List -> AlarmHomeRoute(
+                uiState = uiState,
+                onToggle = onToggle,
+                onEdit = onEdit,
+                onEnterSelection = onEnterSelection,
+                onToggleSelection = onToggleSelection,
+                onClearSelection = onClearSelection,
+                onDeleteSelection = onDeleteSelection,
+                onCreate = onStartCreate,
+                onOpenSettings = onOpenSettings,
+                onSelectHomeTab = onSelectHomeTab,
+                onBreakdownPeriodSelected = onBreakdownPeriodSelected,
+                durationAlarms = durationAlarms,
+                onCancelDurationAlarm = onCancelDurationAlarm,
+                durationDraft = durationDraft,
+                onDurationLabelChange = onDurationLabelChange,
+                onDurationHoursChange = onDurationHoursChange,
+                onDurationMinutesChange = onDurationMinutesChange,
+                onDurationSoundSelected = onDurationSoundSelected,
+                onDurationDismissTaskSelected = onDurationDismissTaskSelected,
+                onDurationQrBarcodeValueChange = onDurationQrBarcodeValueChange,
+                onDurationQrScanModeChange = onDurationQrScanModeChange,
+                onDurationQrUniqueCountChange = onDurationQrUniqueCountChange,
+                onCreateDurationAlarm = onCreateDurationAlarm,
+                onSaveDefaultDuration = onSaveDefaultDuration,
+                isSavingDuration = isSavingDuration,
+                tightGapWarningEnabled = uiState.settings.tightGapWarningEnabled,
+                modifier = modifier
+            )
 
-        AlarmDestination.Create -> AlarmCreateRoute(
-            draft = uiState.draft,
-            isEditing = uiState.editingAlarm != null,
-            onUpdateDraft = onUpdateDraft,
-            onTimeSelected = onTimeSelected,
-            onToggleDay = onToggleDay,
-            onSoundSelected = onSoundSelected,
-            onDismissTaskSelected = onDismissTaskSelected,
-            onQrBarcodeValueChange = onQrBarcodeValueChange,
-            onQrScanModeChange = onQrScanModeChange,
-            onQrUniqueCountChange = onQrUniqueCountChange,
-            onSave = onSaveDraft,
-            onCancel = onCancel,
-            modifier = modifier
-        )
+            AlarmDestination.Create -> AlarmCreateRoute(
+                draft = uiState.draft,
+                isEditing = uiState.editingAlarm != null,
+                onUpdateDraft = onUpdateDraft,
+                onTimeSelected = onTimeSelected,
+                onToggleDay = onToggleDay,
+                onSoundSelected = onSoundSelected,
+                onDismissTaskSelected = onDismissTaskSelected,
+                onQrBarcodeValueChange = onQrBarcodeValueChange,
+                onQrScanModeChange = onQrScanModeChange,
+                onQrUniqueCountChange = onQrUniqueCountChange,
+                onSave = onSaveDraft,
+                onCancel = onCancel,
+                modifier = modifier
+            )
 
-        AlarmDestination.Settings -> SettingsRoute(
-            settings = uiState.settings,
-            onDefaultTaskSelected = onDefaultTaskSelected,
-            onDefaultRingtoneSelected = onDefaultRingtoneSelected,
-            onDebugModeToggled = onDebugModeToggled,
-            onBack = onCloseSettings,
-            modifier = modifier
-        )
+            AlarmDestination.Settings -> SettingsRoute(
+                settings = uiState.settings,
+                onDefaultTaskSelected = onDefaultTaskSelected,
+                onDefaultRingtoneSelected = onDefaultRingtoneSelected,
+                onDebugModeToggled = onDebugModeToggled,
+                onTightGapWarningToggled = onTightGapWarningToggled,
+                onBack = onCloseSettings,
+                modifier = modifier
+            )
+        }
     }
 }
 
@@ -263,6 +309,7 @@ internal fun AlarmScreenContentForTest(
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
     onDebugModeToggled: (Boolean) -> Unit,
+    onTightGapWarningToggled: (Boolean) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -309,6 +356,7 @@ internal fun AlarmScreenContentForTest(
         onDefaultTaskSelected = onDefaultTaskSelected,
         onDefaultRingtoneSelected = onDefaultRingtoneSelected,
         onDebugModeToggled = onDebugModeToggled,
+        onTightGapWarningToggled = onTightGapWarningToggled,
         onEnterSelection = onEnterSelection,
         onToggleSelection = onToggleSelection,
         onClearSelection = onClearSelection,
@@ -360,6 +408,7 @@ private fun AlarmHomeRoute(
     onCreateDurationAlarm: () -> Unit,
     onSaveDefaultDuration: () -> Unit,
     isSavingDuration: Boolean,
+    tightGapWarningEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -393,47 +442,70 @@ private fun AlarmHomeRoute(
             bottom = 0.dp
         )
     ) { innerPadding ->
-        when (uiState.homeTab) {
-            AlarmHomeTab.Alarms -> AlarmListRoute(
-                alarms = uiState.alarms,
-                durationAlarms = durationAlarms,
-                onCancelDurationAlarm = onCancelDurationAlarm,
-                onToggle = onToggle,
-                onEdit = onEdit,
-                selectedIds = uiState.selectedAlarmIds,
-                onEnterSelection = onEnterSelection,
-                onToggleSelection = onToggleSelection,
-                onClearSelection = onClearSelection,
-                onDeleteSelection = onDeleteSelection,
-                onCreate = onCreate,
-                onOpenSettings = onOpenSettings,
-                modifier = Modifier.padding(innerPadding)
-            )
+        AnimatedContent(
+            targetState = uiState.homeTab,
+            transitionSpec = {
+                when (initialState) {
+                    AlarmHomeTab.Alarms -> {
+                        slideLeft()
+                    }
+                    AlarmHomeTab.Duration -> {
+                        if (targetState == AlarmHomeTab.Alarms) {
+                            slideRight()
+                        } else {
+                            slideLeft()
+                        }
+                    }
+                    AlarmHomeTab.Breakdown -> {
+                        slideRight()
+                    }
+                }
+            },
+            label = "alarm_home_tab"
+        ) { homeTab ->
+            when (homeTab) {
+                AlarmHomeTab.Alarms -> AlarmListRoute(
+                    alarms = uiState.alarms,
+                    durationAlarms = durationAlarms,
+                    onCancelDurationAlarm = onCancelDurationAlarm,
+                    onToggle = onToggle,
+                    onEdit = onEdit,
+                    selectedIds = uiState.selectedAlarmIds,
+                    onEnterSelection = onEnterSelection,
+                    onToggleSelection = onToggleSelection,
+                    onClearSelection = onClearSelection,
+                    onDeleteSelection = onDeleteSelection,
+                    onCreate = onCreate,
+                    onOpenSettings = onOpenSettings,
+                    tightGapWarningEnabled = tightGapWarningEnabled,
+                    modifier = Modifier.padding(innerPadding)
+                )
 
-            AlarmHomeTab.Duration -> DurationAlarmRoute(
-                draft = durationDraft,
-                onLabelChange = onDurationLabelChange,
-                onHoursChange = onDurationHoursChange,
-                onMinutesChange = onDurationMinutesChange,
-                onSaveDefaultDuration = onSaveDefaultDuration,
-                onSoundSelected = onDurationSoundSelected,
-                onDismissTaskSelected = onDurationDismissTaskSelected,
-                onQrBarcodeValueChange = onDurationQrBarcodeValueChange,
-                onQrScanModeChange = onDurationQrScanModeChange,
-                onQrUniqueCountChange = onDurationQrUniqueCountChange,
-                onCreate = onCreateDurationAlarm,
-                isSaving = isSavingDuration,
-                onBack = { onSelectHomeTab(AlarmHomeTab.Alarms) },
-                modifier = Modifier.padding(innerPadding)
-            )
+                AlarmHomeTab.Duration -> DurationAlarmRoute(
+                    draft = durationDraft,
+                    onLabelChange = onDurationLabelChange,
+                    onHoursChange = onDurationHoursChange,
+                    onMinutesChange = onDurationMinutesChange,
+                    onSaveDefaultDuration = onSaveDefaultDuration,
+                    onSoundSelected = onDurationSoundSelected,
+                    onDismissTaskSelected = onDurationDismissTaskSelected,
+                    onQrBarcodeValueChange = onDurationQrBarcodeValueChange,
+                    onQrScanModeChange = onDurationQrScanModeChange,
+                    onQrUniqueCountChange = onDurationQrUniqueCountChange,
+                    onCreate = onCreateDurationAlarm,
+                    isSaving = isSavingDuration,
+                    onBack = { onSelectHomeTab(AlarmHomeTab.Alarms) },
+                    modifier = Modifier.padding(innerPadding)
+                )
 
-            AlarmHomeTab.Breakdown -> AlarmBreakdownRoute(
-                events = uiState.wakeEvents,
-                period = uiState.breakdownPeriod,
-                onPeriodChange = onBreakdownPeriodSelected,
-                onOpenSettings = onOpenSettings,
-                modifier = Modifier.padding(innerPadding)
-            )
+                AlarmHomeTab.Breakdown -> AlarmBreakdownRoute(
+                    events = uiState.wakeEvents,
+                    period = uiState.breakdownPeriod,
+                    onPeriodChange = onBreakdownPeriodSelected,
+                    onOpenSettings = onOpenSettings,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
         }
     }
 }
@@ -468,11 +540,12 @@ private fun AlarmScreenPreview() {
             onDefaultTaskSelected = {},
             onDefaultRingtoneSelected = {},
             onDebugModeToggled = {},
+            onTightGapWarningToggled = {},
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},
             onDeleteSelection = {},
-                onSelectHomeTab = {},
+            onSelectHomeTab = {},
             onBreakdownPeriodSelected = {},
             durationAlarms = emptyList(),
             onCancelDurationAlarm = {},

@@ -40,8 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.settings.SettingsState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
@@ -54,6 +54,7 @@ internal fun SettingsRoute(
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
     onDebugModeToggled: (Boolean) -> Unit,
+    onTightGapWarningToggled: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -124,6 +125,35 @@ internal fun SettingsRoute(
                             onSelect = { onDefaultTaskSelected(option) }
                         )
                     }
+                }
+            }
+
+            SettingsSection(
+                title = stringResource(id = R.string.settings_alarm_spacing_title)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.settings_alarm_spacing_toggle_title),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_alarm_spacing_toggle_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = settings.tightGapWarningEnabled,
+                        onCheckedChange = onTightGapWarningToggled
+                    )
                 }
             }
 
@@ -227,11 +257,13 @@ private fun SettingsRoutePreview() {
             settings = SettingsState(
                 defaultDismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
                 defaultRingtoneUri = "content://media/internal/audio/media/50",
-                debugModeEnabled = true
+                debugModeEnabled = true,
+                tightGapWarningEnabled = true
             ),
             onDefaultTaskSelected = {},
             onDefaultRingtoneSelected = {},
             onDebugModeToggled = {},
+            onTightGapWarningToggled = {},
             onBack = {}
         )
     }

@@ -4,7 +4,10 @@ import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-fun calculateNextTrigger(alarm: AlarmUiModel, reference: LocalDateTime = LocalDateTime.now()): LocalDateTime? {
+fun calculateNextTrigger(
+    alarm: AlarmUiModel,
+    reference: LocalDateTime = LocalDateTime.now(ZoneId.systemDefault())
+): LocalDateTime? {
     if (alarm.repeatDays.isEmpty()) {
         val candidate = reference.withHour(alarm.time.hour).withMinute(alarm.time.minute).withSecond(0).withNano(0)
         return if (candidate.isAfter(reference)) candidate else candidate.plusDays(1)

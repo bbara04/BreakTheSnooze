@@ -57,7 +57,7 @@ fun sampleDurationDraft(
     return DurationAlarmCreationState(
         hours = hours,
         minutes = minutes,
-        label = "Power nap",
+        label = "",
         soundUri = defaultSound,
         dismissTask = defaultTask,
         qrBarcodeValue = null,

@@ -59,7 +59,7 @@ import java.time.ZoneId
 
 private const val NEXT_DAY_WARNING_GAP_HOURS = 4L
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 internal fun AlarmListRoute(
     durationAlarms: List<DurationAlarmUiModel>,
@@ -161,7 +161,8 @@ internal fun AlarmListRoute(
                     DurationAlarmRow(
                         alarm = alarm,
                         is24Hour = is24Hour,
-                        onCancel = { onCancelDurationAlarm(alarm.id) }
+                        onCancel = { onCancelDurationAlarm(alarm.id) },
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
@@ -177,7 +178,8 @@ internal fun AlarmListRoute(
                         onToggleSelection = { onToggleSelection(alarm.id) },
                         is24Hour = is24Hour,
                         selectionActive = selectionActive,
-                        isSelected = selectedIds.contains(alarm.id)
+                        isSelected = selectedIds.contains(alarm.id),
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
@@ -193,7 +195,8 @@ internal fun AlarmListRoute(
                         onToggleSelection = { onToggleSelection(alarm.id) },
                         is24Hour = is24Hour,
                         selectionActive = selectionActive,
-                        isSelected = selectedIds.contains(alarm.id)
+                        isSelected = selectedIds.contains(alarm.id),
+                        modifier = Modifier.animateItem()
                     )
                 }
             }
@@ -283,7 +286,8 @@ private fun AlarmSectionHeader(text: String) {
 private fun DurationAlarmRow(
     alarm: DurationAlarmUiModel,
     is24Hour: Boolean,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val triggerTime = remember(alarm.triggerAt, is24Hour) {
         val time = alarm.triggerAt.atZone(ZoneId.systemDefault()).toLocalTime()
@@ -301,7 +305,7 @@ private fun DurationAlarmRow(
     }
     val containerColor = MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.12f)
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { clip = true },
         colors = CardDefaults.cardColors(containerColor = containerColor)
@@ -541,7 +545,8 @@ private fun AlarmRow(
     onToggleSelection: () -> Unit,
     is24Hour: Boolean,
     selectionActive: Boolean,
-    isSelected: Boolean
+    isSelected: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val containerColor = when {
         isSelected -> MaterialTheme.colorScheme.secondaryContainer
@@ -564,7 +569,7 @@ private fun AlarmRow(
         MaterialTheme.colorScheme.onSurfaceVariant
     }
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .graphicsLayer { clip = true }
             .then(

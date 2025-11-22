@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -47,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
+import hu.bbara.breakthesnooze.data.alarm.calculateNextTrigger
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.delay
@@ -54,6 +56,8 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+
+private const val NEXT_DAY_WARNING_GAP_HOURS = 4L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,7 +139,14 @@ internal fun AlarmListRoute(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
-                UpcomingAlarmCard(upcomingAlarm, is24Hour)
+                UpcomingAlarmCard(
+                    upcomingAlarm = upcomingAlarm,
+                    is24Hour = is24Hour,
+                    alarms = alarms,
+                    durationAlarms = durationAlarms,
+                    onDisableAlarm = { onToggle(it, false) },
+                    onCancelDurationAlarm = onCancelDurationAlarm
+                )
             }
 
             if (!hasAnyAlarms) {
@@ -349,7 +360,15 @@ private fun DurationAlarmRowPreview() {
 }
 
 @Composable
-private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) {
+private fun UpcomingAlarmCard(
+    upcomingAlarm: UpcomingAlarm?,
+    is24Hour: Boolean,
+    alarms: List<AlarmUiModel>,
+    durationAlarms: List<DurationAlarmUiModel>,
+    onDisableAlarm: (Int) -> Unit,
+    onCancelDurationAlarm: (Int) -> Unit
+) {
+    val tightNextDayAlarms = findTightNextDayAlarms(alarms, durationAlarms)
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -388,6 +407,32 @@ private fun UpcomingAlarmCard(upcomingAlarm: UpcomingAlarm?, is24Hour: Boolean) 
                     )
                 }
             }
+            if (tightNextDayAlarms != null) {
+                val (firstNextDay, secondNextDay) = tightNextDayAlarms
+                Spacer(modifier = Modifier.height(16.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Warning: two alarms within ${NEXT_DAY_WARNING_GAP_HOURS} hours today or tomorrow.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Text(
+                        text = "Scheduled at ${firstNextDay.triggerAt.toLocalTime().formatForDisplay(is24Hour)} and ${secondNextDay.triggerAt.toLocalTime().formatForDisplay(is24Hour)}.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    Button(
+                        onClick = {
+                            when (secondNextDay) {
+                                is UpcomingScheduledAlarm.Standard -> onDisableAlarm(secondNextDay.alarm.id)
+                                is UpcomingScheduledAlarm.Duration -> onCancelDurationAlarm(secondNextDay.alarm.id)
+                            }
+                        }
+                    ) {
+                        Text(text = "Disable second alarm")
+                    }
+                }
+            }
         }
     }
 }
@@ -405,9 +450,74 @@ private fun UpcomingAlarmCardPreview() {
                     remaining = Duration.ofHours(1)
                 )
             },
-            is24Hour = true
+            is24Hour = true,
+            alarms = sampleAlarms(),
+            durationAlarms = emptyList(),
+            onDisableAlarm = {},
+            onCancelDurationAlarm = {}
         )
     }
+}
+
+private sealed class UpcomingScheduledAlarm {
+    abstract val triggerAt: LocalDateTime
+
+    data class Standard(val alarm: AlarmUiModel, override val triggerAt: LocalDateTime) : UpcomingScheduledAlarm()
+    data class Duration(val alarm: DurationAlarmUiModel, override val triggerAt: LocalDateTime) : UpcomingScheduledAlarm()
+}
+
+private fun findTightNextDayAlarms(
+    alarms: List<AlarmUiModel>,
+    durationAlarms: List<DurationAlarmUiModel>,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    gapThresholdHours: Long = NEXT_DAY_WARNING_GAP_HOURS,
+    reference: LocalDateTime = LocalDateTime.now(zoneId)
+): Pair<UpcomingScheduledAlarm, UpcomingScheduledAlarm>? {
+    val today = reference.toLocalDate()
+    val tomorrow = today.plusDays(1)
+    val targetDates = listOf(today, tomorrow)
+    val nextDayAlarms = buildList {
+        alarms
+            .asSequence()
+            .filter { it.isActive }
+            .flatMap { alarm ->
+                if (alarm.repeatDays.isEmpty()) {
+                    val trigger = calculateNextTrigger(alarm, reference)
+                    if (trigger != null && trigger.toLocalDate() in targetDates) sequenceOf(
+                        UpcomingScheduledAlarm.Standard(alarm, trigger)
+                    ) else emptySequence()
+                } else {
+                    targetDates.asSequence()
+                        .filter { date -> alarm.repeatDays.contains(date.dayOfWeek) }
+                        .map { date -> LocalDateTime.of(date, alarm.time) }
+                        .filter { candidate -> candidate.isAfter(reference) }
+                        .map { candidate -> UpcomingScheduledAlarm.Standard(alarm, candidate) }
+                }
+            }
+            .forEach { add(it) }
+
+        durationAlarms
+            .asSequence()
+            .map { durationAlarm ->
+                val trigger = LocalDateTime.ofInstant(durationAlarm.triggerAt, zoneId)
+                UpcomingScheduledAlarm.Duration(durationAlarm, trigger)
+            }
+            .filter { it.triggerAt.toLocalDate() in targetDates && it.triggerAt.isAfter(reference) }
+            .forEach { add(it) }
+    }.sortedBy { it.triggerAt }
+
+    if (nextDayAlarms.size < 2) return null
+
+    val maxGap = Duration.ofHours(gapThresholdHours)
+    nextDayAlarms.windowed(size = 2, step = 1, partialWindows = false).forEach { pair ->
+        val first = pair[0]
+        val second = pair[1]
+        val gap = Duration.between(first.triggerAt, second.triggerAt)
+        if (!gap.isNegative && gap <= maxGap) {
+            return first to second
+        }
+    }
+    return null
 }
 
 private const val TAG_ALARM_ROW = "AlarmRow"

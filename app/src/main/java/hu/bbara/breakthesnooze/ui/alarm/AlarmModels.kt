@@ -138,7 +138,8 @@ internal fun resolveNextAlarm(
     alarms: List<AlarmUiModel>,
     durationAlarms: List<DurationAlarmUiModel> = emptyList()
 ): UpcomingAlarm? {
-    val now = LocalDateTime.now()
+    val zoneId = ZoneId.systemDefault()
+    val now = LocalDateTime.now(zoneId)
     val standardUpcoming = alarms
         .filter { it.isActive }
         .mapNotNull { alarm ->
@@ -151,7 +152,7 @@ internal fun resolveNextAlarm(
             }
         }
     val durationUpcoming = durationAlarms.mapNotNull { alarm ->
-        val trigger = LocalDateTime.ofInstant(alarm.triggerAt, ZoneId.systemDefault())
+        val trigger = LocalDateTime.ofInstant(alarm.triggerAt, zoneId)
         if (trigger.isBefore(now)) {
             null
         } else {

@@ -21,7 +21,8 @@ data class SettingsState(
     val defaultDismissTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT,
     val defaultRingtoneUri: String? = null,
     val debugModeEnabled: Boolean = false,
-    val defaultCountdownDurationMinutes: Int = DEFAULT_COUNTDOWN_DURATION_MINUTES
+    val defaultCountdownDurationMinutes: Int = DEFAULT_COUNTDOWN_DURATION_MINUTES,
+    val tightGapWarningEnabled: Boolean = true
 )
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -30,6 +31,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     private val defaultRingtoneKey = stringPreferencesKey("default_ringtone_uri")
     private val debugModeKey = booleanPreferencesKey("debug_mode_enabled")
     private val defaultCountdownDurationKey = intPreferencesKey("default_countdown_duration_minutes")
+    private val tightGapWarningEnabledKey = booleanPreferencesKey("tight_gap_warning_enabled")
 
     val settings: Flow<SettingsState> = dataStore.data.map { prefs ->
         val storedTask = prefs[defaultTaskKey]
@@ -39,7 +41,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             defaultDismissTask = AlarmDismissTaskType.fromStorageKey(storedTask),
             defaultRingtoneUri = storedRingtone,
             debugModeEnabled = prefs[debugModeKey] ?: false,
-            defaultCountdownDurationMinutes = storedDuration.coerceAtLeast(0)
+            defaultCountdownDurationMinutes = storedDuration.coerceAtLeast(0),
+            tightGapWarningEnabled = prefs[tightGapWarningEnabledKey] ?: true
         )
     }
 
@@ -62,6 +65,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setDebugModeEnabled(enabled: Boolean) {
         dataStore.edit { prefs ->
             prefs[debugModeKey] = enabled
+        }
+    }
+
+    suspend fun setTightGapWarningEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[tightGapWarningEnabledKey] = enabled
         }
     }
 

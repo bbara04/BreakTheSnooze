@@ -74,6 +74,7 @@ internal fun AlarmListRoute(
     onDeleteSelection: () -> Unit,
     onCreate: () -> Unit,
     onOpenSettings: () -> Unit,
+    tightGapWarningEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -145,7 +146,8 @@ internal fun AlarmListRoute(
                     alarms = alarms,
                     durationAlarms = durationAlarms,
                     onDisableAlarm = { onToggle(it, false) },
-                    onCancelDurationAlarm = onCancelDurationAlarm
+                    onCancelDurationAlarm = onCancelDurationAlarm,
+                    tightGapWarningEnabled = tightGapWarningEnabled
                 )
             }
 
@@ -216,6 +218,7 @@ private fun AlarmListRoutePreview() {
             onDeleteSelection = {},
             onCreate = {},
             onOpenSettings = {},
+            tightGapWarningEnabled = true,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -366,9 +369,14 @@ private fun UpcomingAlarmCard(
     alarms: List<AlarmUiModel>,
     durationAlarms: List<DurationAlarmUiModel>,
     onDisableAlarm: (Int) -> Unit,
-    onCancelDurationAlarm: (Int) -> Unit
+    onCancelDurationAlarm: (Int) -> Unit,
+    tightGapWarningEnabled: Boolean
 ) {
-    val tightNextDayAlarms = findTightNextDayAlarms(alarms, durationAlarms)
+    val tightNextDayAlarms = if (tightGapWarningEnabled) {
+        findTightNextDayAlarms(alarms, durationAlarms)
+    } else {
+        null
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
@@ -454,7 +462,8 @@ private fun UpcomingAlarmCardPreview() {
             alarms = sampleAlarms(),
             durationAlarms = emptyList(),
             onDisableAlarm = {},
-            onCancelDurationAlarm = {}
+            onCancelDurationAlarm = {},
+            tightGapWarningEnabled = true
         )
     }
 }

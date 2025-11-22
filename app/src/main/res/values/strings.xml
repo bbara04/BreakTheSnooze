@@ -50,6 +50,9 @@
     <string name="settings_default_ringtone_hint">Tap to choose a ringtone</string>
     <string name="settings_default_ringtone_fallback">Device default</string>
     <string name="settings_default_ringtone_clear">Use device default</string>
+    <string name="settings_alarm_spacing_title">Alarm spacing</string>
+    <string name="settings_alarm_spacing_toggle_title">Warn when alarms are too close</string>
+    <string name="settings_alarm_spacing_toggle_subtitle">Show a warning and quick disable if two alarms are within 4 hours today or tomorrow.</string>
     <string name="settings_debug_title">Debug</string>
     <string name="settings_debug_description">Tools to aid troubleshooting and app development.</string>
     <string name="settings_debug_toggle_title">Enable debug mode</string>

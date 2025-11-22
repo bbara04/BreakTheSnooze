@@ -121,6 +121,7 @@ fun AlarmScreen(
         onDefaultTaskSelected = alarmViewModel::setDefaultDismissTask,
         onDefaultRingtoneSelected = alarmViewModel::setDefaultRingtone,
         onDebugModeToggled = alarmViewModel::setDebugMode,
+        onTightGapWarningToggled = alarmViewModel::setTightGapWarningEnabled,
         onEnterSelection = alarmViewModel::enterSelection,
         onToggleSelection = alarmViewModel::toggleSelection,
         onClearSelection = alarmViewModel::clearSelection,
@@ -181,6 +182,7 @@ private fun AlarmScreenContent(
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
     onDebugModeToggled: (Boolean) -> Unit,
+    onTightGapWarningToggled: (Boolean) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -251,6 +253,7 @@ private fun AlarmScreenContent(
                 onCreateDurationAlarm = onCreateDurationAlarm,
                 onSaveDefaultDuration = onSaveDefaultDuration,
                 isSavingDuration = isSavingDuration,
+                tightGapWarningEnabled = uiState.settings.tightGapWarningEnabled,
                 modifier = modifier
             )
 
@@ -275,6 +278,7 @@ private fun AlarmScreenContent(
                 onDefaultTaskSelected = onDefaultTaskSelected,
                 onDefaultRingtoneSelected = onDefaultRingtoneSelected,
                 onDebugModeToggled = onDebugModeToggled,
+                onTightGapWarningToggled = onTightGapWarningToggled,
                 onBack = onCloseSettings,
                 modifier = modifier
             )
@@ -305,6 +309,7 @@ internal fun AlarmScreenContentForTest(
     onDefaultTaskSelected: (AlarmDismissTaskType) -> Unit,
     onDefaultRingtoneSelected: (String?) -> Unit,
     onDebugModeToggled: (Boolean) -> Unit,
+    onTightGapWarningToggled: (Boolean) -> Unit,
     onEnterSelection: (Int) -> Unit,
     onToggleSelection: (Int) -> Unit,
     onClearSelection: () -> Unit,
@@ -351,6 +356,7 @@ internal fun AlarmScreenContentForTest(
         onDefaultTaskSelected = onDefaultTaskSelected,
         onDefaultRingtoneSelected = onDefaultRingtoneSelected,
         onDebugModeToggled = onDebugModeToggled,
+        onTightGapWarningToggled = onTightGapWarningToggled,
         onEnterSelection = onEnterSelection,
         onToggleSelection = onToggleSelection,
         onClearSelection = onClearSelection,
@@ -402,6 +408,7 @@ private fun AlarmHomeRoute(
     onCreateDurationAlarm: () -> Unit,
     onSaveDefaultDuration: () -> Unit,
     isSavingDuration: Boolean,
+    tightGapWarningEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -470,6 +477,7 @@ private fun AlarmHomeRoute(
                     onDeleteSelection = onDeleteSelection,
                     onCreate = onCreate,
                     onOpenSettings = onOpenSettings,
+                    tightGapWarningEnabled = tightGapWarningEnabled,
                     modifier = Modifier.padding(innerPadding)
                 )
 
@@ -532,11 +540,12 @@ private fun AlarmScreenPreview() {
             onDefaultTaskSelected = {},
             onDefaultRingtoneSelected = {},
             onDebugModeToggled = {},
+            onTightGapWarningToggled = {},
             onEnterSelection = {},
             onToggleSelection = {},
             onClearSelection = {},
             onDeleteSelection = {},
-                onSelectHomeTab = {},
+            onSelectHomeTab = {},
             onBreakdownPeriodSelected = {},
             durationAlarms = emptyList(),
             onCancelDurationAlarm = {},

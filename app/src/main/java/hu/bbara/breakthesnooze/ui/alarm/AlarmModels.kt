@@ -2,11 +2,11 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import hu.bbara.breakthesnooze.data.alarm.calculateNextTrigger
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import java.time.ZoneId
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
@@ -126,7 +126,7 @@ internal fun sampleDraft(
     defaultSound: String? = null
 ): AlarmCreationState = AlarmCreationState(
     time = if (useCurrentTime) defaultAlarmTime() else LocalTime.of(6, 30),
-    label = "Alarm",
+    label = "",
     repeatDays = emptySet(),
     soundUri = defaultSound,
     dismissTask = defaultTask,

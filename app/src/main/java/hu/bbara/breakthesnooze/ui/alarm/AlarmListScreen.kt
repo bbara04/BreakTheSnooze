@@ -2,6 +2,9 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListLayoutInfo
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -56,8 +60,17 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlin.math.min
 
 private const val NEXT_DAY_WARNING_GAP_HOURS = 4L
+
+private fun LazyListLayoutInfo.maxScrollOffset(): Int? {
+    val lastVisible = visibleItemsInfo.lastOrNull() ?: return null
+    if (lastVisible.index != totalItemsCount - 1) return null
+    val viewportHeight = viewportEndOffset - viewportStartOffset
+    val contentHeight = lastVisible.offset + lastVisible.size + afterContentPadding
+    return (contentHeight - viewportHeight).coerceAtLeast(0)
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -90,17 +103,36 @@ internal fun AlarmListRoute(
 
     val selectionActive = selectedIds.isNotEmpty()
     val listState = rememberLazyListState()
+    var upcomingCardCollapsed by remember { mutableStateOf(false) }
     LaunchedEffect(listState.isScrollInProgress) {
         Log.d("AlarmListRoute", "ScrollCoroutine is active: ${listState.isScrollInProgress}")
-        if (!listState.isScrollInProgress && listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset > 0) {
-            val halfOfFirstVisibleItem =
-                listState.layoutInfo.visibleItemsInfo.firstOrNull()?.size?.div(
-                    2
-                ) ?: 0
-            if (listState.firstVisibleItemScrollOffset <= halfOfFirstVisibleItem) {
-                listState.animateScrollToItem(0, 0)
+        if (!listState.isScrollInProgress && listState.firstVisibleItemIndex == 0) {
+            val firstVisible = listState.layoutInfo.visibleItemsInfo.firstOrNull()
+            if (firstVisible == null) return@LaunchedEffect
+            val currentOffset = listState.firstVisibleItemScrollOffset
+            if (currentOffset == 0) {
+                upcomingCardCollapsed = false
+                return@LaunchedEffect
+            }
+            val halfOfFirstVisibleItem = firstVisible.size / 2
+            val offsetToSecondItem = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.index == 1 }?.offset
+                ?: firstVisible.size
+            val maxForwardScroll = listState.layoutInfo.maxScrollOffset()
+            val canSnapToSecondItem = maxForwardScroll == null || maxForwardScroll >= offsetToSecondItem
+            if (canSnapToSecondItem) {
+                upcomingCardCollapsed = false
+                if (currentOffset <= halfOfFirstVisibleItem) {
+                    listState.animateScrollToItem(0, 0)
+                } else {
+                    listState.animateScrollToItem(1, 0)
+                }
             } else {
-                listState.animateScrollToItem(1, 0)
+                val collapseThreshold = min(halfOfFirstVisibleItem, maxForwardScroll ?: halfOfFirstVisibleItem)
+                val shouldCollapse = currentOffset >= collapseThreshold
+                upcomingCardCollapsed = shouldCollapse
+                if (!shouldCollapse) {
+                    listState.animateScrollToItem(0, 0)
+                }
             }
         }
     }
@@ -140,15 +172,21 @@ internal fun AlarmListRoute(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
-                UpcomingAlarmCard(
-                    upcomingAlarm = upcomingAlarm,
-                    is24Hour = is24Hour,
-                    alarms = alarms,
-                    durationAlarms = durationAlarms,
-                    onDisableAlarm = { onToggle(it, false) },
-                    onCancelDurationAlarm = onCancelDurationAlarm,
-                    tightGapWarningEnabled = tightGapWarningEnabled
-                )
+                AnimatedVisibility(
+                    visible = !upcomingCardCollapsed,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    UpcomingAlarmCard(
+                        upcomingAlarm = upcomingAlarm,
+                        is24Hour = is24Hour,
+                        alarms = alarms,
+                        durationAlarms = durationAlarms,
+                        onDisableAlarm = { onToggle(it, false) },
+                        onCancelDurationAlarm = onCancelDurationAlarm,
+                        tightGapWarningEnabled = tightGapWarningEnabled
+                    )
+                }
             }
 
             if (!hasAnyAlarms) {

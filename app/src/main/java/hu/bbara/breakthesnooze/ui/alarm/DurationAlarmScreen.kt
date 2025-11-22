@@ -30,11 +30,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -128,8 +131,17 @@ internal fun DurationAlarmRoute(
                 },
                 title = { Text(text = stringResource(id = R.string.duration_alarm_title)) },
                 actions = {
-                    TextButton(onClick = onCreate, enabled = canSave) {
-                        Text(text = stringResource(id = R.string.duration_alarm_start_button))
+                    FilledIconButton(
+                        onClick = onCreate,
+                        enabled = canSave,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = stringResource(id = R.string.duration_alarm_start_button)
+                        )
                     }
                 }
             )

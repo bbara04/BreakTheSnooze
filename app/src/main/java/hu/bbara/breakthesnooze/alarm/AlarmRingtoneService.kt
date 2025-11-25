@@ -254,9 +254,11 @@ class AlarmRingtoneService : Service() {
         mediaPlayer?.let { player ->
             if (player.isPlaying) {
                 player.pause()
-                isPaused = true
             }
         }
+        isPaused = true
+        wearFallbackJob?.cancel()
+        wearFallbackJob = null
     }
 
     private fun resumeAlarm(alarmId: Int) {
@@ -264,9 +266,9 @@ class AlarmRingtoneService : Service() {
         mediaPlayer?.let { player ->
             if (!player.isPlaying) {
                 player.start()
-                isPaused = false
             }
-        }
+        } ?: startPlayback(currentAlarm?.soundUri)
+        isPaused = false
     }
 
     private fun stopPlayback() {
@@ -314,6 +316,10 @@ class AlarmRingtoneService : Service() {
         val alarmId = currentAlarmId
         if (alarmId == null) {
             Log.d(TAG, "Skipping wear fallback scheduling ($description); no active alarm id")
+            return
+        }
+        if (isPaused) {
+            Log.d(TAG, "Skipping wear fallback scheduling ($description); alarm is paused for alarmId=$alarmId")
             return
         }
         val alarmSoundUri = currentAlarm?.soundUri

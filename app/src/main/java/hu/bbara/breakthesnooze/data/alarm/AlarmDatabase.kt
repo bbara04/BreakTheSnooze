@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmDao
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmEntity
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmDao
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmEntity
 
 @Database(
     entities = [AlarmEntity::class, WakeEventEntity::class, DurationAlarmEntity::class],

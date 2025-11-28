@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.settings.SettingsRepository
 
 class AlarmViewModelFactory(

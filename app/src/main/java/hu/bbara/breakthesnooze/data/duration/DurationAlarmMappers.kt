@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.alarm.duration
+package hu.bbara.breakthesnooze.data.duration
 
 import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.uniqueAlarmId

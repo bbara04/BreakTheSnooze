@@ -9,18 +9,18 @@ import androidx.core.content.ContextCompat
 import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmSchedulerProvider
 import hu.bbara.breakthesnooze.data.alarm.detectAlarmKind
 import hu.bbara.breakthesnooze.data.alarm.rawAlarmIdFromUnique
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmSchedulerProvider
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 class AlarmReceiver : BroadcastReceiver() {
 

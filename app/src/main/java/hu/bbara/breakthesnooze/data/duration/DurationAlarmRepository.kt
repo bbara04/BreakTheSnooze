@@ -1,13 +1,13 @@
-package hu.bbara.breakthesnooze.data.alarm.duration
+package hu.bbara.breakthesnooze.data.duration
 
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 interface DurationAlarmRepository {
     val alarms: Flow<List<DurationAlarm>>

@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.alarm.duration
+package hu.bbara.breakthesnooze.data.duration
 
 import androidx.room.Dao
 import androidx.room.Insert

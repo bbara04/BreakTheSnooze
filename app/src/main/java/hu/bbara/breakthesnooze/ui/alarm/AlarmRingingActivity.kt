@@ -31,8 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -44,10 +44,10 @@ import hu.bbara.breakthesnooze.alarm.AlarmRingtoneService
 import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.detectAlarmKind
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmPlaybackStore
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.duration.toAlarmUiModel
 import hu.bbara.breakthesnooze.data.alarm.rawAlarmIdFromUnique
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmPlaybackStore
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.duration.toAlarmUiModel
 import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType

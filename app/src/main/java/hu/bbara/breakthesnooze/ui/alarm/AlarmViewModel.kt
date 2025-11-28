@@ -6,10 +6,10 @@ import androidx.lifecycle.viewModelScope
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
 import hu.bbara.breakthesnooze.data.alarm.WakeEvent
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.alarm.toUiModelWithId
+import hu.bbara.breakthesnooze.data.duration.DurationAlarm
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.settings.SettingsRepository
 import hu.bbara.breakthesnooze.data.settings.SettingsState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType

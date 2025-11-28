@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.alarm.duration
+package hu.bbara.breakthesnooze.data.duration
 
 import android.app.AlarmManager
 import android.app.PendingIntent

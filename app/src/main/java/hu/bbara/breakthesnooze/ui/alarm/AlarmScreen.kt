@@ -39,8 +39,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.duration.DurationAlarmSchedulerProvider
 import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.settings.SettingsRoute

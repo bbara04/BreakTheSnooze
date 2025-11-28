@@ -58,16 +58,21 @@ fun AlarmScreen(
     val durationRepository = remember(context) { DurationAlarmRepositoryProvider.getRepository(context) }
     val durationScheduler = remember(context) { DurationAlarmSchedulerProvider.getScheduler(context) }
     val settingsRepository = remember(context) { SettingsRepositoryProvider.getRepository(context) }
-    val alarmViewModel: AlarmViewModel = viewModel(
+    val listViewModel: AlarmListViewModel = viewModel(
+        factory = remember(repository, scheduler) { AlarmListViewModelFactory(repository, scheduler) }
+    )
+    val editorViewModel: AlarmEditorViewModel = viewModel(
         factory = remember(repository, scheduler, settingsRepository) {
-            AlarmViewModelFactory(
-                repository,
-                scheduler,
-                settingsRepository,
-                durationRepository,
-                durationScheduler
-            )
+            AlarmEditorViewModelFactory(repository, scheduler, settingsRepository)
         }
+    )
+    val durationViewModel: DurationAlarmViewModel = viewModel(
+        factory = remember(durationRepository, durationScheduler, settingsRepository) {
+            DurationAlarmViewModelFactory(durationRepository, durationScheduler, settingsRepository)
+        }
+    )
+    val settingsViewModel: AlarmSettingsViewModel = viewModel(
+        factory = remember(settingsRepository) { AlarmSettingsViewModelFactory(settingsRepository) }
     )
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -86,7 +91,24 @@ fun AlarmScreen(
         }
     }
 
-    val uiState by alarmViewModel.uiState.collectAsState()
+    val listState by listViewModel.state.collectAsState()
+    val editorState by editorViewModel.state.collectAsState()
+    val durationState by durationViewModel.state.collectAsState()
+    val settingsState by settingsViewModel.state.collectAsState()
+    val uiState = AlarmUiState(
+        alarms = listState.alarms,
+        wakeEvents = listState.wakeEvents,
+        settings = settingsState,
+        draft = editorState.draft,
+        durationAlarms = durationState.durationAlarms,
+        durationDraft = durationState.durationDraft,
+        destination = editorState.destination,
+        homeTab = listState.homeTab,
+        breakdownPeriod = listState.breakdownPeriod,
+        editingAlarm = editorState.editingAlarm,
+        selectedAlarmIds = listState.selectedAlarmIds,
+        isSavingDuration = durationState.isSavingDuration
+    )
 
     BackHandler(
         enabled = uiState.selectedAlarmIds.isNotEmpty() ||
@@ -94,53 +116,64 @@ fun AlarmScreen(
             uiState.destination == AlarmDestination.Settings
     ) {
         when {
-            uiState.selectedAlarmIds.isNotEmpty() -> alarmViewModel.clearSelection()
-            uiState.destination == AlarmDestination.Create -> alarmViewModel.cancelCreation()
-            uiState.destination == AlarmDestination.Settings -> alarmViewModel.closeSettings()
+            uiState.selectedAlarmIds.isNotEmpty() -> listViewModel.clearSelection()
+            uiState.destination == AlarmDestination.Create -> editorViewModel.cancelCreation()
+            uiState.destination == AlarmDestination.Settings -> editorViewModel.closeSettings()
         }
     }
 
     AlarmScreenContent(
         uiState = uiState,
-        onToggle = alarmViewModel::onToggleAlarm,
-        onDelete = alarmViewModel::deleteAlarm,
-        onEdit = alarmViewModel::startEditing,
-        onStartCreate = alarmViewModel::startCreating,
-        onUpdateDraft = alarmViewModel::updateDraft,
-        onTimeSelected = alarmViewModel::setDraftTime,
-        onToggleDay = alarmViewModel::toggleDraftDay,
-        onSoundSelected = alarmViewModel::setDraftSound,
-        onDismissTaskSelected = alarmViewModel::setDraftDismissTask,
-        onQrBarcodeValueChange = alarmViewModel::setDraftQrBarcodeValue,
-        onQrScanModeChange = alarmViewModel::setDraftQrScanMode,
-        onQrUniqueCountChange = alarmViewModel::setDraftQrUniqueCount,
-        onSaveDraft = alarmViewModel::saveDraft,
-        onCancel = alarmViewModel::cancelCreation,
-        onOpenSettings = alarmViewModel::openSettings,
-        onCloseSettings = alarmViewModel::closeSettings,
-        onDefaultTaskSelected = alarmViewModel::setDefaultDismissTask,
-        onDefaultRingtoneSelected = alarmViewModel::setDefaultRingtone,
-        onDebugModeToggled = alarmViewModel::setDebugMode,
-        onTightGapWarningToggled = alarmViewModel::setTightGapWarningEnabled,
-        onEnterSelection = alarmViewModel::enterSelection,
-        onToggleSelection = alarmViewModel::toggleSelection,
-        onClearSelection = alarmViewModel::clearSelection,
-        onDeleteSelection = alarmViewModel::deleteSelected,
-        onSelectHomeTab = alarmViewModel::selectHomeTab,
-        onBreakdownPeriodSelected = alarmViewModel::setBreakdownPeriod,
+        onToggle = listViewModel::onToggleAlarm,
+        onDelete = listViewModel::deleteAlarm,
+        onEdit = { id ->
+            listViewModel.clearSelection()
+            editorViewModel.startEditing(id)
+        },
+        onStartCreate = {
+            listViewModel.clearSelection()
+            editorViewModel.startCreating()
+        },
+        onUpdateDraft = editorViewModel::updateDraft,
+        onTimeSelected = editorViewModel::setDraftTime,
+        onToggleDay = editorViewModel::toggleDraftDay,
+        onSoundSelected = editorViewModel::setDraftSound,
+        onDismissTaskSelected = editorViewModel::setDraftDismissTask,
+        onQrBarcodeValueChange = editorViewModel::setDraftQrBarcodeValue,
+        onQrScanModeChange = editorViewModel::setDraftQrScanMode,
+        onQrUniqueCountChange = editorViewModel::setDraftQrUniqueCount,
+        onSaveDraft = editorViewModel::saveDraft,
+        onCancel = editorViewModel::cancelCreation,
+        onOpenSettings = editorViewModel::openSettings,
+        onCloseSettings = editorViewModel::closeSettings,
+        onDefaultTaskSelected = settingsViewModel::setDefaultDismissTask,
+        onDefaultRingtoneSelected = settingsViewModel::setDefaultRingtone,
+        onDebugModeToggled = settingsViewModel::setDebugMode,
+        onTightGapWarningToggled = settingsViewModel::setTightGapWarningEnabled,
+        onEnterSelection = listViewModel::enterSelection,
+        onToggleSelection = listViewModel::toggleSelection,
+        onClearSelection = listViewModel::clearSelection,
+        onDeleteSelection = listViewModel::deleteSelected,
+        onSelectHomeTab = {
+            listViewModel.selectHomeTab(it)
+            if (it == AlarmHomeTab.Duration) {
+                durationViewModel.prepareDurationDraft()
+            }
+        },
+        onBreakdownPeriodSelected = listViewModel::setBreakdownPeriod,
         durationAlarms = uiState.durationAlarms,
-        onCancelDurationAlarm = alarmViewModel::deleteDurationAlarm,
+        onCancelDurationAlarm = durationViewModel::deleteDurationAlarm,
         durationDraft = uiState.durationDraft,
-        onDurationLabelChange = alarmViewModel::setDurationLabel,
-        onDurationHoursChange = alarmViewModel::setDurationHours,
-        onDurationMinutesChange = alarmViewModel::setDurationMinutes,
-        onDurationSoundSelected = alarmViewModel::setDurationSound,
-        onDurationDismissTaskSelected = alarmViewModel::setDurationDismissTask,
-        onDurationQrBarcodeValueChange = alarmViewModel::setDurationQrBarcodeValue,
-        onDurationQrScanModeChange = alarmViewModel::setDurationQrScanMode,
-        onDurationQrUniqueCountChange = alarmViewModel::setDurationQrUniqueCount,
-        onCreateDurationAlarm = alarmViewModel::saveDurationDraft,
-        onSaveDefaultDuration = alarmViewModel::saveDefaultDuration,
+        onDurationLabelChange = durationViewModel::setDurationLabel,
+        onDurationHoursChange = durationViewModel::setDurationHours,
+        onDurationMinutesChange = durationViewModel::setDurationMinutes,
+        onDurationSoundSelected = durationViewModel::setDurationSound,
+        onDurationDismissTaskSelected = durationViewModel::setDurationDismissTask,
+        onDurationQrBarcodeValueChange = durationViewModel::setDurationQrBarcodeValue,
+        onDurationQrScanModeChange = durationViewModel::setDurationQrScanMode,
+        onDurationQrUniqueCountChange = durationViewModel::setDurationQrUniqueCount,
+        onCreateDurationAlarm = durationViewModel::saveDurationDraft,
+        onSaveDefaultDuration = durationViewModel::saveDefaultDuration,
         isSavingDuration = uiState.isSavingDuration,
         modifier = modifier
     )

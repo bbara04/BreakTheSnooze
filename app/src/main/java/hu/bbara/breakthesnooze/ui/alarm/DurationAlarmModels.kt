@@ -33,6 +33,21 @@ data class DurationAlarmCreationState(
         get() = (hours.coerceAtLeast(0) * 60) + minutes.coerceIn(0, 59)
 }
 
+fun DurationAlarmCreationState.toDurationAlarm(): DurationAlarm {
+    val now = Instant.now()
+    return DurationAlarm(
+        id = 0,
+        label = label.ifBlank { "Alarm" },
+        durationMinutes = totalMinutes,
+        createdAt = now,
+        triggerAt = now.plusSeconds(totalMinutes * 60L),
+        soundUri = soundUri,
+        dismissTask = dismissTask,
+        qrBarcodeValue = if (dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) qrBarcodeValue else null,
+        qrRequiredUniqueCount = if (dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) qrRequiredUniqueCount else 0
+    )
+}
+
 fun DurationAlarm.toUiModel(): DurationAlarmUiModel {
     return DurationAlarmUiModel(
         id = id,

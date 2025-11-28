@@ -9,13 +9,17 @@ import android.util.Size
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +43,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.objectdetection.camera.CustomCameraPreview
 
 @Composable
@@ -179,6 +185,10 @@ private fun GrantedContent(
     showOverlay: Boolean
 ) {
     val context = LocalContext.current
+    val title = stringResource(id = R.string.alarm_scan_object)
+    val instructions = stringResource(id = R.string.object_detection_instructions)
+    val cancelLabel = stringResource(id = R.string.qr_barcode_cancel)
+    val viewfinderSize = 260.dp
     // Keep the screen on while this composable (camera preview) is visible
     DisposableEffect(Unit) {
         val activity = context as? android.app.Activity
@@ -213,6 +223,60 @@ private fun GrantedContent(
                 }
             }
         )
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(viewfinderSize)
+                .border(
+                    width = 3.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = RoundedCornerShape(12.dp)
+                )
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = instructions,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Button(
+                onClick = onCancel,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Text(cancelLabel)
+            }
+        }
+
         if (showOverlay) {
             ResolutionBadge(
                 text = "Resolution: ${target.width}x${target.height}",
@@ -220,14 +284,6 @@ private fun GrantedContent(
                     .align(Alignment.TopStart)
                     .padding(12.dp)
             )
-        }
-        Button(
-            onClick = onCancel,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(24.dp)
-        ) {
-            Text("Cancel")
         }
     }
 }

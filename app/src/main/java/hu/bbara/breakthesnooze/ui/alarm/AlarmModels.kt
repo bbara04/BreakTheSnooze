@@ -1,6 +1,6 @@
 package hu.bbara.breakthesnooze.ui.alarm
 
-import hu.bbara.breakthesnooze.data.alarm.calculateNextTrigger
+import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTrigger
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.DayOfWeek
 import java.time.Duration

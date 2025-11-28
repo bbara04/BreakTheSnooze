@@ -24,8 +24,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.AlarmScreen
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 
 class MainActivity : ComponentActivity() {
 

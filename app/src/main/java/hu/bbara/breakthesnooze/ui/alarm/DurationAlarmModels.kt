@@ -1,9 +1,9 @@
 package hu.bbara.breakthesnooze.ui.alarm
 
-import hu.bbara.breakthesnooze.data.alarm.AlarmKind
-import hu.bbara.breakthesnooze.data.alarm.duration.DurationAlarm
-import hu.bbara.breakthesnooze.data.alarm.uniqueAlarmId
-import hu.bbara.breakthesnooze.data.settings.DEFAULT_COUNTDOWN_DURATION_MINUTES
+import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
+import hu.bbara.breakthesnooze.data.alarm.model.uniqueAlarmId
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
+import hu.bbara.breakthesnooze.data.settings.repository.DEFAULT_COUNTDOWN_DURATION_MINUTES
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.Duration
 import java.time.Instant
@@ -31,6 +31,21 @@ data class DurationAlarmCreationState(
 ) {
     val totalMinutes: Int
         get() = (hours.coerceAtLeast(0) * 60) + minutes.coerceIn(0, 59)
+}
+
+fun DurationAlarmCreationState.toDurationAlarm(): DurationAlarm {
+    val now = Instant.now()
+    return DurationAlarm(
+        id = 0,
+        label = label.ifBlank { "Alarm" },
+        durationMinutes = totalMinutes,
+        createdAt = now,
+        triggerAt = now.plusSeconds(totalMinutes * 60L),
+        soundUri = soundUri,
+        dismissTask = dismissTask,
+        qrBarcodeValue = if (dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) qrBarcodeValue else null,
+        qrRequiredUniqueCount = if (dismissTask == AlarmDismissTaskType.QR_BARCODE_SCAN) qrRequiredUniqueCount else 0
+    )
 }
 
 fun DurationAlarm.toUiModel(): DurationAlarmUiModel {

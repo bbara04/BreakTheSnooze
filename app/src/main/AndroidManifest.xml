@@ -51,11 +51,11 @@
             android:theme="@style/Theme.BreakTheSnooze" />
 
         <receiver
-            android:name=".alarm.AlarmReceiver"
+            android:name=".feature.alarm.service.AlarmReceiver"
             android:exported="false" />
 
         <service
-            android:name=".alarm.AlarmRingtoneService"
+            android:name=".feature.alarm.service.AlarmRingtoneService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 

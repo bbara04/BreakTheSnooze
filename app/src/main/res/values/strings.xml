@@ -5,6 +5,7 @@
     <string name="alarm_label_default">Alarm</string>
     <string name="alarm_ringing_message">Alarm is ringing</string>
     <string name="alarm_scan_object">Scan toothbrush</string>
+    <string name="object_detection_instructions">Point the camera at your toothbrush until it is recognized.</string>
     <string name="alarm_math_challenge">Solve math challenge</string>
     <string name="alarm_qr_barcode_scan">Scan QR/Barcode</string>
     <string name="alarm_memory_task">Memory sequence</string>

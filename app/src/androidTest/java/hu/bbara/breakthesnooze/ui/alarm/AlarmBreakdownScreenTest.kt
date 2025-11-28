@@ -12,17 +12,17 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
-import hu.bbara.breakthesnooze.data.alarm.WakeEvent
+import hu.bbara.breakthesnooze.R
+import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
-import hu.bbara.breakthesnooze.R
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AlarmBreakdownScreenTest {

@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.alarm
+package hu.bbara.breakthesnooze.feature.alarm.service
 
 import android.app.NotificationManager
 import android.app.Service

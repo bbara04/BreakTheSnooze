@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.alarm
+package hu.bbara.breakthesnooze.feature.alarm.service
 
 object AlarmIntents {
     const val ACTION_ALARM_FIRED = "hu.bbara.breakthesnooze.alarm.action.ALARM_FIRED"

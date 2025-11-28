@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.alarm
+package hu.bbara.breakthesnooze.feature.alarm.service
 
 import android.content.BroadcastReceiver
 import android.content.Context

@@ -8,8 +8,8 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
-import hu.bbara.breakthesnooze.alarm.AlarmIntents
-import hu.bbara.breakthesnooze.alarm.AlarmReceiver
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import java.time.Clock

@@ -39,8 +39,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import hu.bbara.breakthesnooze.R
-import hu.bbara.breakthesnooze.alarm.AlarmIntents
-import hu.bbara.breakthesnooze.alarm.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
 import hu.bbara.breakthesnooze.data.alarm.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.detectAlarmKind

@@ -9,8 +9,8 @@ import androidx.compose.runtime.MutableState
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import hu.bbara.breakthesnooze.MainDispatcherRule
-import hu.bbara.breakthesnooze.alarm.AlarmIntents
-import hu.bbara.breakthesnooze.alarm.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.settings.SettingsRepository

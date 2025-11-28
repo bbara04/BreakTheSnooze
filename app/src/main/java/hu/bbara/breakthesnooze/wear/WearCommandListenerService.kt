@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
-import hu.bbara.breakthesnooze.alarm.AlarmIntents
-import hu.bbara.breakthesnooze.alarm.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
 
 class WearCommandListenerService : WearableListenerService() {
 

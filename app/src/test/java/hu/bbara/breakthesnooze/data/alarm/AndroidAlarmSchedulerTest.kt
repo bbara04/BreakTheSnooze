@@ -5,8 +5,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
-import hu.bbara.breakthesnooze.alarm.AlarmIntents
-import hu.bbara.breakthesnooze.alarm.AlarmReceiver
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType

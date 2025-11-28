@@ -172,7 +172,11 @@ fun AlarmScreen(
         onDurationQrBarcodeValueChange = durationViewModel::setDurationQrBarcodeValue,
         onDurationQrScanModeChange = durationViewModel::setDurationQrScanMode,
         onDurationQrUniqueCountChange = durationViewModel::setDurationQrUniqueCount,
-        onCreateDurationAlarm = durationViewModel::saveDurationDraft,
+        onCreateDurationAlarm = {
+            durationViewModel.saveDurationDraft()
+            // Move back to the alarms tab after creating a duration alarm
+            listViewModel.selectHomeTab(AlarmHomeTab.Alarms)
+        },
         onSaveDefaultDuration = durationViewModel::saveDefaultDuration,
         isSavingDuration = uiState.isSavingDuration,
         modifier = modifier

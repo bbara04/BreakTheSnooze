@@ -9,20 +9,23 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.os.PowerManager
-import android.os.IBinder
 import androidx.test.core.app.ApplicationProvider
 import hu.bbara.breakthesnooze.MainDispatcherRule
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
-import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmSchedulerProvider
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -305,7 +308,7 @@ class AlarmReceiverTest {
         override val alarms: Flow<List<AlarmUiModel>>
             get() = throw UnsupportedOperationException()
 
-        override val wakeEvents: Flow<List<hu.bbara.breakthesnooze.data.alarm.WakeEvent>>
+        override val wakeEvents: Flow<List<hu.bbara.breakthesnooze.data.alarm.model.WakeEvent>>
             get() = throw UnsupportedOperationException()
 
         override suspend fun upsertAlarm(alarm: AlarmUiModel): AlarmUiModel? {

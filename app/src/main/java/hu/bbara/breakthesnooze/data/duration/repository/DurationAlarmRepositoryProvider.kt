@@ -1,7 +1,7 @@
-package hu.bbara.breakthesnooze.data.duration
+package hu.bbara.breakthesnooze.data.duration.repository
 
 import android.content.Context
-import hu.bbara.breakthesnooze.data.alarm.AlarmDatabase
+import hu.bbara.breakthesnooze.data.alarm.db.AlarmDatabase
 
 object DurationAlarmRepositoryProvider {
     @Volatile

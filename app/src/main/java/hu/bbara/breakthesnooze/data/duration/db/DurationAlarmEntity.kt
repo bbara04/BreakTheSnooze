@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.duration
+package hu.bbara.breakthesnooze.data.duration.db
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.settings
+package hu.bbara.breakthesnooze.data.settings.repository
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import hu.bbara.breakthesnooze.data.settings.model.SettingsState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,14 +17,6 @@ private const val SETTINGS_STORE_NAME = "app_settings"
 const val DEFAULT_COUNTDOWN_DURATION_MINUTES: Int = 60
 
 val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = SETTINGS_STORE_NAME)
-
-data class SettingsState(
-    val defaultDismissTask: AlarmDismissTaskType = AlarmDismissTaskType.DEFAULT,
-    val defaultRingtoneUri: String? = null,
-    val debugModeEnabled: Boolean = false,
-    val defaultCountdownDurationMinutes: Int = DEFAULT_COUNTDOWN_DURATION_MINUTES,
-    val tightGapWarningEnabled: Boolean = true
-)
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 

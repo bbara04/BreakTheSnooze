@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.alarm
+package hu.bbara.breakthesnooze.data.alarm.db
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

@@ -1,6 +1,6 @@
 package hu.bbara.breakthesnooze.ui.alarm
 
-import hu.bbara.breakthesnooze.data.alarm.toUiModelWithId
+import hu.bbara.breakthesnooze.data.alarm.repository.toUiModelWithId
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import org.junit.After
 import org.junit.Assert.assertEquals

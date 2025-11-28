@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.duration
+package hu.bbara.breakthesnooze.data.duration.scheduler
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -8,8 +8,9 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
-import hu.bbara.breakthesnooze.data.alarm.AlarmKind
-import hu.bbara.breakthesnooze.data.alarm.uniqueAlarmId
+import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
+import hu.bbara.breakthesnooze.data.alarm.model.uniqueAlarmId
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity

@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.settings
+package hu.bbara.breakthesnooze.data.settings.repository
 
 import android.content.Context
 

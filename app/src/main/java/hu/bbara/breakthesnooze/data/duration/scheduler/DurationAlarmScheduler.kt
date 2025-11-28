@@ -1,4 +1,6 @@
-package hu.bbara.breakthesnooze.data.duration
+package hu.bbara.breakthesnooze.data.duration.scheduler
+
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
 
 interface DurationAlarmScheduler {
     fun schedule(alarm: DurationAlarm)

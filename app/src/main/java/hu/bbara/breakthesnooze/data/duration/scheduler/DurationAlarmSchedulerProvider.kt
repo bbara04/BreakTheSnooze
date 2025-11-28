@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.duration
+package hu.bbara.breakthesnooze.data.duration.scheduler
 
 import android.content.Context
 

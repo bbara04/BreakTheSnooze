@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.alarm
+package hu.bbara.breakthesnooze.data.alarm.model
 
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.Instant

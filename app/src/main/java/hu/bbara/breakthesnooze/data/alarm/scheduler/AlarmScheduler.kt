@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.alarm
+package hu.bbara.breakthesnooze.data.alarm.scheduler
 
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 

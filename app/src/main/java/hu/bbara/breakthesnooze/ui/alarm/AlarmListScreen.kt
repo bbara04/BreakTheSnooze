@@ -48,7 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
-import hu.bbara.breakthesnooze.data.alarm.calculateNextTrigger
+import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTrigger
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import kotlinx.coroutines.delay

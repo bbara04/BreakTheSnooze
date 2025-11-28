@@ -2,14 +2,14 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import hu.bbara.breakthesnooze.MainDispatcherRule
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
-import hu.bbara.breakthesnooze.data.alarm.WakeEvent
-import hu.bbara.breakthesnooze.data.duration.DurationAlarm
-import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepository
-import hu.bbara.breakthesnooze.data.duration.DurationAlarmScheduler
-import hu.bbara.breakthesnooze.data.settings.SettingsRepository
-import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryImpl
+import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
+import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
+import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepositoryImpl
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.CreateDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteDurationAlarmUseCase

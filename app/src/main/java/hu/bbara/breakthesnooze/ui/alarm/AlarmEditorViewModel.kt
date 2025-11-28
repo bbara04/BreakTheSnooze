@@ -2,9 +2,9 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
-import hu.bbara.breakthesnooze.data.settings.SettingsRepository
-import hu.bbara.breakthesnooze.data.settings.SettingsState
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
+import hu.bbara.breakthesnooze.data.settings.model.SettingsState
+import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.SaveAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.withToggledDay

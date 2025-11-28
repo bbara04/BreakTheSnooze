@@ -1,11 +1,11 @@
 package hu.bbara.breakthesnooze.ui.alarm.domain
 
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
-import hu.bbara.breakthesnooze.data.alarm.toUiModelWithId
-import hu.bbara.breakthesnooze.data.duration.DurationAlarm
-import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepository
-import hu.bbara.breakthesnooze.data.duration.DurationAlarmScheduler
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.repository.toUiModelWithId
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.ui.alarm.AlarmCreationState
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import java.time.DayOfWeek

@@ -2,8 +2,8 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepository
-import hu.bbara.breakthesnooze.data.settings.SettingsRepository
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.CreateDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteDurationAlarmUseCase

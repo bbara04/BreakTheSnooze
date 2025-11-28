@@ -50,7 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
-import hu.bbara.breakthesnooze.data.alarm.WakeEvent
+import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.DayOfWeek

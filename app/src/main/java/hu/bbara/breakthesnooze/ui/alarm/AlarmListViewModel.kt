@@ -2,9 +2,9 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import hu.bbara.breakthesnooze.data.alarm.AlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.AlarmScheduler
-import hu.bbara.breakthesnooze.data.alarm.WakeEvent
+import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.SynchronizeAlarmsUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.ToggleAlarmActiveUseCase

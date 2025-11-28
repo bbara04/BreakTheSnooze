@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.settings
+package hu.bbara.breakthesnooze.data.settings.repository
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType

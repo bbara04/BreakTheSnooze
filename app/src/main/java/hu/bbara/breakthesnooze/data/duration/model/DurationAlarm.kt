@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.data.duration
+package hu.bbara.breakthesnooze.data.duration.model
 
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import java.time.Duration

@@ -2,8 +2,8 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import hu.bbara.breakthesnooze.data.settings.SettingsRepository
-import hu.bbara.breakthesnooze.data.settings.SettingsState
+import hu.bbara.breakthesnooze.data.settings.model.SettingsState
+import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

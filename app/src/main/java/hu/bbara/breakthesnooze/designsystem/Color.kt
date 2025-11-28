@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.theme
+package hu.bbara.breakthesnooze.designsystem
 
 import androidx.compose.ui.graphics.Color
 

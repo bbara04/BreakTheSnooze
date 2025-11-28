@@ -44,8 +44,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.settings.SettingsState
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

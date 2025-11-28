@@ -31,7 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 

@@ -42,9 +42,9 @@ import hu.bbara.breakthesnooze.data.alarm.AlarmSchedulerProvider
 import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.duration.DurationAlarmSchedulerProvider
 import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.settings.SettingsRoute
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import java.time.DayOfWeek
 import java.time.LocalTime
 

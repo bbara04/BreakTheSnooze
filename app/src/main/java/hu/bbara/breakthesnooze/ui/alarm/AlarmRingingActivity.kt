@@ -49,12 +49,12 @@ import hu.bbara.breakthesnooze.data.duration.DurationAlarmPlaybackStore
 import hu.bbara.breakthesnooze.data.duration.DurationAlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.duration.toAlarmUiModel
 import hu.bbara.breakthesnooze.data.settings.SettingsRepositoryProvider
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.MathChallengeDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.createTask
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import kotlinx.coroutines.launch
 import java.time.Instant
 

@@ -1,6 +1,8 @@
 package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import hu.bbara.breakthesnooze.MainDispatcherRule
 import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
@@ -9,17 +11,18 @@ import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
 import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
-import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepositoryImpl
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.CreateDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.SaveAlarmUseCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -31,6 +34,7 @@ import java.nio.file.Files
 import java.time.DayOfWeek
 import java.time.LocalTime
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AlarmViewModelsTest {
 
     @get:Rule
@@ -38,9 +42,12 @@ class AlarmViewModelsTest {
 
     private val tempDirs = mutableListOf<File>()
     private val scopes = mutableListOf<CoroutineScope>()
+    private val viewModels = mutableListOf<ViewModel>()
 
     @After
     fun tearDown() {
+        viewModels.forEach { it.viewModelScope.cancel() }
+        viewModels.clear()
         scopes.forEach { it.cancel() }
         scopes.clear()
         tempDirs.forEach { it.deleteRecursively() }
@@ -48,34 +55,44 @@ class AlarmViewModelsTest {
     }
 
     @Test
-    fun editorStartCreatingUsesSettingsDefaults() = runTest {
+    fun editorStartCreatingUsesSettingsDefaults() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         settings.setDefaultDismissTask(AlarmDismissTaskType.MATH_CHALLENGE)
         val repository = FakeAlarmRepository()
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmEditorViewModel(repository, settings, saveAlarmUseCase = SaveAlarmUseCase(repository, scheduler))
+        val viewModel = AlarmEditorViewModel(repository, settings, saveAlarmUseCase = SaveAlarmUseCase(repository, scheduler)).also {
+            viewModels += it
+        }
+        advanceUntilIdle()
 
         viewModel.startCreating()
+        advanceUntilIdle()
         val state = viewModel.state.first { it.destination == AlarmDestination.Create }
 
         assertEquals(AlarmDismissTaskType.MATH_CHALLENGE, state.draft.dismissTask)
     }
 
     @Test
-    fun listToggleInvokesScheduler() = runTest {
+    fun listToggleInvokesScheduler() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         val alarm = sampleAlarm(id = 1, isActive = true)
         val repository = FakeAlarmRepository(listOf(alarm))
         val scheduler = FakeAlarmScheduler()
-        val viewModel = AlarmListViewModel(repository, scheduler)
+        val viewModel = AlarmListViewModel(
+            repository = repository,
+            scheduler = scheduler,
+            ioDispatcher = mainDispatcherRule.dispatcher
+        ).also { viewModels += it }
+        advanceUntilIdle()
 
         viewModel.onToggleAlarm(1, false)
+        advanceUntilIdle()
         assertEquals(listOf(1 to false), repository.updateActiveCalls)
         assertEquals(listOf(1), scheduler.cancelledIds)
     }
 
     @Test
-    fun durationSaveSchedulesAlarm() = runTest {
+    fun durationSaveSchedulesAlarm() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         val durationRepository = FakeDurationAlarmRepository()
         val scheduler = FakeDurationAlarmScheduler()
@@ -83,26 +100,31 @@ class AlarmViewModelsTest {
             repository = durationRepository,
             settingsRepository = settings,
             createDurationAlarmUseCase = CreateDurationAlarmUseCase(durationRepository, scheduler),
-            deleteDurationAlarmUseCase = DeleteDurationAlarmUseCase(durationRepository, scheduler)
-        )
+            deleteDurationAlarmUseCase = DeleteDurationAlarmUseCase(durationRepository, scheduler),
+            ioDispatcher = mainDispatcherRule.dispatcher
+        ).also { viewModels += it }
+        advanceUntilIdle()
 
         viewModel.setDurationHours(0)
         viewModel.setDurationMinutes(5)
         viewModel.setDurationLabel("Nap")
         viewModel.saveDurationDraft()
+        advanceUntilIdle()
 
         assertTrue(durationRepository.created.isNotEmpty())
         assertTrue(scheduler.scheduled.isNotEmpty())
     }
 
     @Test
-    fun settingsUpdatesPersist() = runTest {
+    fun settingsUpdatesPersist() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
-        val viewModel = AlarmSettingsViewModel(settings)
+        val viewModel = AlarmSettingsViewModel(settings).also { viewModels += it }
+        advanceUntilIdle()
 
         viewModel.setDefaultDismissTask(AlarmDismissTaskType.FOCUS_TIMER)
         viewModel.setDefaultRingtone("content://tone")
         viewModel.setDebugMode(true)
+        advanceUntilIdle()
 
         val updated = settings.settings.first()
         assertEquals(AlarmDismissTaskType.FOCUS_TIMER, updated.defaultDismissTask)
@@ -127,11 +149,11 @@ class AlarmViewModelsTest {
 
     private fun createSettingsRepository(): SettingsRepository {
         val tempDir = Files.createTempDirectory("settings").toFile().also { tempDirs.add(it) }
-        val scope = CoroutineScope(SupervisorJob()).also { scopes.add(it) }
+        val scope = CoroutineScope(SupervisorJob() + mainDispatcherRule.dispatcher).also { scopes.add(it) }
         val dataStore = PreferenceDataStoreFactory.create(scope = scope) {
             tempDir.resolve("datastore.preferences_pb")
         }
-        return SettingsRepositoryImpl(dataStore)
+        return SettingsRepository(dataStore)
     }
 }
 

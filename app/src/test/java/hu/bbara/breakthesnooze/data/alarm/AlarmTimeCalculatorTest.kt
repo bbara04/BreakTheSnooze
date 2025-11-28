@@ -1,5 +1,7 @@
 package hu.bbara.breakthesnooze.data.alarm
 
+import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTrigger
+import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTriggerMillis
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import org.junit.Assert.assertEquals

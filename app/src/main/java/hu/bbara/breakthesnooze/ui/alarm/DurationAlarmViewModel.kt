@@ -8,6 +8,7 @@ import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.CreateDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteDurationAlarmUseCase
 import hu.bbara.breakthesnooze.util.logDuration
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ class DurationAlarmViewModel(
     private val repository: DurationAlarmRepository,
     private val settingsRepository: SettingsRepository,
     private val createDurationAlarmUseCase: CreateDurationAlarmUseCase,
-    private val deleteDurationAlarmUseCase: DeleteDurationAlarmUseCase
+    private val deleteDurationAlarmUseCase: DeleteDurationAlarmUseCase,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -67,7 +69,7 @@ class DurationAlarmViewModel(
 
     fun deleteDurationAlarm(id: Int) {
         viewModelScope.launch {
-            val deleted = withContext(Dispatchers.IO) {
+            val deleted = withContext(ioDispatcher) {
                 logDuration(TAG, "delete_duration_$id") {
                     deleteDurationAlarmUseCase(id)
                 }
@@ -178,7 +180,7 @@ class DurationAlarmViewModel(
         }
         _state.update { state -> state.copy(isSavingDuration = true) }
         viewModelScope.launch {
-            val saved = withContext(Dispatchers.IO) {
+            val saved = withContext(ioDispatcher) {
                 logDuration(TAG, "create_duration") {
                     createDurationAlarmUseCase(draftSnapshot.toDurationAlarm())
                 }

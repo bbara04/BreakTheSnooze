@@ -9,6 +9,7 @@ import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.SynchronizeAlarmsUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.ToggleAlarmActiveUseCase
 import hu.bbara.breakthesnooze.util.logDuration
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +22,8 @@ import kotlinx.coroutines.withContext
 
 class AlarmListViewModel(
     private val repository: AlarmRepository,
-    scheduler: AlarmScheduler
+    scheduler: AlarmScheduler,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
     private val toggleAlarmUseCase = ToggleAlarmActiveUseCase(repository, scheduler)
@@ -33,7 +35,7 @@ class AlarmListViewModel(
     private var synchronizeJob: Job? = null
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(ioDispatcher) {
             logDuration(TAG, "ensureSeedData") { repository.ensureSeedData() }
         }
 
@@ -68,7 +70,7 @@ class AlarmListViewModel(
             state.copy(alarms = updatedAlarms)
         }
         viewModelScope.launch {
-            val updated = withContext(Dispatchers.IO) {
+            val updated = withContext(ioDispatcher) {
                 logDuration(TAG, "updateAlarmActive_$id") {
                     toggleAlarmUseCase(id, isActive)
                 }
@@ -85,7 +87,7 @@ class AlarmListViewModel(
             state.copy(alarms = state.alarms.filterNot { it.id == id })
         }
         viewModelScope.launch {
-            val deleted = withContext(Dispatchers.IO) {
+            val deleted = withContext(ioDispatcher) {
                 logDuration(TAG, "delete_$id") { deleteAlarmUseCase(id) }
             }
             if (!deleted) {
@@ -139,7 +141,7 @@ class AlarmListViewModel(
 
     private fun synchronizeAlarms(alarms: List<AlarmUiModel>) {
         synchronizeJob?.cancel()
-        synchronizeJob = viewModelScope.launch(Dispatchers.IO) {
+        synchronizeJob = viewModelScope.launch(ioDispatcher) {
             logDuration(TAG, "synchronize_${alarms.size}") {
                 synchronizeAlarmsUseCase(alarms)
             }

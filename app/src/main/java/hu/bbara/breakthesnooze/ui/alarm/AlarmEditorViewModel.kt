@@ -2,6 +2,7 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
@@ -18,8 +19,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
 import java.time.LocalTime
+import javax.inject.Inject
 
-class AlarmEditorViewModel(
+@HiltViewModel
+class AlarmEditorViewModel @Inject constructor(
     private val repository: AlarmRepository,
     settingsRepository: SettingsRepository,
     saveAlarmUseCase: SaveAlarmUseCase

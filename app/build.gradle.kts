@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.kapt")
+    alias(libs.plugins.dagger.hilt)
 }
 
 android {
@@ -69,6 +70,8 @@ dependencies {
     implementation(libs.mlkit.barcode.scanning)
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.dagger.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
     testImplementation(libs.junit)
     testImplementation("androidx.test:core:1.6.1")
     testImplementation("org.robolectric:robolectric:4.12.1")
@@ -76,15 +79,20 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.12")
     testImplementation("com.google.truth:truth:1.4.2")
     testImplementation("app.cash.turbine:turbine:1.1.0")
+    testImplementation(libs.dagger.hilt.android.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     androidTestImplementation("com.google.truth:truth:1.4.2")
+    androidTestImplementation(libs.dagger.hilt.android.testing)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     kapt(libs.androidx.room.compiler)
+    kapt(libs.dagger.hilt.compiler)
+    kaptTest(libs.dagger.hilt.compiler)
+    kaptAndroidTest(libs.dagger.hilt.compiler)
     wearApp(project(":wear"))
 }
 

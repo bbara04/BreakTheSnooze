@@ -9,13 +9,14 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.IBinder
 import android.util.Log
+import dagger.hilt.android.AndroidEntryPoint
 import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.detectAlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.rawAlarmIdFromUnique
-import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.duration.model.DurationAlarmPlaybackStore
 import hu.bbara.breakthesnooze.data.duration.model.toAlarmUiModel
-import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.wear.WearAlarmMessenger
 import kotlinx.coroutines.CancellationException
@@ -27,8 +28,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlarmRingtoneService : Service() {
+
+    @Inject lateinit var alarmRepository: AlarmRepository
+    @Inject lateinit var durationAlarmRepository: DurationAlarmRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var mediaPlayer: MediaPlayer? = null
@@ -358,16 +364,14 @@ class AlarmRingtoneService : Service() {
     private suspend fun resolveAlarm(uniqueAlarmId: Int): AlarmUiModel? {
         return when (detectAlarmKind(uniqueAlarmId)) {
             AlarmKind.Standard -> {
-                val repository = AlarmRepositoryProvider.getRepository(applicationContext)
                 DurationAlarmPlaybackStore.remove(uniqueAlarmId)
-                repository.getAlarmById(uniqueAlarmId)
+                alarmRepository.getAlarmById(uniqueAlarmId)
             }
 
             AlarmKind.Duration -> {
-                val repository = DurationAlarmRepositoryProvider.getRepository(applicationContext)
                 val rawId = rawAlarmIdFromUnique(uniqueAlarmId)
-                val alarm = repository.getById(rawId) ?: return null
-                repository.delete(rawId)
+                val alarm = durationAlarmRepository.getById(rawId) ?: return null
+                durationAlarmRepository.delete(rawId)
                 return alarm.toAlarmUiModel().also {
                     DurationAlarmPlaybackStore.put(it.id, it)
                 }

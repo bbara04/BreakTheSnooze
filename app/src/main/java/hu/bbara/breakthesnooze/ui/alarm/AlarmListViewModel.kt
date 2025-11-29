@@ -2,6 +2,7 @@ package hu.bbara.breakthesnooze.ui.alarm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
@@ -19,8 +20,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-class AlarmListViewModel(
+@HiltViewModel
+class AlarmListViewModel @Inject constructor(
     private val repository: AlarmRepository,
     scheduler: AlarmScheduler,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO

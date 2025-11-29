@@ -13,8 +13,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -99,6 +99,7 @@ class AlarmScreenDraftEditingTest {
                     onDefaultTaskSelected = {},
                     onDefaultRingtoneSelected = {},
                     onDebugModeToggled = {},
+                    onTightGapWarningToggled = {},
                     onEnterSelection = {},
                     onToggleSelection = {},
                     onClearSelection = {},

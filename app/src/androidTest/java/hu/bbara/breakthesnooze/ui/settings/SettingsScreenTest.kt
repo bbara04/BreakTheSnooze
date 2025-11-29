@@ -5,8 +5,6 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivityResultRegistryOwner
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,11 +16,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
-import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
-import hu.bbara.breakthesnooze.testutil.RecordingActivityResultRegistryOwner
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,7 +32,8 @@ class SettingsScreenTest {
     private lateinit var settingsState: MutableState<SettingsState>
     private var lastSelectedTask: AlarmDismissTaskType? = null
     private var lastDebugToggle: Boolean? = null
-    private lateinit var registryOwner: RecordingActivityResultRegistryOwner
+    private var lastLaunchedRingtoneIntent: Intent? = null
+    private var defaultRingtoneSelectedInvocations: Int = 0
 
     @Test
     fun selectingDifferentDefaultTaskUpdatesState() {
@@ -55,15 +52,16 @@ class SettingsScreenTest {
     fun ringtonePickerResultPersistsSelection() {
         setContent()
 
-        val hint = composeRule.activity.getString(R.string.settings_default_ringtone_hint)
-        composeRule.onNodeWithText(hint).performClick()
+        composeRule.onNodeWithTag(SettingsTestTags.RINGTONE_ROW, useUnmergedTree = true).performClick()
 
         val uri = Settings.System.DEFAULT_ALARM_ALERT_URI
         composeRule.runOnIdle {
-            registryOwner.registry.dispatchResult(
+            handleRingtonePickerResult(
                 Activity.RESULT_OK,
                 Intent().apply { putExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, uri) }
-            )
+            ) { selectedUri ->
+                settingsState.value = settingsState.value.copy(defaultRingtoneUri = selectedUri)
+            }
         }
 
         composeRule.runOnIdle {
@@ -81,10 +79,11 @@ class SettingsScreenTest {
             )
         )
 
-        val clearLabel = composeRule.activity.getString(R.string.settings_default_ringtone_clear)
-        composeRule.onNodeWithText(clearLabel).performClick()
+        composeRule.onNodeWithTag(SettingsTestTags.RINGTONE_CLEAR, useUnmergedTree = true)
+            .performSemanticsAction(SemanticsActions.OnClick)
 
         composeRule.runOnIdle {
+            assertThat(defaultRingtoneSelectedInvocations).isEqualTo(1)
             assertThat(settingsState.value.defaultRingtoneUri).isNull()
         }
     }
@@ -103,28 +102,32 @@ class SettingsScreenTest {
     }
 
     private fun setContent(initial: SettingsState = SettingsState()) {
-        registryOwner = RecordingActivityResultRegistryOwner()
+        lastLaunchedRingtoneIntent = null
+        defaultRingtoneSelectedInvocations = 0
         composeRule.setContent {
-            CompositionLocalProvider(LocalActivityResultRegistryOwner provides registryOwner) {
-                BreakTheSnoozeTheme {
-                    val state = remember { mutableStateOf(initial) }
-                    settingsState = state
-                    SettingsRoute(
-                        settings = state.value,
-                        onDefaultTaskSelected = { task ->
-                            lastSelectedTask = task
-                            state.value = state.value.copy(defaultDismissTask = task)
-                        },
-                        onDefaultRingtoneSelected = { uri ->
-                            state.value = state.value.copy(defaultRingtoneUri = uri)
-                        },
-                        onDebugModeToggled = { enabled ->
-                            lastDebugToggle = enabled
-                            state.value = state.value.copy(debugModeEnabled = enabled)
-                        },
-                        onBack = {}
-                    )
-                }
+            BreakTheSnoozeTheme {
+                val state = remember { mutableStateOf(initial) }
+                settingsState = state
+                SettingsRoute(
+                    settings = state.value,
+                    onDefaultTaskSelected = { task ->
+                        lastSelectedTask = task
+                        state.value = state.value.copy(defaultDismissTask = task)
+                    },
+                    onDefaultRingtoneSelected = { uri ->
+                        defaultRingtoneSelectedInvocations++
+                        state.value = state.value.copy(defaultRingtoneUri = uri)
+                    },
+                    onDebugModeToggled = { enabled ->
+                        lastDebugToggle = enabled
+                        state.value = state.value.copy(debugModeEnabled = enabled)
+                    },
+                    onTightGapWarningToggled = { enabled ->
+                        state.value = state.value.copy(tightGapWarningEnabled = enabled)
+                    },
+                    onBack = {},
+                    onLaunchRingtonePicker = { intent -> lastLaunchedRingtoneIntent = intent }
+                )
             }
         }
     }

@@ -14,8 +14,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

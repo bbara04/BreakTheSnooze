@@ -16,12 +16,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.testutil.RecordingActivityResultRegistryOwner
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
-import java.time.LocalTime
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.time.LocalTime
 
 @RunWith(AndroidJUnit4::class)
 class AlarmCreateScreenRingtoneTest {

@@ -26,7 +26,7 @@ class AlarmRingtoneServiceTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun pauseCancelsWearFallbackWhenNoPlaybackStarted() {
+    fun `pause cancels wear fallback when no playback started`() {
         val context: Context = ApplicationProvider.getApplicationContext()
         val controller = Robolectric.buildService(AlarmRingtoneService::class.java).create()
         val service = controller.get()

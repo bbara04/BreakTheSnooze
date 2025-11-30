@@ -24,7 +24,7 @@ class AlarmListScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun alarmListShowsEmptyStateWhenNoAlarms() {
+    fun `alarm list shows empty state when no alarms`() {
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
@@ -50,7 +50,7 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun selectionTopBarAppearsWhenSelectionActive() {
+    fun `selection top bar appears when selection active`() {
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
@@ -75,7 +75,7 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun togglingSwitchInvokesCallback() {
+    fun `toggling switch invokes callback`() {
         val toggleResult = AtomicReference<Pair<Int, Boolean>?>(null)
 
         composeTestRule.setContent {

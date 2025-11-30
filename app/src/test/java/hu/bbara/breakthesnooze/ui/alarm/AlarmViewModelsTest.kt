@@ -55,7 +55,7 @@ class AlarmViewModelsTest {
     }
 
     @Test
-    fun editorStartCreatingUsesSettingsDefaults() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `editor start creating uses settings defaults`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         settings.setDefaultDismissTask(AlarmDismissTaskType.MATH_CHALLENGE)
         val repository = FakeAlarmRepository()
@@ -73,7 +73,7 @@ class AlarmViewModelsTest {
     }
 
     @Test
-    fun listToggleInvokesScheduler() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `list toggle invokes scheduler`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         val alarm = sampleAlarm(id = 1, isActive = true)
         val repository = FakeAlarmRepository(listOf(alarm))
@@ -92,7 +92,7 @@ class AlarmViewModelsTest {
     }
 
     @Test
-    fun durationSaveSchedulesAlarm() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `duration save schedules alarm`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         val durationRepository = FakeDurationAlarmRepository()
         val scheduler = FakeDurationAlarmScheduler()
@@ -116,7 +116,7 @@ class AlarmViewModelsTest {
     }
 
     @Test
-    fun settingsUpdatesPersist() = runTest(mainDispatcherRule.dispatcher.scheduler) {
+    fun `settings updates persist`() = runTest(mainDispatcherRule.dispatcher.scheduler) {
         val settings = createSettingsRepository()
         val viewModel = AlarmSettingsViewModel(settings).also { viewModels += it }
         advanceUntilIdle()

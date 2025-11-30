@@ -33,7 +33,7 @@ class AlarmCreateScreenRingtoneTest {
     private lateinit var registryOwner: RecordingActivityResultRegistryOwner
 
     @Test
-    fun selectingValidRingtoneUpdatesDraft() {
+    fun `selecting valid ringtone updates draft`() {
         setContent()
 
         composeRule.onNodeWithText("Tap to choose a ringtone", useUnmergedTree = true).performClick()
@@ -55,7 +55,7 @@ class AlarmCreateScreenRingtoneTest {
     }
 
     @Test
-    fun cancelledPickerKeepsExistingSound() {
+    fun `cancelled picker keeps existing sound`() {
         val initialUri = "content://existing"
         setContent(sampleDraft(useCurrentTime = false).copy(time = LocalTime.of(6, 0), soundUri = initialUri))
 
@@ -71,7 +71,7 @@ class AlarmCreateScreenRingtoneTest {
     }
 
     @Test
-    fun missingUriResultFallsBackToDefaultLabel() {
+    fun `missing uri result falls back to default label`() {
         setContent()
 
         composeRule.onNodeWithText("Tap to choose a ringtone", useUnmergedTree = true).performClick()
@@ -86,7 +86,7 @@ class AlarmCreateScreenRingtoneTest {
     }
 
     @Test
-    fun clearButtonResetsSoundSelection() {
+    fun `clear button resets sound selection`() {
         setContent(sampleDraft(useCurrentTime = false).copy(time = LocalTime.of(6, 0), soundUri = "content://custom"))
 
         composeRule.onNodeWithText("Use default").performClick()

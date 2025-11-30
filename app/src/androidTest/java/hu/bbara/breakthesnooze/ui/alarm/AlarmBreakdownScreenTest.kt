@@ -33,7 +33,7 @@ class AlarmBreakdownScreenTest {
     private lateinit var periodState: MutableState<BreakdownPeriod>
 
     @Test
-    fun emptyStateVisibleWhenNoEvents() {
+    fun `empty state visible when no events`() {
         setContent(emptyList())
 
         val emptyText = composeRule.activity.getString(R.string.alarm_breakdown_empty_day)
@@ -41,7 +41,7 @@ class AlarmBreakdownScreenTest {
     }
 
     @Test
-    fun selectingDifferentDayShowsThatDaysEvents() {
+    fun `selecting different day shows that days events`() {
         val zoneId = ZoneId.systemDefault()
         val today = LocalDate.now(zoneId)
         val yesterday = today.minusDays(1)
@@ -60,7 +60,7 @@ class AlarmBreakdownScreenTest {
     }
 
     @Test
-    fun switchingToMonthlyUpdatesCalendarHeader() {
+    fun `switching to monthly updates calendar header`() {
         val events = listOf(wakeEvent(id = 10, daysAgo = 0, label = "Morning"))
         setContent(events)
 

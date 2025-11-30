@@ -76,7 +76,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun buildsPrimaryAndBackupDismissTasks_inConfiguredOrder() {
+    fun buildsPrimaryAndBackupDismissTasksInConfiguredOrder() {
         val alarm = baseAlarm(dismissTask = AlarmDismissTaskType.MATH_CHALLENGE)
         val activity = launchActivity(alarm)
 
@@ -87,7 +87,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun buildsSingleTask_whenPrimaryAlreadyFocusTimer() {
+    fun buildsSingleTaskWhenPrimaryAlreadyFocusTimer() {
         val alarm = baseAlarm(dismissTask = AlarmDismissTaskType.FOCUS_TIMER)
         val activity = launchActivity(alarm)
 
@@ -97,7 +97,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun clearsAvailableTasks_whenAlarmMissing() {
+    fun clearsAvailableTasksWhenAlarmMissing() {
         coEvery { alarmRepository.getAlarmById(TEST_ALARM_ID) } returns null
         val controller = buildActivity(
             AlarmRingingActivity::class.java,
@@ -112,7 +112,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun activeTaskCleared_whenTaskListNoLongerContainsSelection() {
+    fun activeTaskClearedWhenTaskListNoLongerContainsSelection() {
         val initialAlarm = baseAlarm(dismissTask = AlarmDismissTaskType.MATH_CHALLENGE)
         val activity = launchActivity(initialAlarm)
         val mathTask = activity.tasksState().value.first()
@@ -162,7 +162,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun onTaskCompleted_recordsWakeEventOnceAndStopsAlarm() {
+    fun onTaskCompletedRecordsWakeEventOnceAndStopsAlarm() {
         val alarm = baseAlarm(dismissTask = AlarmDismissTaskType.MATH_CHALLENGE)
         val activity = launchActivity(alarm)
         val focusTask = activity.tasksState().value.last()
@@ -189,7 +189,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun onTaskCompleted_isIdempotentAcrossMultipleInvocations() {
+    fun onTaskCompletedIsIdempotentAcrossMultipleInvocations() {
         val alarm = baseAlarm()
         val activity = launchActivity(alarm)
         coEvery { alarmRepository.addWakeEvent(any(), any(), any(), any()) } returns Unit
@@ -264,7 +264,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun activityFinishesImmediately_whenAlarmIdMissing() {
+    fun activityFinishesImmediatelyWhenAlarmIdMissing() {
         val controller = buildActivity(
             AlarmRingingActivity::class.java,
             Intent(application, AlarmRingingActivity::class.java)

@@ -76,7 +76,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverReschedulesRepeatingAlarm_whenRepeatDaysPresent`() {
+    fun `AlarmReceiver reschedules repeating alarm when repeat days  present`() {
         val alarm = baseAlarm().copy(repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY))
         val repository = RecordingAlarmRepository(mapOf(alarm.id to alarm))
         val scheduler = RecordingAlarmScheduler()
@@ -104,7 +104,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverDisablesOneShotAlarm_whenNoRepeatDays`() {
+    fun `AlarmReceiver disables one shot Alarm when no repeat days are present`() {
         val alarm = baseAlarm().copy(repeatDays = emptySet())
         val repository = RecordingAlarmRepository(mapOf(alarm.id to alarm))
         val scheduler = RecordingAlarmScheduler()
@@ -123,7 +123,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverCancelsAndSkipsLaunch_whenAlarmMissing`() {
+    fun `AlarmReceiver cancels and skips Launch when Alarm missing`() {
         val repository = RecordingAlarmRepository(emptyMap())
         val scheduler = RecordingAlarmScheduler()
         installProviders(repository, scheduler)
@@ -141,7 +141,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverFinishesPendingResult_whenSchedulerThrows`() {
+    fun `AlarmReceiver finishes PendingResult when scheduler throws exception`() {
         val alarm = baseAlarm()
         val repository = RecordingAlarmRepository(mapOf(alarm.id to alarm))
         val scheduler = ThrowingAlarmScheduler()
@@ -156,7 +156,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverFinishesPendingResult_whenRepositoryThrows`() {
+    fun `AlarmReceiver Finishes PendingResult when repository throws exception`() {
         val repository = object : RecordingAlarmRepository(emptyMap()) {
             override suspend fun getAlarmById(id: Int): AlarmUiModel? {
                 throw IllegalStateException("boom")
@@ -174,7 +174,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverReturnsEarly_whenActionMismatched`() {
+    fun `AlarmReceiver returns early when action mismatched`() {
         val repository = RecordingAlarmRepository(emptyMap())
         val scheduler = RecordingAlarmScheduler()
         installProviders(repository, scheduler)
@@ -189,7 +189,7 @@ class AlarmReceiverTest {
     }
 
     @Test
-    fun `AlarmReceiverReturnsEarly_whenAlarmIdMissing`() {
+    fun `AlarmReceiver returns early when alarm id missing`() {
         val repository = RecordingAlarmRepository(emptyMap())
         val scheduler = RecordingAlarmScheduler()
         installProviders(repository, scheduler)

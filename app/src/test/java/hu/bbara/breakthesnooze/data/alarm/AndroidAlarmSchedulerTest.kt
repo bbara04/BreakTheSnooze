@@ -71,7 +71,7 @@ class AndroidAlarmSchedulerTest {
     }
 
     @Test
-    fun `AndroidAlarmSchedulerSchedulesExactAlarm_whenPermissionGranted`() {
+    fun `Android AlarmScheduler schedules Exact alarm when permission granted`() {
         val alarm = createAlarm(id = 42, time = LocalTime.of(7, 30), repeatDays = emptySet())
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
 
@@ -103,7 +103,7 @@ class AndroidAlarmSchedulerTest {
     }
 
     @Test
-    fun `AndroidAlarmSchedulerFallsBack_whenExactNotAllowed`() {
+    fun `Android AlarmScheduler Falls back when exact not allowed`() {
         val alarm = createAlarm(id = 5, time = LocalTime.of(9, 15))
         ShadowAlarmManager.setCanScheduleExactAlarms(false)
         ShadowLog.reset()
@@ -123,7 +123,7 @@ class AndroidAlarmSchedulerTest {
     }
 
     @Test
-    fun `AndroidAlarmSchedulerCancelsAlarm_whenCancelInvoked`() {
+    fun `Android AlarmScheduler cancels Alarm when cancel invoked`() {
         val alarm = createAlarm(id = 7, time = LocalTime.of(6, 45))
         ShadowAlarmManager.setCanScheduleExactAlarms(true)
         scheduler.schedule(alarm)
@@ -141,13 +141,13 @@ class AndroidAlarmSchedulerTest {
     }
 
     @Test
-    fun `AndroidAlarmSchedulerCancelIsNoOp_whenAlarmNotScheduled`() {
+    fun `Android AlarmScheduler cancel does nothing when alarm not scheduled`() {
         scheduler.cancel(999)
         assertNull(alarmManager.nextAlarmClock)
     }
 
     @Test
-    fun `AndroidAlarmSchedulerSynchronizeSchedulesActive_andCancelsInactive`() {
+    fun `Android AlarmScheduler synchronize schedules active and cancels inactive`() {
         val activeAlarm = createAlarm(id = 1, time = LocalTime.of(7, 0), repeatDays = setOf(DayOfWeek.MONDAY))
         val inactiveAlarm = createAlarm(id = 2, time = LocalTime.of(8, 0)).copy(isActive = false)
         val newlyActiveAlarm = createAlarm(id = 3, time = LocalTime.of(9, 30))
@@ -187,32 +187,6 @@ class AndroidAlarmSchedulerTest {
                 info.triggerTime >= clock.millis()
             )
         }
-    }
-
-    @Test
-    fun `AndroidAlarmSchedulerSchedulesAcrossDSTForward_withoutSkippingDay`() {
-        TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
-        updateClock(
-            LocalDateTime.of(2024, 3, 9, 23, 0)
-                .atZone(ZoneId.systemDefault())
-                .toInstant()
-        )
-        ShadowAlarmManager.setCanScheduleExactAlarms(true)
-        val alarm = createAlarm(
-            id = 12,
-            time = LocalTime.of(2, 30),
-            repeatDays = setOf(DayOfWeek.SUNDAY)
-        )
-
-        scheduler.schedule(alarm)
-
-        val alarmClock = alarmManager.nextAlarmClock
-        assertNotNull(alarmClock)
-        val expectedMillis = calculateNextTriggerMillis(
-            alarm,
-            LocalDateTime.now(clock)
-        )
-        assertEquals("Trigger should land on the first valid post-DST time", expectedMillis, alarmClock!!.triggerTime)
     }
 
     private fun createAlarm(

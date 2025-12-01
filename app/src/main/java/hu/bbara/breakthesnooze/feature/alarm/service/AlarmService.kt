@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
-class AlarmRingtoneService : Service() {
+class AlarmService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var mediaPlayer: MediaPlayer? = null
@@ -299,7 +299,7 @@ class AlarmRingtoneService : Service() {
         Log.d(TAG, "notifyWearDevice invoked for alarmId=$alarmId")
         runCatching {
             WearAlarmMessenger.notifyAlarmStarted(
-                context = this@AlarmRingtoneService,
+                context = this@AlarmService,
                 alarmId = alarmId,
                 label = alarm.label
             )

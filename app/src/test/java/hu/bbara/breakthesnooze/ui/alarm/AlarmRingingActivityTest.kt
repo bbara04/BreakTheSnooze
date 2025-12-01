@@ -15,7 +15,7 @@ import hu.bbara.breakthesnooze.data.settings.model.SettingsState
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
-import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmService
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
@@ -155,7 +155,7 @@ class AlarmRingingActivityTest {
 
         val intent = shadowApp.nextStartedService
         assertThat(intent).isNotNull()
-        assertThat(intent!!.component?.className).isEqualTo(AlarmRingtoneService::class.java.name)
+        assertThat(intent!!.component?.className).isEqualTo(AlarmService::class.java.name)
         assertThat(intent.action).isEqualTo(AlarmIntents.ACTION_STOP_ALARM)
         assertThat(intent.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1)).isEqualTo(TEST_ALARM_ID)
         assertThat(activity.isFinishing).isTrue()

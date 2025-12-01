@@ -95,7 +95,7 @@ class AlarmReceiverTest {
 
         val serviceIntent = shadowApp.nextStartedService
         assertNotNull("Foreground service should be started", serviceIntent)
-        assertEquals(AlarmRingtoneService::class.java.name, serviceIntent!!.component?.className)
+        assertEquals(AlarmService::class.java.name, serviceIntent!!.component?.className)
         assertEquals(AlarmIntents.ACTION_ALARM_FIRED, serviceIntent.action)
 
         val activityIntent = shadowApp.nextStartedActivity

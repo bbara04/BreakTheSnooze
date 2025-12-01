@@ -60,7 +60,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     scheduler.schedule(alarm)
                 }
 
-                val serviceIntent = Intent(context, AlarmRingtoneService::class.java).apply {
+                val serviceIntent = Intent(context, AlarmService::class.java).apply {
                     action = AlarmIntents.ACTION_ALARM_FIRED
                     putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
                 }
@@ -92,7 +92,7 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
         scheduler.cancel(rawId)
-        val serviceIntent = Intent(context, AlarmRingtoneService::class.java).apply {
+        val serviceIntent = Intent(context, AlarmService::class.java).apply {
             action = AlarmIntents.ACTION_ALARM_FIRED
             putExtra(AlarmIntents.EXTRA_ALARM_ID, uniqueAlarmId)
         }

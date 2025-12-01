@@ -55,7 +55,7 @@
             android:exported="false" />
 
         <service
-            android:name=".feature.alarm.service.AlarmRingtoneService"
+            android:name=".feature.alarm.service.AlarmService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 

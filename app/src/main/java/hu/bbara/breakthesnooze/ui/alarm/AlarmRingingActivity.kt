@@ -49,7 +49,7 @@ import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepositoryP
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
-import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmService
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
@@ -237,7 +237,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun sendAlarmCommand(action: String) {
-        val intent = Intent(this, AlarmRingtoneService::class.java).apply {
+        val intent = Intent(this, AlarmService::class.java).apply {
             this.action = action
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
         }

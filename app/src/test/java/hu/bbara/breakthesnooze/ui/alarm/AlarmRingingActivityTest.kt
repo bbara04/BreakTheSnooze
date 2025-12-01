@@ -8,12 +8,19 @@ import android.os.Looper
 import androidx.compose.runtime.MutableState
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import hu.bbara.breakthesnooze.MainDispatcherRule
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepositoryProvider
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
-import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepositoryProvider
+import hu.bbara.breakthesnooze.di.AppModule
+import hu.bbara.breakthesnooze.di.TestAppModuleBindings
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmService
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
@@ -24,8 +31,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Before
@@ -42,11 +47,16 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+@HiltAndroidTest
+@UninstallModules(AppModule::class)
+@Config(application = HiltTestApplication::class, sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 class AlarmRingingActivityTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @get:Rule
+    val hiltRule = HiltAndroidRule(this)
 
     private val application: Application = ApplicationProvider.getApplicationContext()
     private lateinit var shadowApp: ShadowApplication
@@ -59,20 +69,20 @@ class AlarmRingingActivityTest {
         shadowApp = shadowOf(application)
         drainStartedServices()
         alarmRepository = mockk(relaxed = true)
-        settingsRepository = mockk(relaxed = true)
         settingsState = MutableStateFlow(SettingsState(debugModeEnabled = false))
-
-        mockkObject(AlarmRepositoryProvider)
-        mockkObject(SettingsRepositoryProvider)
-        every { AlarmRepositoryProvider.getRepository(any()) } returns alarmRepository
-        every { SettingsRepositoryProvider.getRepository(any()) } returns settingsRepository
+        settingsRepository = mockk(relaxed = true)
         every { settingsRepository.settings } returns settingsState
+        TestAppModuleBindings.alarmRepository = alarmRepository
+        TestAppModuleBindings.settingsRepository = settingsRepository
+        TestAppModuleBindings.durationAlarmRepository = RingingFakeDurationAlarmRepository()
+        TestAppModuleBindings.durationAlarmScheduler = RingingFakeDurationAlarmScheduler()
+        TestAppModuleBindings.alarmScheduler = NoopAlarmScheduler()
+        hiltRule.inject()
     }
 
     @After
     fun tearDown() {
         drainStartedServices()
-        unmockkAll()
     }
 
     @Test
@@ -345,4 +355,31 @@ class AlarmRingingActivityTest {
     companion object {
         private const val TEST_ALARM_ID = 99
     }
+}
+
+private class RingingFakeDurationAlarmRepository : DurationAlarmRepository {
+    override val alarms = MutableStateFlow(emptyList<hu.bbara.breakthesnooze.data.duration.model.DurationAlarm>())
+    override suspend fun create(
+        durationMinutes: Int,
+        label: String,
+        soundUri: String?,
+        dismissTask: AlarmDismissTaskType,
+        qrBarcodeValue: String?,
+        qrRequiredUniqueCount: Int
+    ) = null
+
+    override suspend fun delete(id: Int) = Unit
+    override suspend fun getById(id: Int) = null
+}
+
+private class RingingFakeDurationAlarmScheduler : DurationAlarmScheduler {
+    override fun schedule(alarm: hu.bbara.breakthesnooze.data.duration.model.DurationAlarm) = Unit
+    override fun cancel(alarmId: Int) = Unit
+    override fun synchronize(alarms: List<hu.bbara.breakthesnooze.data.duration.model.DurationAlarm>) = Unit
+}
+
+private class NoopAlarmScheduler : AlarmScheduler {
+    override fun schedule(alarm: AlarmUiModel) = Unit
+    override fun cancel(alarmId: Int) = Unit
+    override fun synchronize(alarms: List<AlarmUiModel>) = Unit
 }

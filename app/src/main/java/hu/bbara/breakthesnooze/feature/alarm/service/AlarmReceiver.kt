@@ -6,13 +6,18 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import androidx.core.content.ContextCompat
+import dagger.hilt.EntryPoint
+import dagger.hilt.EntryPoints
+import dagger.hilt.InstallIn
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.components.SingletonComponent
 import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.detectAlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.rawAlarmIdFromUnique
-import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmSchedulerProvider
-import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepositoryProvider
-import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
+import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 
+@AndroidEntryPoint
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent?) {
@@ -37,15 +43,16 @@ class AlarmReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         scope.launch {
+            val entryPoint = EntryPoints.get(context.applicationContext, AlarmReceiverEntryPoint::class.java)
             try {
                 if (alarmKind == AlarmKind.Duration) {
-                    handleDurationAlarm(context, uniqueAlarmId)
+                    handleDurationAlarm(context, uniqueAlarmId, entryPoint)
                     return@launch
                 }
 
                 val alarmId = uniqueAlarmId
-                val repository = AlarmRepositoryProvider.getRepository(context.applicationContext)
-                val scheduler = AlarmSchedulerProvider.getScheduler(context.applicationContext)
+                val repository = entryPoint.alarmRepository()
+                val scheduler = entryPoint.alarmScheduler()
                 val alarm = repository.getAlarmById(alarmId)
 
                 if (alarm == null) {
@@ -82,10 +89,14 @@ class AlarmReceiver : BroadcastReceiver() {
         }
     }
 
-    private suspend fun handleDurationAlarm(context: Context, uniqueAlarmId: Int) {
+    private suspend fun handleDurationAlarm(
+        context: Context,
+        uniqueAlarmId: Int,
+        entryPoint: AlarmReceiverEntryPoint
+    ) {
         val rawId = rawAlarmIdFromUnique(uniqueAlarmId)
-        val repository = DurationAlarmRepositoryProvider.getRepository(context.applicationContext)
-        val scheduler = DurationAlarmSchedulerProvider.getScheduler(context.applicationContext)
+        val repository = entryPoint.durationAlarmRepository()
+        val scheduler = entryPoint.durationAlarmScheduler()
         val alarm = repository.getById(rawId)
         if (alarm == null) {
             scheduler.cancel(rawId)
@@ -118,6 +129,15 @@ class AlarmReceiver : BroadcastReceiver() {
             }
         }
     }
+}
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface AlarmReceiverEntryPoint {
+    fun alarmRepository(): AlarmRepository
+    fun alarmScheduler(): AlarmScheduler
+    fun durationAlarmRepository(): DurationAlarmRepository
+    fun durationAlarmScheduler(): DurationAlarmScheduler
 }
 
 private fun BroadcastReceiver.PendingResult.ensureFinishedFlagVisible() {

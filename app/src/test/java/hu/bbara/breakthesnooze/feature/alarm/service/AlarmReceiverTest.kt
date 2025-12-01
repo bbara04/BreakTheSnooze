@@ -10,14 +10,21 @@ import android.os.Bundle
 import android.os.Looper
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.HiltTestApplication
+import dagger.hilt.android.testing.UninstallModules
 import hu.bbara.breakthesnooze.MainDispatcherRule
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
-import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepositoryProvider
 import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
-import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmSchedulerProvider
+import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
+import hu.bbara.breakthesnooze.di.AppModule
+import hu.bbara.breakthesnooze.di.TestAppModuleBindings
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
@@ -40,7 +47,9 @@ import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.S])
+@HiltAndroidTest
+@UninstallModules(AppModule::class)
+@Config(application = HiltTestApplication::class, sdk = [Build.VERSION_CODES.S])
 class AlarmReceiverTest {
 
     /*
@@ -55,6 +64,9 @@ class AlarmReceiverTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(UnconfinedTestDispatcher())
 
+    @get:Rule
+    val hiltRule = HiltAndroidRule(this)
+
     private val context: Application = ApplicationProvider.getApplicationContext()
     private lateinit var shadowApp: ShadowApplication
     private lateinit var powerManager: PowerManager
@@ -67,12 +79,21 @@ class AlarmReceiverTest {
         shadowPowerManager = shadowOf(powerManager)
         shadowPowerManager.setIsInteractive(false)
         clearStartedComponents()
-        clearProviders()
+        installDefaultBindings()
+        hiltRule.inject()
     }
 
     @After
     fun tearDown() {
-        clearProviders()
+        clearStartedComponents()
+    }
+
+    private fun installDefaultBindings() {
+        TestAppModuleBindings.alarmRepository = RecordingAlarmRepository(emptyMap())
+        TestAppModuleBindings.alarmScheduler = RecordingAlarmScheduler()
+        TestAppModuleBindings.durationAlarmRepository = ReceiverFakeDurationAlarmRepository()
+        TestAppModuleBindings.durationAlarmScheduler = ReceiverFakeDurationAlarmScheduler()
+        TestAppModuleBindings.settingsRepository = mockk(relaxed = true)
     }
 
     @Test
@@ -80,7 +101,8 @@ class AlarmReceiverTest {
         val alarm = baseAlarm().copy(repeatDays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY))
         val repository = RecordingAlarmRepository(mapOf(alarm.id to alarm))
         val scheduler = RecordingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
         val pendingResult = preparePendingResult(receiver)
 
@@ -108,7 +130,8 @@ class AlarmReceiverTest {
         val alarm = baseAlarm().copy(repeatDays = emptySet())
         val repository = RecordingAlarmRepository(mapOf(alarm.id to alarm))
         val scheduler = RecordingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
         val pendingResult = preparePendingResult(receiver)
 
@@ -126,7 +149,8 @@ class AlarmReceiverTest {
     fun `AlarmReceiver cancels and skips Launch when Alarm missing`() {
         val repository = RecordingAlarmRepository(emptyMap())
         val scheduler = RecordingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
         val pendingResult = preparePendingResult(receiver)
 
@@ -145,7 +169,8 @@ class AlarmReceiverTest {
         val alarm = baseAlarm()
         val repository = RecordingAlarmRepository(mapOf(alarm.id to alarm))
         val scheduler = ThrowingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
         val pendingResult = preparePendingResult(receiver)
 
@@ -163,7 +188,8 @@ class AlarmReceiverTest {
             }
         }
         val scheduler = RecordingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
         val pendingResult = preparePendingResult(receiver)
 
@@ -177,7 +203,8 @@ class AlarmReceiverTest {
     fun `AlarmReceiver returns early when action mismatched`() {
         val repository = RecordingAlarmRepository(emptyMap())
         val scheduler = RecordingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
 
         receiver.onReceive(context, Intent("custom.action").apply {
@@ -192,7 +219,8 @@ class AlarmReceiverTest {
     fun `AlarmReceiver returns early when alarm id missing`() {
         val repository = RecordingAlarmRepository(emptyMap())
         val scheduler = RecordingAlarmScheduler()
-        installProviders(repository, scheduler)
+        TestAppModuleBindings.alarmRepository = repository
+        TestAppModuleBindings.alarmScheduler = scheduler
         val receiver = AlarmReceiver()
 
         receiver.onReceive(context, Intent(AlarmIntents.ACTION_ALARM_FIRED))
@@ -220,22 +248,6 @@ class AlarmReceiverTest {
     private fun clearStartedComponents() {
         while (shadowApp.nextStartedService != null) { /* drain */ }
         while (shadowApp.nextStartedActivity != null) { /* drain */ }
-    }
-
-    private fun installProviders(repository: AlarmRepository, scheduler: AlarmScheduler) {
-        setProviderField(AlarmRepositoryProvider::class.java, "repository", repository)
-        setProviderField(AlarmSchedulerProvider::class.java, "scheduler", scheduler)
-    }
-
-    private fun clearProviders() {
-        setProviderField(AlarmRepositoryProvider::class.java, "repository", null)
-        setProviderField(AlarmSchedulerProvider::class.java, "scheduler", null)
-    }
-
-    private fun setProviderField(owner: Class<*>, fieldName: String, value: Any?) {
-        val field = owner.getDeclaredField(fieldName)
-        field.isAccessible = true
-        field.set(null, value)
     }
 
     private fun preparePendingResult(receiver: AlarmReceiver): BroadcastReceiver.PendingResult {
@@ -368,5 +380,31 @@ class AlarmReceiverTest {
 
         override fun cancel(alarmId: Int) = Unit
         override fun synchronize(alarms: List<AlarmUiModel>) = Unit
+    }
+
+    private class ReceiverFakeDurationAlarmRepository : DurationAlarmRepository {
+        override val alarms: Flow<List<hu.bbara.breakthesnooze.data.duration.model.DurationAlarm>>
+            get() = throw UnsupportedOperationException()
+
+        override suspend fun create(
+            durationMinutes: Int,
+            label: String,
+            soundUri: String?,
+            dismissTask: AlarmDismissTaskType,
+            qrBarcodeValue: String?,
+            qrRequiredUniqueCount: Int
+        ): hu.bbara.breakthesnooze.data.duration.model.DurationAlarm? {
+            return null
+        }
+
+        override suspend fun delete(id: Int) = Unit
+
+        override suspend fun getById(id: Int): hu.bbara.breakthesnooze.data.duration.model.DurationAlarm? = null
+    }
+
+    private class ReceiverFakeDurationAlarmScheduler : DurationAlarmScheduler {
+        override fun schedule(alarm: hu.bbara.breakthesnooze.data.duration.model.DurationAlarm) = Unit
+        override fun cancel(alarmId: Int) = Unit
+        override fun synchronize(alarms: List<hu.bbara.breakthesnooze.data.duration.model.DurationAlarm>) = Unit
     }
 }

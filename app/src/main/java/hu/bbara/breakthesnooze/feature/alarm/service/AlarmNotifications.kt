@@ -59,7 +59,7 @@ object AlarmNotifications {
         val dismissIntent = PendingIntent.getService(
             context,
             alarm.id,
-            Intent(context, AlarmRingtoneService::class.java).apply {
+            Intent(context, AlarmService::class.java).apply {
                 action = AlarmIntents.ACTION_ALARM_DISMISSED
                 putExtra(AlarmIntents.EXTRA_ALARM_ID, alarm.id)
             },

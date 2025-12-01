@@ -13,8 +13,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -99,6 +99,7 @@ class AlarmScreenDraftEditingTest {
                     onDefaultTaskSelected = {},
                     onDefaultRingtoneSelected = {},
                     onDebugModeToggled = {},
+                    onTightGapWarningToggled = {},
                     onEnterSelection = {},
                     onToggleSelection = {},
                     onClearSelection = {},
@@ -112,7 +113,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun saveDisabledUntilTimeSelected_thenEnabledAfterTimeProvided() {
+    fun `save disabled until time selected then enabled after time provided`() {
         composeRule.onNodeWithTag(AlarmCreateTestTags.SAVE_BUTTON).assertIsNotEnabled()
 
         composeRule.runOnIdle {
@@ -125,7 +126,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun labelInputUpdatesDraftState() {
+    fun `label input updates draft state`() {
         composeRule.onNodeWithTag(AlarmCreateTestTags.LABEL_FIELD, useUnmergedTree = true)
             .performTextInput("Morning Run")
 
@@ -135,7 +136,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun cancelInvokesCallback() {
+    fun `cancel invokes callback`() {
         composeRule.onNodeWithTag(AlarmCreateTestTags.BACK_BUTTON).performClick()
         composeRule.runOnIdle {
             assertThat(cancelInvocations).isEqualTo(1)
@@ -143,7 +144,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun saveInvokesCallbackWhenTimeSelected() {
+    fun `save invokes callback when time selected`() {
         composeRule.runOnIdle {
             uiStateHolder.value = uiStateHolder.value.copy(
                 draft = uiStateHolder.value.draft.copy(time = LocalTime.of(7, 45))

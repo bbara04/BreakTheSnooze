@@ -6,8 +6,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.theme.BreakTheSnoozeTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -24,10 +24,12 @@ class AlarmListScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun alarmListShowsEmptyStateWhenNoAlarms() {
+    fun `alarm list shows empty state when no alarms`() {
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
+                    durationAlarms = emptyList(),
+                    onCancelDurationAlarm = {},
                     alarms = emptyList(),
                     onToggle = { _, _ -> },
                     onEdit = {},
@@ -37,7 +39,8 @@ class AlarmListScreenTest {
                     onClearSelection = {},
                     onDeleteSelection = {},
                     onCreate = {},
-                    onOpenSettings = {}
+                    onOpenSettings = {},
+                    tightGapWarningEnabled = false
                 )
             }
         }
@@ -47,10 +50,12 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun selectionTopBarAppearsWhenSelectionActive() {
+    fun `selection top bar appears when selection active`() {
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
+                    durationAlarms = emptyList(),
+                    onCancelDurationAlarm = {},
                     alarms = listOf(sampleAlarm(id = 1)),
                     onToggle = { _, _ -> },
                     onEdit = {},
@@ -60,7 +65,8 @@ class AlarmListScreenTest {
                     onClearSelection = {},
                     onDeleteSelection = {},
                     onCreate = {},
-                    onOpenSettings = {}
+                    onOpenSettings = {},
+                    tightGapWarningEnabled = false
                 )
             }
         }
@@ -69,12 +75,14 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun togglingSwitchInvokesCallback() {
+    fun `toggling switch invokes callback`() {
         val toggleResult = AtomicReference<Pair<Int, Boolean>?>(null)
 
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
+                    durationAlarms = emptyList(),
+                    onCancelDurationAlarm = {},
                     alarms = listOf(sampleAlarm(id = 7, isActive = true)),
                     onToggle = { id, isActive -> toggleResult.set(id to isActive) },
                     onEdit = {},
@@ -84,7 +92,8 @@ class AlarmListScreenTest {
                     onClearSelection = {},
                     onDeleteSelection = {},
                     onCreate = {},
-                    onOpenSettings = {}
+                    onOpenSettings = {},
+                    tightGapWarningEnabled = false
                 )
             }
         }

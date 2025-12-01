@@ -56,6 +56,7 @@ internal fun SettingsRoute(
     onDebugModeToggled: (Boolean) -> Unit,
     onTightGapWarningToggled: (Boolean) -> Unit,
     onBack: () -> Unit,
+    onLaunchRingtonePicker: ((Intent) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBack)
@@ -64,19 +65,16 @@ internal fun SettingsRoute(
     val ringtoneLabel = resolveRingtoneTitle(context, settings.defaultRingtoneUri)
         ?: stringResource(id = R.string.settings_default_ringtone_fallback)
 
+    val handleRingtoneResult: (Int, Intent?) -> Unit = { resultCode, data ->
+        handleRingtonePickerResult(resultCode, data, onDefaultRingtoneSelected)
+    }
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data = result.data
-            val pickedUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            }
-            onDefaultRingtoneSelected(pickedUri?.toString())
-        }
+        handleRingtoneResult(result.resultCode, result.data)
+    }
+    val launchRingtonePicker = onLaunchRingtonePicker ?: { intent: Intent ->
+        ringtonePickerLauncher.launch(intent)
     }
 
     Scaffold(
@@ -183,11 +181,13 @@ internal fun SettingsRoute(
                             val existing = settings.defaultRingtoneUri?.let { Uri.parse(it) }
                             putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, existing)
                         }
-                        ringtonePickerLauncher.launch(intent)
+                        launchRingtonePicker(intent)
                     },
                     shape = MaterialTheme.shapes.large,
                     tonalElevation = 4.dp,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(SettingsTestTags.RINGTONE_ROW)
                 ) {
                     Column(
                         modifier = Modifier
@@ -207,7 +207,10 @@ internal fun SettingsRoute(
                     }
                 }
                 if (settings.defaultRingtoneUri != null) {
-                    TextButton(onClick = { onDefaultRingtoneSelected(null) }) {
+                    TextButton(
+                        onClick = { onDefaultRingtoneSelected(null) },
+                        modifier = Modifier.testTag(SettingsTestTags.RINGTONE_CLEAR)
+                    ) {
                         Text(text = stringResource(id = R.string.settings_default_ringtone_clear))
                     }
                 }
@@ -369,7 +372,24 @@ private fun resolveRingtoneTitle(context: android.content.Context, ringtoneUri: 
     }.getOrNull()
 }
 
+internal fun handleRingtonePickerResult(
+    resultCode: Int,
+    data: Intent?,
+    onDefaultRingtoneSelected: (String?) -> Unit
+) {
+    if (resultCode != Activity.RESULT_OK) return
+    val pickedUri = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+        data?.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI, Uri::class.java)
+    } else {
+        @Suppress("DEPRECATION")
+        data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+    }
+    onDefaultRingtoneSelected(pickedUri?.toString())
+}
+
 @VisibleForTesting
 internal object SettingsTestTags {
     const val DEBUG_SWITCH = "settings_debug_switch"
+    const val RINGTONE_ROW = "settings_ringtone_row"
+    const val RINGTONE_CLEAR = "settings_ringtone_clear"
 }

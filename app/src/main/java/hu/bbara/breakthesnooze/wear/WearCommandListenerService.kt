@@ -6,7 +6,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
-import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmService
 
 class WearCommandListenerService : WearableListenerService() {
 
@@ -26,7 +26,7 @@ class WearCommandListenerService : WearableListenerService() {
     private fun handleStopCommand(messageEvent: MessageEvent) {
         val alarmId = messageEvent.data?.decodeToString()?.toIntOrNull() ?: -1
         Log.i(TAG, "Received stop command from wear for alarmId=$alarmId")
-        val stopIntent = Intent(applicationContext, AlarmRingtoneService::class.java).apply {
+        val stopIntent = Intent(applicationContext, AlarmService::class.java).apply {
             action = AlarmIntents.ACTION_STOP_ALARM
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
         }
@@ -36,7 +36,7 @@ class WearCommandListenerService : WearableListenerService() {
     private fun handleAck(messageEvent: MessageEvent) {
         val alarmId = messageEvent.data?.decodeToString()?.toIntOrNull() ?: -1
         Log.i(TAG, "Received watch acknowledgement for alarmId=$alarmId")
-        val ackIntent = Intent(applicationContext, AlarmRingtoneService::class.java).apply {
+        val ackIntent = Intent(applicationContext, AlarmService::class.java).apply {
             action = AlarmIntents.ACTION_WEAR_ACK
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
         }

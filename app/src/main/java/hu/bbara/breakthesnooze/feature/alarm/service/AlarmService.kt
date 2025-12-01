@@ -31,7 +31,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AlarmRingtoneService : Service() {
+class AlarmService : Service() {
 
     @Inject lateinit var alarmRepository: AlarmRepository
     @Inject lateinit var durationAlarmRepository: DurationAlarmRepository
@@ -305,7 +305,7 @@ class AlarmRingtoneService : Service() {
         Log.d(TAG, "notifyWearDevice invoked for alarmId=$alarmId")
         runCatching {
             WearAlarmMessenger.notifyAlarmStarted(
-                context = this@AlarmRingtoneService,
+                context = this@AlarmService,
                 alarmId = alarmId,
                 label = alarm.label
             )

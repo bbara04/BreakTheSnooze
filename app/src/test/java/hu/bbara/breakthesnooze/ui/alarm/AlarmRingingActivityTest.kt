@@ -15,7 +15,7 @@ import hu.bbara.breakthesnooze.data.settings.model.SettingsState
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepositoryProvider
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
-import hu.bbara.breakthesnooze.feature.alarm.service.AlarmRingtoneService
+import hu.bbara.breakthesnooze.feature.alarm.service.AlarmService
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
@@ -76,7 +76,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun buildsPrimaryAndBackupDismissTasks_inConfiguredOrder() {
+    fun `builds primary and backup dismiss tasks in configured order`() {
         val alarm = baseAlarm(dismissTask = AlarmDismissTaskType.MATH_CHALLENGE)
         val activity = launchActivity(alarm)
 
@@ -87,7 +87,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun buildsSingleTask_whenPrimaryAlreadyFocusTimer() {
+    fun `builds single task when primary is focus timer`() {
         val alarm = baseAlarm(dismissTask = AlarmDismissTaskType.FOCUS_TIMER)
         val activity = launchActivity(alarm)
 
@@ -97,7 +97,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun clearsAvailableTasks_whenAlarmMissing() {
+    fun `clears available tasks when alarm missing`() {
         coEvery { alarmRepository.getAlarmById(TEST_ALARM_ID) } returns null
         val controller = buildActivity(
             AlarmRingingActivity::class.java,
@@ -112,7 +112,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun activeTaskCleared_whenTaskListNoLongerContainsSelection() {
+    fun `active task cleared when task list no longer contains selection`() {
         val initialAlarm = baseAlarm(dismissTask = AlarmDismissTaskType.MATH_CHALLENGE)
         val activity = launchActivity(initialAlarm)
         val mathTask = activity.tasksState().value.first()
@@ -131,7 +131,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun debugControlsReflectSettingsFlowChanges() {
+    fun `debug controls reflect settings flow changes`() {
         val alarm = baseAlarm()
         val activity = launchActivity(alarm)
         assertThat(activity.debugFlagState().value).isFalse()
@@ -146,7 +146,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun debugCancelStopsAlarmViaBackPress() {
+    fun `debug cancel stops alarm via back press`() {
         val alarm = baseAlarm()
         val controller = launchController(alarm)
         val activity = controller.get()
@@ -155,14 +155,14 @@ class AlarmRingingActivityTest {
 
         val intent = shadowApp.nextStartedService
         assertThat(intent).isNotNull()
-        assertThat(intent!!.component?.className).isEqualTo(AlarmRingtoneService::class.java.name)
+        assertThat(intent!!.component?.className).isEqualTo(AlarmService::class.java.name)
         assertThat(intent.action).isEqualTo(AlarmIntents.ACTION_STOP_ALARM)
         assertThat(intent.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1)).isEqualTo(TEST_ALARM_ID)
         assertThat(activity.isFinishing).isTrue()
     }
 
     @Test
-    fun onTaskCompleted_recordsWakeEventOnceAndStopsAlarm() {
+    fun `on task completed records wake event once and stops alarm`() {
         val alarm = baseAlarm(dismissTask = AlarmDismissTaskType.MATH_CHALLENGE)
         val activity = launchActivity(alarm)
         val focusTask = activity.tasksState().value.last()
@@ -189,7 +189,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun onTaskCompleted_isIdempotentAcrossMultipleInvocations() {
+    fun `on task completed is idempotent across multiple invocations`() {
         val alarm = baseAlarm()
         val activity = launchActivity(alarm)
         coEvery { alarmRepository.addWakeEvent(any(), any(), any(), any()) } returns Unit
@@ -205,7 +205,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun startTaskPausesAlarmAndStoresContext() {
+    fun `start task pauses alarm and stores context`() {
         val alarm = baseAlarm()
         val activity = launchActivity(alarm)
         val task = activity.tasksState().value.first()
@@ -219,7 +219,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun cancelActiveTaskResumesAlarmAndClearsState() {
+    fun `cancel active task resumes alarm and clears state`() {
         val alarm = baseAlarm()
         val activity = launchActivity(alarm)
         val task = activity.tasksState().value.first()
@@ -235,7 +235,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun onDestroyResumesAlarmWhenTaskIncomplete() {
+    fun `on destroy resumes alarm when task incomplete`() {
         val alarm = baseAlarm()
         val controller = launchController(alarm)
         val activity = controller.get()
@@ -250,7 +250,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun dismissReceiverFinishesActivityWhenAlarmDismissed() {
+    fun `dismiss receiver finishes activity when alarm dismissed`() {
         val alarm = baseAlarm()
         val controller = launchController(alarm)
         val activity = controller.get()
@@ -264,7 +264,7 @@ class AlarmRingingActivityTest {
     }
 
     @Test
-    fun activityFinishesImmediately_whenAlarmIdMissing() {
+    fun `activity finishes immediately when alarm id missing`() {
         val controller = buildActivity(
             AlarmRingingActivity::class.java,
             Intent(application, AlarmRingingActivity::class.java)

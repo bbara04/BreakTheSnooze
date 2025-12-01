@@ -26,15 +26,15 @@ class AlarmRingtoneServiceTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun pauseCancelsWearFallbackWhenNoPlaybackStarted() {
+    fun `pause cancels wear fallback when no playback started`() {
         val context: Context = ApplicationProvider.getApplicationContext()
-        val controller = Robolectric.buildService(AlarmRingtoneService::class.java).create()
+        val controller = Robolectric.buildService(AlarmService::class.java).create()
         val service = controller.get()
 
         setField(service, "currentAlarmId", 42)
         setField(service, "currentAlarm", baseAlarm(id = 42))
 
-        val ackIntent = Intent(context, AlarmRingtoneService::class.java).apply {
+        val ackIntent = Intent(context, AlarmService::class.java).apply {
             action = AlarmIntents.ACTION_WEAR_ACK
             putExtra(AlarmIntents.EXTRA_ALARM_ID, 42)
         }
@@ -44,7 +44,7 @@ class AlarmRingtoneServiceTest {
         assertThat(scheduledJob).isNotNull()
         assertThat(scheduledJob!!.isActive).isTrue()
 
-        val pauseIntent = Intent(context, AlarmRingtoneService::class.java).apply {
+        val pauseIntent = Intent(context, AlarmService::class.java).apply {
             action = AlarmIntents.ACTION_PAUSE_ALARM
             putExtra(AlarmIntents.EXTRA_ALARM_ID, 42)
         }
@@ -68,15 +68,15 @@ class AlarmRingtoneServiceTest {
         qrRequiredUniqueCount = 0
     )
 
-    private fun <T> getField(service: AlarmRingtoneService, name: String): T {
-        val field = AlarmRingtoneService::class.java.getDeclaredField(name)
+    private fun <T> getField(service: AlarmService, name: String): T {
+        val field = AlarmService::class.java.getDeclaredField(name)
         field.isAccessible = true
         @Suppress("UNCHECKED_CAST")
         return field.get(service) as T
     }
 
-    private fun setField(service: AlarmRingtoneService, name: String, value: Any?) {
-        val field = AlarmRingtoneService::class.java.getDeclaredField(name)
+    private fun setField(service: AlarmService, name: String, value: Any?) {
+        val field = AlarmService::class.java.getDeclaredField(name)
         field.isAccessible = true
         field.set(service, value)
     }

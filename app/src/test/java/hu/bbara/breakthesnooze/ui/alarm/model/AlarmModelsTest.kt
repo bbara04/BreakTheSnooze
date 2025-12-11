@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.model
 
 import hu.bbara.breakthesnooze.data.alarm.repository.toUiModelWithId
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType

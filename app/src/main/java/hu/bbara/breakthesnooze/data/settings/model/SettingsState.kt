@@ -8,5 +8,5 @@ data class SettingsState(
     val defaultRingtoneUri: String? = null,
     val debugModeEnabled: Boolean = false,
     val defaultCountdownDurationMinutes: Int = DEFAULT_COUNTDOWN_DURATION_MINUTES,
-    val tightGapWarningEnabled: Boolean = true
+    val tightGapWarningEnabled: Boolean = false
 )

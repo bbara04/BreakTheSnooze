@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.duration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +8,10 @@ import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.CreateDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteDurationAlarmUseCase
+import hu.bbara.breakthesnooze.ui.alarm.model.DEFAULT_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.MAX_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.MIN_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.QrScanMode
 import hu.bbara.breakthesnooze.util.logDuration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

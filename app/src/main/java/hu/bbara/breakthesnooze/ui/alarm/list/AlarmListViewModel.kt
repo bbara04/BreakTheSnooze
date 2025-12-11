@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +9,9 @@ import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.SynchronizeAlarmsUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.ToggleAlarmActiveUseCase
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmHomeTab
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.BreakdownPeriod
 import hu.bbara.breakthesnooze.util.logDuration
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

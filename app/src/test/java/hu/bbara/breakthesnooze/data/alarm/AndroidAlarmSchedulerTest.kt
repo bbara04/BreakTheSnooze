@@ -10,8 +10,8 @@ import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTriggerMillis
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

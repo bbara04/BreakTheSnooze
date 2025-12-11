@@ -36,7 +36,7 @@ class SettingsScreenTest {
     private var defaultRingtoneSelectedInvocations: Int = 0
 
     @Test
-    fun `selecting different default task updates state`() {
+    fun selectingDifferentDefaultTaskUpdatesState() {
         setContent()
 
         val label = composeRule.activity.getString(AlarmDismissTaskType.OBJECT_DETECTION.optionLabelResId)
@@ -49,7 +49,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `ringtone picker result persists selection`() {
+    fun ringtonePickerResultPersistsSelection() {
         setContent()
 
         composeRule.onNodeWithTag(SettingsTestTags.RINGTONE_ROW, useUnmergedTree = true).performClick()
@@ -70,7 +70,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `clear button resets ringtone to default`() {
+    fun clearButtonResetsRingtoneToDefault() {
         setContent(
             SettingsState(
                 defaultDismissTask = AlarmDismissTaskType.MATH_CHALLENGE,
@@ -89,7 +89,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `toggling debug switch invokes callback`() {
+    fun togglingDebugSwitchInvokesCallback() {
         setContent()
 
         composeRule.onNodeWithTag(SettingsTestTags.DEBUG_SWITCH, useUnmergedTree = true)

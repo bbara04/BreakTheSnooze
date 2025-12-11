@@ -8,6 +8,8 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.list.AlarmListRoute
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -24,7 +26,7 @@ class AlarmListScreenTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `alarm list shows empty state when no alarms`() {
+    fun alarmListShowsEmptyStateWhenNoAlarms() {
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
@@ -50,7 +52,7 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun `selection top bar appears when selection active`() {
+    fun selectionTopBarAppearsWhenSelectionActive() {
         composeTestRule.setContent {
             BreakTheSnoozeTheme {
                 AlarmListRoute(
@@ -75,7 +77,7 @@ class AlarmListScreenTest {
     }
 
     @Test
-    fun `toggling switch invokes callback`() {
+    fun togglingSwitchInvokesCallback() {
         val toggleResult = AtomicReference<Pair<Int, Boolean>?>(null)
 
         composeTestRule.setContent {

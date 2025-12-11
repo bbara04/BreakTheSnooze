@@ -17,7 +17,8 @@ import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.duration.model.DurationAlarmPlaybackStore
 import hu.bbara.breakthesnooze.data.duration.model.toAlarmUiModel
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import hu.bbara.breakthesnooze.wear.WearAlarmMessenger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +41,7 @@ class AlarmService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmId: Int? = null
     private var currentAlarm: AlarmUiModel? = null
-    private var playbackJob: kotlinx.coroutines.Job? = null
+    private var playbackJob: Job? = null
     private var isPaused: Boolean = false
     private var wearNotificationSentForId: Int? = null
     private var wearFallbackJob: Job? = null
@@ -199,7 +200,7 @@ class AlarmService : Service() {
             Log.d(TAG, "Skipping AlarmRingingActivity launch; screen is interactive")
             return
         }
-        val intent = hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity.createIntent(
+        val intent = AlarmRingingActivity.createIntent(
             applicationContext,
             alarmId
         )

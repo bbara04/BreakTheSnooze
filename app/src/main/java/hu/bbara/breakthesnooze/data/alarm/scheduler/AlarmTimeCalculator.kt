@@ -1,6 +1,6 @@
 package hu.bbara.breakthesnooze.data.alarm.scheduler
 
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import java.time.LocalDateTime
 import java.time.ZoneId
 

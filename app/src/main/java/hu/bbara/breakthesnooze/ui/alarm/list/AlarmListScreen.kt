@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.list
 
 import android.text.format.DateFormat
 import android.util.Log
@@ -51,6 +51,14 @@ import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTrigger
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.UpcomingAlarm
+import hu.bbara.breakthesnooze.ui.alarm.model.formatDays
+import hu.bbara.breakthesnooze.ui.alarm.model.formatForDisplay
+import hu.bbara.breakthesnooze.ui.alarm.model.formatRemaining
+import hu.bbara.breakthesnooze.ui.alarm.model.resolveNextAlarm
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleAlarms
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
@@ -198,6 +206,13 @@ internal fun AlarmListRoute(
                         isSelected = selectedIds.contains(alarm.id),
                         modifier = Modifier.animateItem()
                     )
+                }
+            }
+
+            // Dummy spacer for the animation
+            if (!(listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0)) {
+                item {
+                    Spacer(modifier = Modifier.height(100.dp))
                 }
             }
         }
@@ -368,13 +383,13 @@ private fun DurationAlarmRowPreview() {
 
 @Composable
 private fun UpcomingAlarmCard(
-    upcomingAlarm: UpcomingAlarm?,
-    is24Hour: Boolean,
-    alarms: List<AlarmUiModel>,
-    durationAlarms: List<DurationAlarmUiModel>,
-    onDisableAlarm: (Int) -> Unit,
-    onCancelDurationAlarm: (Int) -> Unit,
-    tightGapWarningEnabled: Boolean
+	upcomingAlarm: UpcomingAlarm?,
+	is24Hour: Boolean,
+	alarms: List<AlarmUiModel>,
+	durationAlarms: List<DurationAlarmUiModel>,
+	onDisableAlarm: (Int) -> Unit,
+	onCancelDurationAlarm: (Int) -> Unit,
+	tightGapWarningEnabled: Boolean
 ) {
     val tightNextDayAlarms = if (tightGapWarningEnabled) {
         findTightNextDayAlarms(alarms, durationAlarms)

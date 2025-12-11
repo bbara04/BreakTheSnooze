@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.camera
 
 import android.Manifest
 import android.content.pm.PackageManager

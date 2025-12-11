@@ -1,7 +1,10 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.model
 
 import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.duration.sampleDurationDraft
 
 data class AlarmUiState(
     val alarms: List<AlarmUiModel> = emptyList(),

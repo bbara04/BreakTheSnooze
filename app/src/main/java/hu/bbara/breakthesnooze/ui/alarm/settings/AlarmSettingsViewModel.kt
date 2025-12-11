@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

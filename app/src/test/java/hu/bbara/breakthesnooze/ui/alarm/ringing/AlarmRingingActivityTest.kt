@@ -1,5 +1,5 @@
 // How to run: ./gradlew :app:testDebugUnitTest
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.ringing
 
 import android.app.Application
 import android.content.Intent
@@ -23,10 +23,12 @@ import hu.bbara.breakthesnooze.di.AppModule
 import hu.bbara.breakthesnooze.di.TestAppModuleBindings
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmService
+import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.MathChallengeDismissTask
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

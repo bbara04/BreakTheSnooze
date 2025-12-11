@@ -46,7 +46,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
-import hu.bbara.breakthesnooze.ui.alarm.rememberCameraPermissionState
+import hu.bbara.breakthesnooze.ui.alarm.camera.rememberCameraPermissionState
 import java.util.concurrent.Executors
 import androidx.camera.core.Preview as CameraPreview
 

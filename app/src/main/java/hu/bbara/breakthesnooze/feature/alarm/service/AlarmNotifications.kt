@@ -11,7 +11,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 
 object AlarmNotifications {
     private const val CHANNEL_ID = "alarm_channel"

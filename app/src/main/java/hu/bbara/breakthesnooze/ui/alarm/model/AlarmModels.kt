@@ -1,7 +1,9 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.model
 
 import hu.bbara.breakthesnooze.data.alarm.scheduler.calculateNextTrigger
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.duration.toAlarmUiModel
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.LocalDateTime

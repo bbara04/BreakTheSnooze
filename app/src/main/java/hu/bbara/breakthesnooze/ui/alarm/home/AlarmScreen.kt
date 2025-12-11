@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.home
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -37,7 +37,26 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
+import hu.bbara.breakthesnooze.ui.alarm.breakdown.AlarmBreakdownRoute
+import hu.bbara.breakthesnooze.ui.alarm.create.AlarmCreateRoute
+import hu.bbara.breakthesnooze.ui.alarm.create.AlarmEditorViewModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmRoute
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmViewModel
+import hu.bbara.breakthesnooze.ui.alarm.duration.sampleDurationDraft
+import hu.bbara.breakthesnooze.ui.alarm.list.AlarmListRoute
+import hu.bbara.breakthesnooze.ui.alarm.list.AlarmListViewModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmDestination
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmHomeTab
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiState
+import hu.bbara.breakthesnooze.ui.alarm.model.BreakdownPeriod
+import hu.bbara.breakthesnooze.ui.alarm.model.QrScanMode
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleAlarms
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleDraft
+import hu.bbara.breakthesnooze.ui.alarm.settings.AlarmSettingsViewModel
 import hu.bbara.breakthesnooze.ui.settings.SettingsRoute
 import java.time.DayOfWeek
 import java.time.LocalTime

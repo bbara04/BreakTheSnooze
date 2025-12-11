@@ -6,12 +6,12 @@ import hu.bbara.breakthesnooze.data.alarm.db.AlarmEntity
 import hu.bbara.breakthesnooze.data.alarm.db.WakeEventDao
 import hu.bbara.breakthesnooze.data.alarm.db.WakeEventEntity
 import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
-import hu.bbara.breakthesnooze.ui.alarm.AlarmCreationState
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
-import hu.bbara.breakthesnooze.ui.alarm.dayOrder
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
-import hu.bbara.breakthesnooze.ui.alarm.sampleAlarms
-import hu.bbara.breakthesnooze.ui.alarm.timeFormatter
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.dayOrder
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleAlarms
+import hu.bbara.breakthesnooze.ui.alarm.model.timeFormatter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

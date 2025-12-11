@@ -120,7 +120,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun `save disabled until time selected then enabled after time provided`() {
+    fun saveDisabledUntilTimeProvided() {
         composeRule.onNodeWithTag(AlarmCreateTestTags.SAVE_BUTTON).assertIsNotEnabled()
 
         composeRule.runOnIdle {
@@ -133,7 +133,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun `label input updates draft state`() {
+    fun labelInputUpdatesDraftState() {
         composeRule.onNodeWithTag(AlarmCreateTestTags.LABEL_FIELD, useUnmergedTree = true)
             .performTextInput("Morning Run")
 
@@ -143,7 +143,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun `cancel invokes callback`() {
+    fun cancelInvokesCallback() {
         composeRule.onNodeWithTag(AlarmCreateTestTags.BACK_BUTTON).performClick()
         composeRule.runOnIdle {
             assertThat(cancelInvocations).isEqualTo(1)
@@ -151,7 +151,7 @@ class AlarmScreenDraftEditingTest {
     }
 
     @Test
-    fun `save invokes callback when time selected`() {
+    fun saveInvokesCallbackWhenTimeSelected() {
         composeRule.runOnIdle {
             uiStateHolder.value = uiStateHolder.value.copy(
                 draft = uiStateHolder.value.draft.copy(time = LocalTime.of(7, 45))

@@ -39,9 +39,6 @@ android {
     buildFeatures {
         compose = true
     }
-    adbOptions {
-        installOptions("-d")
-    }
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
@@ -93,7 +90,6 @@ dependencies {
     kapt(libs.dagger.hilt.compiler)
     kaptTest(libs.dagger.hilt.compiler)
     kaptAndroidTest(libs.dagger.hilt.compiler)
-    wearApp(project(":wear"))
 }
 
 kapt {

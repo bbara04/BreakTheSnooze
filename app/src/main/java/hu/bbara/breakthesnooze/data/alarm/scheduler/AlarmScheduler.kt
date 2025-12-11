@@ -1,6 +1,6 @@
 package hu.bbara.breakthesnooze.data.alarm.scheduler
 
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 
 interface AlarmScheduler {
     fun schedule(alarm: AlarmUiModel)

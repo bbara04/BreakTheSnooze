@@ -22,8 +22,8 @@ import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.di.AppModule
 import hu.bbara.breakthesnooze.di.TestAppModuleBindings
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

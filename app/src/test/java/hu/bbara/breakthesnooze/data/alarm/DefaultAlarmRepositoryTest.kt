@@ -5,8 +5,8 @@ import hu.bbara.breakthesnooze.data.alarm.db.AlarmEntity
 import hu.bbara.breakthesnooze.data.alarm.db.WakeEventDao
 import hu.bbara.breakthesnooze.data.alarm.db.WakeEventEntity
 import hu.bbara.breakthesnooze.data.alarm.repository.DefaultAlarmRepository
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

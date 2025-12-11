@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmIntents
 import hu.bbara.breakthesnooze.feature.alarm.service.AlarmReceiver
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import java.time.Clock
 import java.time.LocalDateTime
 

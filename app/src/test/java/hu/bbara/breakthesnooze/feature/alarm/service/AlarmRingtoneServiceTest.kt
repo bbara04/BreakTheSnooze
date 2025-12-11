@@ -6,8 +6,8 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import hu.bbara.breakthesnooze.MainDispatcherRule
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import kotlinx.coroutines.Job
 import org.junit.Rule
 import org.junit.Test

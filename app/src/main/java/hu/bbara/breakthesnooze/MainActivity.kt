@@ -26,7 +26,7 @@ import androidx.core.content.getSystemService
 import androidx.core.view.WindowCompat
 import dagger.hilt.android.AndroidEntryPoint
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
-import hu.bbara.breakthesnooze.ui.alarm.AlarmScreen
+import hu.bbara.breakthesnooze.ui.alarm.home.AlarmScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {

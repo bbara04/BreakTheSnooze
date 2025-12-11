@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.breakdown
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.BorderStroke
@@ -53,6 +53,10 @@ import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.data.alarm.model.WakeEvent
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.BreakdownPeriod
+import hu.bbara.breakthesnooze.ui.alarm.model.dayOrder
+import hu.bbara.breakthesnooze.ui.alarm.model.displayName
+import hu.bbara.breakthesnooze.ui.alarm.model.formatForDisplay
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate

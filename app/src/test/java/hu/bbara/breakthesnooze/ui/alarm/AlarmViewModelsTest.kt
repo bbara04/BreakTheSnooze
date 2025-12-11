@@ -11,10 +11,16 @@ import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
 import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
+import hu.bbara.breakthesnooze.ui.alarm.create.AlarmEditorViewModel
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.CreateDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.DeleteDurationAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.SaveAlarmUseCase
+import hu.bbara.breakthesnooze.ui.alarm.duration.DurationAlarmViewModel
+import hu.bbara.breakthesnooze.ui.alarm.list.AlarmListViewModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmDestination
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.settings.AlarmSettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob

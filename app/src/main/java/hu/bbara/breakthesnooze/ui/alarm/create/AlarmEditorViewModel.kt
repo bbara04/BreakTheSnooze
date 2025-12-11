@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +9,15 @@ import hu.bbara.breakthesnooze.data.settings.repository.SettingsRepository
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.domain.SaveAlarmUseCase
 import hu.bbara.breakthesnooze.ui.alarm.domain.withToggledDay
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmDestination
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.DEFAULT_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.MAX_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.MIN_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.QrScanMode
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleDraft
+import hu.bbara.breakthesnooze.ui.alarm.model.toCreationState
 import hu.bbara.breakthesnooze.util.logDuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow

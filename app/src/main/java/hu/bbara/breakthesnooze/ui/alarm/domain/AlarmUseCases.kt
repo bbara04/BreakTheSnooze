@@ -6,8 +6,8 @@ import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
 import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
 import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
-import hu.bbara.breakthesnooze.ui.alarm.AlarmCreationState
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import java.time.DayOfWeek
 
 class ToggleAlarmActiveUseCase(

@@ -1,6 +1,6 @@
 package hu.bbara.breakthesnooze.data.duration.model
 
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import java.util.concurrent.ConcurrentHashMap
 
 object DurationAlarmPlaybackStore {

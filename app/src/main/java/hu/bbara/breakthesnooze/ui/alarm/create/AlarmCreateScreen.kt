@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.create
 
 import android.app.Activity
 import android.content.Intent
@@ -70,9 +70,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
+import hu.bbara.breakthesnooze.ui.alarm.camera.rememberCameraPermissionState
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.BarcodeScannerContent
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.PermissionDeniedContent
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmCreationState
+import hu.bbara.breakthesnooze.ui.alarm.model.DEFAULT_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.MAX_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.MIN_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.QrScanMode
+import hu.bbara.breakthesnooze.ui.alarm.model.dayOrder
+import hu.bbara.breakthesnooze.ui.alarm.model.displayName
+import hu.bbara.breakthesnooze.ui.alarm.model.formatDays
+import hu.bbara.breakthesnooze.ui.alarm.model.formatForDisplay
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleDraft
 import java.time.DayOfWeek
 import java.time.LocalTime
 

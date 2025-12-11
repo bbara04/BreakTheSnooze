@@ -1,10 +1,11 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.duration
 
 import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.uniqueAlarmId
 import hu.bbara.breakthesnooze.data.duration.model.DurationAlarm
 import hu.bbara.breakthesnooze.data.settings.repository.DEFAULT_COUNTDOWN_DURATION_MINUTES
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId

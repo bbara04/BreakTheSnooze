@@ -7,6 +7,7 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.text.format.DateFormat
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
@@ -56,6 +57,9 @@ import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.FocusTimerDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.MathChallengeDismissTask
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.createTask
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.formatForDisplay
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleAlarms
 import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
@@ -252,11 +256,11 @@ class AlarmRingingActivity : ComponentActivity() {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
         } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-            )
+
+	        window.addFlags(
+		        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+				        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+	        )
         }
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -273,21 +277,22 @@ class AlarmRingingActivity : ComponentActivity() {
         }
     }
 
-    private fun wakeScreen() {
-        val powerManager = ContextCompat.getSystemService(this, PowerManager::class.java) ?: return
-        @Suppress("DEPRECATION")
-        val wakeLock = powerManager.newWakeLock(
-            PowerManager.FULL_WAKE_LOCK or
-                PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                PowerManager.ON_AFTER_RELEASE,
-            "$packageName:AlarmWakeLock"
-        )
-        runCatching { wakeLock.acquire(5_000) }
-            .onFailure { wakeLock.releaseIfHeld() }
-        if (wakeLock.isHeld) {
-            window.decorView.postDelayed({ wakeLock.releaseIfHeld() }, 2_000)
-        }
-    }
+	private fun wakeScreen() {
+		val powerManager = ContextCompat.getSystemService(this, PowerManager::class.java) ?: return
+
+		@Suppress("DEPRECATION")
+		val wakeLock = powerManager.newWakeLock(
+			PowerManager.FULL_WAKE_LOCK or
+					PowerManager.ACQUIRE_CAUSES_WAKEUP or
+					PowerManager.ON_AFTER_RELEASE,
+			"$packageName:AlarmWakeLock"
+		)
+		runCatching { wakeLock.acquire(5_000) }
+			.onFailure { wakeLock.releaseIfHeld() }
+		if (wakeLock.isHeld) {
+			window.decorView.postDelayed({ wakeLock.releaseIfHeld() }, 2_000)
+		}
+	}
 
     private fun registerDismissReceiver() {
         val receiver = object : BroadcastReceiver() {
@@ -342,8 +347,8 @@ private fun AlarmRingingScreen(
     if (activeTask != null) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+	            .fillMaxSize()
+	            .background(MaterialTheme.colorScheme.background)
         ) {
             activeTask.Content(
                 modifier = Modifier.fillMaxSize(),
@@ -353,8 +358,8 @@ private fun AlarmRingingScreen(
             if (showDebugCancel) {
                 DebugCancelButton(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp),
+	                    .align(Alignment.TopEnd)
+	                    .padding(16.dp),
                     onClick = onDebugCancel
                 )
             }
@@ -364,21 +369,21 @@ private fun AlarmRingingScreen(
 
     val context = LocalContext.current
     val label = alarm?.label?.takeIf { it.isNotBlank() } ?: stringResource(id = R.string.alarm_label_default)
-    val timeText = alarm?.time?.formatForDisplay(android.text.format.DateFormat.is24HourFormat(context))
+    val timeText = alarm?.time?.formatForDisplay(DateFormat.is24HourFormat(context))
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(32.dp),
+	        .fillMaxSize()
+	        .background(MaterialTheme.colorScheme.background)
+	        .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
         if (showDebugCancel) {
             DebugCancelButton(
                 onClick = onDebugCancel,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
+	                .align(Alignment.TopEnd)
+	                .padding(8.dp)
             )
         }
         Column(
@@ -417,8 +422,8 @@ private fun AlarmRingingScreen(
                     Button(
                         onClick = { onTaskSelected(task) },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(64.dp)
+	                        .fillMaxWidth()
+	                        .height(64.dp)
                     ) {
                         Text(
                             text = stringResource(id = task.labelResId),

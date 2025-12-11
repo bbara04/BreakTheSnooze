@@ -1,4 +1,4 @@
-package hu.bbara.breakthesnooze.ui.alarm
+package hu.bbara.breakthesnooze.ui.alarm.duration
 
 import android.app.Activity
 import android.content.Intent
@@ -64,7 +64,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import hu.bbara.breakthesnooze.R
+import hu.bbara.breakthesnooze.ui.alarm.create.AssignQrBarcodeScreen
+import hu.bbara.breakthesnooze.ui.alarm.create.QrBarcodeSettings
+import hu.bbara.breakthesnooze.ui.alarm.create.resolveRingtoneTitle
+import hu.bbara.breakthesnooze.ui.alarm.create.taskIconFor
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.model.MIN_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.QrScanMode
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import java.util.Date

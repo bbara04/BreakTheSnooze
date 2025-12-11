@@ -14,7 +14,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import hu.bbara.breakthesnooze.data.settings.model.SettingsState
 import hu.bbara.breakthesnooze.designsystem.BreakTheSnoozeTheme
+import hu.bbara.breakthesnooze.ui.alarm.create.AlarmCreateTestTags
 import hu.bbara.breakthesnooze.ui.alarm.dismiss.AlarmDismissTaskType
+import hu.bbara.breakthesnooze.ui.alarm.home.AlarmScreenContentForTest
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmDestination
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiState
+import hu.bbara.breakthesnooze.ui.alarm.model.DEFAULT_QR_UNIQUE_COUNT
+import hu.bbara.breakthesnooze.ui.alarm.model.QrScanMode
+import hu.bbara.breakthesnooze.ui.alarm.model.sampleDraft
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

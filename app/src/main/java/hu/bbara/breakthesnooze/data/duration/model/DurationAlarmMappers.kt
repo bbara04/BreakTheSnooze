@@ -2,7 +2,7 @@ package hu.bbara.breakthesnooze.data.duration.model
 
 import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.uniqueAlarmId
-import hu.bbara.breakthesnooze.ui.alarm.AlarmUiModel
+import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import java.time.ZoneId
 
 fun DurationAlarm.toAlarmUiModel(): AlarmUiModel {

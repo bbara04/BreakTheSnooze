@@ -208,6 +208,13 @@ internal fun AlarmListRoute(
                     )
                 }
             }
+
+            // Dummy spacer for the animation
+            if (!(listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0)) {
+                item {
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+            }
         }
     }
 }

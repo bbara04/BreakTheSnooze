@@ -35,7 +35,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             defaultRingtoneUri = storedRingtone,
             debugModeEnabled = prefs[debugModeKey] ?: false,
             defaultCountdownDurationMinutes = storedDuration.coerceAtLeast(0),
-            tightGapWarningEnabled = prefs[tightGapWarningEnabledKey] ?: true
+            tightGapWarningEnabled = prefs[tightGapWarningEnabledKey] ?: false
         )
     }
 

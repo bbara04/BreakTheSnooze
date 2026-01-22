@@ -17,6 +17,7 @@ class WakeCheckReceiver : BroadcastReceiver() {
             WakeCheckIntents.ACTION_SHOW_WAKE_CHECK -> handleShow(context, alarmId)
             WakeCheckIntents.ACTION_ACK_WAKE_CHECK -> handleAck(context, alarmId)
             WakeCheckIntents.ACTION_WAKE_CHECK_FALLBACK -> handleFallback(context, alarmId)
+            WakeCheckIntents.ACTION_WAKE_CHECK_CLEARED -> handleCleared(context, alarmId)
         }
     }
 
@@ -49,6 +50,16 @@ class WakeCheckReceiver : BroadcastReceiver() {
             payload?.let { putExtra(WakeCheckIntents.EXTRA_WAKE_CHECK_PAYLOAD, it.toJson()) }
         }
         ContextCompat.startForegroundService(context, restartIntent)
+    }
+
+    private fun handleCleared(context: Context, alarmId: Int) {
+        val payload = WakeCheckStorage(context).get(alarmId)
+        if (payload == null) {
+            Log.d(TAG, "Wake-check clear ignored; payload missing for alarmId=$alarmId")
+            return
+        }
+        Log.d(TAG, "Wake-check cleared from shade; re-posting for alarmId=$alarmId")
+        WakeCheckNotifications.showWakeCheck(context, payload)
     }
 
     companion object {

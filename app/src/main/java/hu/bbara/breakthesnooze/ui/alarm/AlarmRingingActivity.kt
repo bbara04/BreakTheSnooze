@@ -226,7 +226,7 @@ class AlarmRingingActivity : ComponentActivity() {
         if (taskCompleted) return
         taskCompleted = true
         recordWakeEvent()
-        sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM)
+        sendAlarmCommand(AlarmIntents.ACTION_STOP_ALARM, scheduleWakeCheck = true)
         finish()
     }
 
@@ -243,10 +243,13 @@ class AlarmRingingActivity : ComponentActivity() {
         }
     }
 
-    private fun sendAlarmCommand(action: String) {
+    private fun sendAlarmCommand(action: String, scheduleWakeCheck: Boolean = false) {
         val intent = Intent(this, AlarmService::class.java).apply {
             this.action = action
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
+            if (scheduleWakeCheck) {
+                putExtra(AlarmIntents.EXTRA_SCHEDULE_WAKE_CHECK, true)
+            }
         }
         ContextCompat.startForegroundService(this, intent)
     }

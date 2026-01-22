@@ -55,6 +55,10 @@
             android:name=".feature.alarm.service.AlarmReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".feature.alarm.wakecheck.WakeCheckReceiver"
+            android:exported="false" />
+
         <service
             android:name=".feature.alarm.service.AlarmService"
             android:exported="false"

@@ -15,8 +15,11 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import hu.bbara.breakthesnooze.MainDispatcherRule
+import hu.bbara.breakthesnooze.data.alarm.model.AlarmKind
+import hu.bbara.breakthesnooze.data.alarm.model.uniqueAlarmId
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarmPlaybackStore
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
 import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.di.AppModule
@@ -162,6 +165,48 @@ class AlarmReceiverTest {
         assertEquals(listOf(77), scheduler.cancelledIds)
         assertNull("No service should start when alarm is missing", shadowApp.nextStartedService)
         assertNull("No activity should launch when alarm missing", shadowApp.nextStartedActivity)
+    }
+
+    @Test
+    fun `AlarmReceiver restarts duration alarm from playback cache when repository empty`() {
+        val rawId = 321
+        val uniqueId = uniqueAlarmId(AlarmKind.Duration, rawId)
+        val cachedAlarm = AlarmUiModel(
+            id = uniqueId,
+            time = LocalTime.of(6, 15),
+            label = "Cached duration",
+            isActive = true,
+            repeatDays = emptySet(),
+            soundUri = null,
+            dismissTask = AlarmDismissTaskType.DEFAULT,
+            qrBarcodeValue = null,
+            qrRequiredUniqueCount = 0
+        )
+        DurationAlarmPlaybackStore.put(uniqueId, cachedAlarm)
+
+        val scheduler = object : ReceiverFakeDurationAlarmScheduler() {
+            val cancelled = mutableListOf<Int>()
+            override fun cancel(alarmId: Int) {
+                cancelled += alarmId
+            }
+        }
+        TestAppModuleBindings.durationAlarmRepository = ReceiverFakeDurationAlarmRepository()
+        TestAppModuleBindings.durationAlarmScheduler = scheduler
+        val receiver = AlarmReceiver()
+        val pendingResult = preparePendingResult(receiver)
+
+        try {
+            receiver.onReceive(context, createIntent(uniqueId))
+            shadowOf(Looper.getMainLooper()).idle()
+
+            assertTrue(waitUntilFinished(pendingResult))
+            assertEquals(listOf(rawId), scheduler.cancelled)
+            val serviceIntent = shadowApp.nextStartedService
+            assertNotNull("Foreground service should start for cached duration alarm", serviceIntent)
+            assertEquals(uniqueId, serviceIntent!!.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1))
+        } finally {
+            DurationAlarmPlaybackStore.remove(uniqueId)
+        }
     }
 
     @Test
@@ -402,7 +447,7 @@ class AlarmReceiverTest {
         override suspend fun getById(id: Int): hu.bbara.breakthesnooze.data.duration.model.DurationAlarm? = null
     }
 
-    private class ReceiverFakeDurationAlarmScheduler : DurationAlarmScheduler {
+    private open class ReceiverFakeDurationAlarmScheduler : DurationAlarmScheduler {
         override fun schedule(alarm: hu.bbara.breakthesnooze.data.duration.model.DurationAlarm) = Unit
         override fun cancel(alarmId: Int) = Unit
         override fun synchronize(alarms: List<hu.bbara.breakthesnooze.data.duration.model.DurationAlarm>) = Unit

@@ -41,6 +41,7 @@ class AlarmService : Service() {
     @Inject lateinit var durationAlarmRepository: DurationAlarmRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val alarmRestartScheduler by lazy { AlarmRestartScheduler(applicationContext) }
     private var mediaPlayer: MediaPlayer? = null
     private var currentAlarmId: Int? = null
     private var currentAlarm: AlarmUiModel? = null
@@ -117,8 +118,8 @@ class AlarmService : Service() {
     }
 
     private fun startAlarm(alarmId: Int, overrideAlarm: AlarmUiModel? = null) {
-        if (currentAlarmId == alarmId && mediaPlayer?.isPlaying == true) {
-            Log.d(TAG, "startAlarm ignored; already playing for alarmId=$alarmId")
+        if (currentAlarmId == alarmId && (mediaPlayer?.isPlaying == true || isPaused)) {
+            Log.d(TAG, "startAlarm ignored; already active for alarmId=$alarmId isPaused=$isPaused")
             return
         }
         currentAlarmId = alarmId
@@ -138,6 +139,7 @@ class AlarmService : Service() {
             }
 
             currentAlarm = alarm
+            alarmRestartScheduler.schedule(alarm.id)
             val notification = withContext(Dispatchers.Default) {
                 AlarmNotifications.buildNotification(applicationContext, alarm)
             }
@@ -247,6 +249,7 @@ class AlarmService : Service() {
 
     private fun stopAlarm(alarmId: Int, scheduleWakeCheck: Boolean) {
         Log.d(TAG, "Stopping alarm for alarmId=$alarmId scheduleWakeCheck=$scheduleWakeCheck")
+        alarmRestartScheduler.cancel(alarmId)
         val activeAlarm = currentAlarm
         if (scheduleWakeCheck && activeAlarm != null) {
             WakeCheckScheduler(applicationContext).schedule(WakeCheckPayload.fromAlarm(activeAlarm))
@@ -388,11 +391,14 @@ class AlarmService : Service() {
 
             AlarmKind.Duration -> {
                 val rawId = rawAlarmIdFromUnique(uniqueAlarmId)
-                val alarm = durationAlarmRepository.getById(rawId) ?: return null
-                durationAlarmRepository.delete(rawId)
-                return alarm.toAlarmUiModel().also {
-                    DurationAlarmPlaybackStore.put(it.id, it)
+                val alarm = durationAlarmRepository.getById(rawId)
+                if (alarm != null) {
+                    durationAlarmRepository.delete(rawId)
+                    return alarm.toAlarmUiModel().also {
+                        DurationAlarmPlaybackStore.put(it.id, it)
+                    }
                 }
+                return DurationAlarmPlaybackStore.get(uniqueAlarmId)
             }
         }
     }

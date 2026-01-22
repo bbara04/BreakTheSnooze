@@ -16,6 +16,7 @@ import hu.bbara.breakthesnooze.data.alarm.model.detectAlarmKind
 import hu.bbara.breakthesnooze.data.alarm.model.rawAlarmIdFromUnique
 import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.alarm.scheduler.AlarmScheduler
+import hu.bbara.breakthesnooze.data.duration.model.DurationAlarmPlaybackStore
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
 import hu.bbara.breakthesnooze.data.duration.scheduler.DurationAlarmScheduler
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
@@ -98,7 +99,8 @@ class AlarmReceiver : BroadcastReceiver() {
         val repository = entryPoint.durationAlarmRepository()
         val scheduler = entryPoint.durationAlarmScheduler()
         val alarm = repository.getById(rawId)
-        if (alarm == null) {
+        val hasCachedPlayback = DurationAlarmPlaybackStore.get(uniqueAlarmId) != null
+        if (alarm == null && !hasCachedPlayback) {
             scheduler.cancel(rawId)
             return
         }

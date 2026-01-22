@@ -17,6 +17,9 @@ import hu.bbara.breakthesnooze.data.alarm.repository.AlarmRepository
 import hu.bbara.breakthesnooze.data.duration.model.DurationAlarmPlaybackStore
 import hu.bbara.breakthesnooze.data.duration.model.toAlarmUiModel
 import hu.bbara.breakthesnooze.data.duration.repository.DurationAlarmRepository
+import hu.bbara.breakthesnooze.feature.alarm.wakecheck.WakeCheckIntents
+import hu.bbara.breakthesnooze.feature.alarm.wakecheck.WakeCheckPayload
+import hu.bbara.breakthesnooze.feature.alarm.wakecheck.WakeCheckScheduler
 import hu.bbara.breakthesnooze.ui.alarm.AlarmRingingActivity
 import hu.bbara.breakthesnooze.ui.alarm.model.AlarmUiModel
 import hu.bbara.breakthesnooze.wear.WearAlarmMessenger
@@ -51,6 +54,8 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
         val alarmId = intent?.getIntExtra(AlarmIntents.EXTRA_ALARM_ID, -1) ?: -1
+        val scheduleWakeCheck = intent?.getBooleanExtra(AlarmIntents.EXTRA_SCHEDULE_WAKE_CHECK, false) ?: false
+        val wakeCheckPayload = intent?.getStringExtra(WakeCheckIntents.EXTRA_WAKE_CHECK_PAYLOAD)
         if (alarmId == -1) {
             Log.w(TAG, "onStartCommand without valid alarmId, stopping service")
             stopSelf()
@@ -73,7 +78,7 @@ class AlarmService : Service() {
         when (action) {
             AlarmIntents.ACTION_STOP_ALARM -> {
                 Log.d(TAG, "Received stop command for alarmId=$alarmId")
-                stopAlarm(alarmId)
+                stopAlarm(alarmId, scheduleWakeCheck)
                 return START_NOT_STICKY
             }
             AlarmIntents.ACTION_WEAR_ACK -> {
@@ -96,6 +101,12 @@ class AlarmService : Service() {
                 refreshForegroundNotification(alarmId)
             }
 
+            AlarmIntents.ACTION_WAKE_CHECK_RESTART -> {
+                Log.d(TAG, "Received wake-check restart for alarmId=$alarmId")
+                val alarmOverride = WakeCheckPayload.fromJson(wakeCheckPayload)?.toAlarmUiModel()
+                startAlarm(alarmId, alarmOverride)
+            }
+
             AlarmIntents.ACTION_ALARM_FIRED, null -> {
                 Log.d(TAG, "Received fired command for alarmId=$alarmId")
                 startAlarm(alarmId)
@@ -105,7 +116,7 @@ class AlarmService : Service() {
         return START_STICKY
     }
 
-    private fun startAlarm(alarmId: Int) {
+    private fun startAlarm(alarmId: Int, overrideAlarm: AlarmUiModel? = null) {
         if (currentAlarmId == alarmId && mediaPlayer?.isPlaying == true) {
             Log.d(TAG, "startAlarm ignored; already playing for alarmId=$alarmId")
             return
@@ -117,7 +128,7 @@ class AlarmService : Service() {
         wearFallbackJob?.cancel()
         wearFallbackJob = null
         playbackJob = serviceScope.launch {
-            val alarm = resolveAlarm(alarmId)
+            val alarm = overrideAlarm ?: resolveAlarm(alarmId)
 
             if (alarm == null) {
                 Log.w(TAG, "No alarm found for alarmId=$alarmId, stopping service")
@@ -234,8 +245,14 @@ class AlarmService : Service() {
         }
     }
 
-    private fun stopAlarm(alarmId: Int) {
-        Log.d(TAG, "Stopping alarm for alarmId=$alarmId")
+    private fun stopAlarm(alarmId: Int, scheduleWakeCheck: Boolean) {
+        Log.d(TAG, "Stopping alarm for alarmId=$alarmId scheduleWakeCheck=$scheduleWakeCheck")
+        val activeAlarm = currentAlarm
+        if (scheduleWakeCheck && activeAlarm != null) {
+            WakeCheckScheduler(applicationContext).schedule(WakeCheckPayload.fromAlarm(activeAlarm))
+        } else {
+            WakeCheckScheduler(applicationContext).cancel(alarmId)
+        }
         stopPlayback()
         playbackJob?.cancel()
         playbackJob = null

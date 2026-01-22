@@ -7,5 +7,7 @@ object AlarmIntents {
     const val ACTION_RESUME_ALARM = "hu.bbara.breakthesnooze.alarm.action.RESUME_ALARM"
     const val ACTION_ALARM_DISMISSED = "hu.bbara.breakthesnooze.alarm.action.ALARM_DISMISSED"
     const val ACTION_WEAR_ACK = "hu.bbara.breakthesnooze.alarm.action.WEAR_ACK"
+    const val ACTION_WAKE_CHECK_RESTART = "hu.bbara.breakthesnooze.alarm.action.WAKE_CHECK_RESTART"
     const val EXTRA_ALARM_ID = "hu.bbara.breakthesnooze.alarm.extra.ALARM_ID"
+    const val EXTRA_SCHEDULE_WAKE_CHECK = "hu.bbara.breakthesnooze.alarm.extra.SCHEDULE_WAKE_CHECK"
 }

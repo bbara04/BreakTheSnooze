@@ -29,6 +29,7 @@ class WearCommandListenerService : WearableListenerService() {
         val stopIntent = Intent(applicationContext, AlarmService::class.java).apply {
             action = AlarmIntents.ACTION_STOP_ALARM
             putExtra(AlarmIntents.EXTRA_ALARM_ID, alarmId)
+            putExtra(AlarmIntents.EXTRA_SCHEDULE_WAKE_CHECK, true)
         }
         ContextCompat.startForegroundService(applicationContext, stopIntent)
     }

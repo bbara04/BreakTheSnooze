@@ -14,6 +14,7 @@ import hu.bbara.breakthesnooze.R
 object WakeCheckNotifications {
     private const val CHANNEL_ID = "wake_check_channel"
     private const val NOTIFICATION_ID_BASE = 20_000
+    private const val DELETE_REQUEST_CODE_BASE = 30_000
 
     fun showWakeCheck(context: Context, payload: WakeCheckPayload) {
         ensureChannel(context)
@@ -37,6 +38,17 @@ object WakeCheckNotifications {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val deleteIntent = Intent(context, WakeCheckReceiver::class.java).apply {
+            action = WakeCheckIntents.ACTION_WAKE_CHECK_CLEARED
+            putExtra(WakeCheckIntents.EXTRA_ALARM_ID, payload.alarmId)
+        }
+        val deletePendingIntent = PendingIntent.getBroadcast(
+            context,
+            DELETE_REQUEST_CODE_BASE + payload.alarmId,
+            deleteIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val label = payload.label.ifBlank { context.getString(R.string.alarm_label_default) }
 
         return NotificationCompat.Builder(context, CHANNEL_ID)
@@ -48,6 +60,7 @@ object WakeCheckNotifications {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
             .setContentIntent(ackPendingIntent)
+            .setDeleteIntent(deletePendingIntent)
             .addAction(
                 0,
                 context.getString(R.string.wake_check_confirm),
